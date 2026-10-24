@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Note 09 — Single Stock Futures: practice</title>
+<style>
+  :root{
+    --bg:#ffffff; --fg:#1a1a1a; --muted:#5f6672; --line:#e2e5ea;
+    --card:#f7f8fa; --accent:#00205b; --accent-fg:#ffffff;
+    --ok-bg:#e8f5ec; --ok-line:#2e7d47; --ok-fg:#17532c;
+    --no-bg:#fdeceb; --no-line:#c0392b; --no-fg:#8e2b20;
+    --hint-bg:#fff8e6; --hint-line:#b8860b; --hint-fg:#6b4e00;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#14161a; --fg:#e8eaed; --muted:#9aa3af; --line:#2b2f36;
+      --card:#1b1e24; --accent:#7f9cd4; --accent-fg:#0d1015;
+      --ok-bg:#132a1c; --ok-line:#4caf70; --ok-fg:#9fdcb4;
+      --no-bg:#2c1614; --no-line:#e06c5d; --no-fg:#f0a99f;
+      --hint-bg:#2a2313; --hint-line:#d4a017; --hint-fg:#e5c976;
+    }
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:0; background:var(--bg); color:var(--fg);
+    font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  .wrap{max-width:760px; margin:0 auto; padding:24px 18px 64px}
+  header{border-bottom:1px solid var(--line); padding-bottom:14px; margin-bottom:20px}
+  h1{font-size:1.35rem; margin:0 0 4px}
+  .sub{color:var(--muted); font-size:.9rem}
+  .topics{display:flex; flex-wrap:wrap; gap:7px; margin:18px 0}
+  .chip{
+    border:1px solid var(--line); background:var(--card); color:var(--fg);
+    padding:6px 12px; border-radius:999px; cursor:pointer; font-size:.85rem;
+    font-family:inherit;
+  }
+  .chip[aria-pressed="true"]{background:var(--accent); color:var(--accent-fg); border-color:var(--accent)}
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:10px;
+    padding:20px; margin-bottom:16px;
+  }
+  .qmeta{font-size:.75rem; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin-bottom:10px}
+  .qtext{font-size:1.05rem; margin-bottom:6px}
+  .qtext b{font-variant-numeric:tabular-nums}
+  .qfig{display:flex; flex-wrap:wrap; gap:6px 26px; margin:10px 0 2px}
+  .qfig svg{max-width:100%; height:auto; overflow:visible}
+  .qfig text{fill:var(--fg); font-family:inherit; font-variant-numeric:tabular-nums}
+  .qfig .tl{font-weight:600}
+  .qfig .tp{fill:var(--muted); font-size:13px}
+  .qfig line, .qfig polygon{stroke:var(--accent); fill:var(--accent)}
+  .qfig circle{fill:var(--accent)}
+  .qfig line.off{stroke:var(--muted); opacity:.35}
+  .qfig circle.off{fill:var(--muted); opacity:.45}
+  .ask{margin-top:14px; font-weight:600}
+  .row{display:flex; gap:9px; margin-top:14px; flex-wrap:wrap}
+  input[type=text]{
+    flex:1 1 190px; min-width:0; padding:11px 13px; font-size:1rem; font-family:inherit;
+    border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--fg);
+  }
+  input[type=text]:focus{outline:2px solid var(--accent); outline-offset:1px}
+  button{
+    padding:11px 17px; font-size:.95rem; font-family:inherit; border-radius:8px;
+    border:1px solid var(--accent); background:var(--accent); color:var(--accent-fg);
+    cursor:pointer; font-weight:600;
+  }
+  button.ghost{background:transparent; color:var(--fg); border-color:var(--line); font-weight:500}
+  button:disabled{opacity:.45; cursor:default}
+  .fb{border-radius:8px; padding:13px 15px; margin-top:15px; border-left:4px solid; font-size:.95rem}
+  .fb.ok{background:var(--ok-bg); border-color:var(--ok-line); color:var(--ok-fg)}
+  .fb.no{background:var(--no-bg); border-color:var(--no-line); color:var(--no-fg)}
+  .fb.hint{background:var(--hint-bg); border-color:var(--hint-line); color:var(--hint-fg)}
+  .fb strong{display:block; margin-bottom:3px}
+  details{margin-top:15px; border-top:1px solid var(--line); padding-top:13px}
+  summary{cursor:pointer; font-size:.9rem; color:var(--muted); font-weight:600}
+  .steps{margin-top:11px; font-size:.92rem}
+  .steps div{padding:5px 0; border-bottom:1px dashed var(--line)}
+  .steps div:last-child{border-bottom:none; font-weight:600}
+  .steps table.eqs{border-collapse:collapse; margin:2px 0}
+  .steps table.eqs td{padding:0; vertical-align:top}
+  .steps table.eqs td:first-child{text-align:right; padding-right:.3em}
+  .steps table.cf{border-collapse:collapse; margin:6px 0}
+  .steps table.cf td,.steps table.cf th{padding:2px 12px 2px 0; text-align:center}
+  .steps table.cf td:first-child,.steps table.cf th:first-child{text-align:left}
+  .steps table.cf th{border-bottom:1px solid var(--line)}
+  code{
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.88em;
+    background:var(--bg); padding:1px 5px; border-radius:4px; border:1px solid var(--line);
+  }
+  .opts{display:flex; flex-direction:column; gap:8px; margin-top:14px}
+  .opt{
+    text-align:left; padding:11px 14px; border:1px solid var(--line); background:var(--bg);
+    color:var(--fg); border-radius:8px; cursor:pointer; font-family:inherit;
+    font-size:.95rem; font-weight:400; line-height:1.55;
+  }
+  .opt:hover:not(:disabled){border-color:var(--accent)}
+  .opt.right{background:var(--ok-bg); border-color:var(--ok-line); border-width:2px}
+  .opt.wrong{background:var(--no-bg); border-color:var(--no-line)}
+  .opt:disabled{cursor:default}
+  .opt sup{font-size:.75em}
+  .stats{display:flex; gap:22px; font-size:.86rem; color:var(--muted); margin-top:22px;
+         border-top:1px solid var(--line); padding-top:14px; flex-wrap:wrap}
+  .stats b{color:var(--fg); font-variant-numeric:tabular-nums}
+  footer{margin-top:26px; font-size:.78rem; color:var(--muted); text-align:center}
+  /* The hidden attribute's UA rule is only [hidden]{display:none}, which loses
+     to author rules like .opts{display:flex} and .row{display:flex}. Without
+     this, hiding those panels silently does nothing. */
+  .modes{display:flex; gap:8px; align-items:center; margin-top:10px;
+         font-size:.84rem; color:var(--muted); flex-wrap:wrap}
+  .modes .chip{font-size:.84rem; padding:5px 12px}
+  .prog{margin-top:18px}
+  .progtop{display:flex; justify-content:space-between; align-items:baseline;
+           font-size:.86rem; color:var(--muted); margin-bottom:6px}
+  .progtop b{color:var(--fg); font-variant-numeric:tabular-nums}
+  .progbar{height:9px; border-radius:999px; background:var(--line); overflow:hidden}
+  .progfill{height:100%; width:0%; border-radius:999px; background:var(--accent);
+            transition:width .35s ease}
+  .progreset{background:none; border:none; color:var(--muted); font-size:.8rem;
+             padding:0; cursor:pointer; text-decoration:underline; font-weight:400}
+  .progreset:hover{color:var(--fg)}
+  .qhead{display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:10px}
+  .qhead .qmeta{margin-bottom:0}
+  .star{background:transparent; color:var(--muted); border:1px solid var(--line); border-radius:999px;
+        padding:3px 11px; font-size:.8rem; font-weight:500; white-space:nowrap; flex:none}
+  .star[aria-pressed="true"]{color:var(--hint-fg); background:var(--hint-bg); border-color:var(--hint-line)}
+  .star:hover{border-color:var(--accent)}
+  [hidden]{display:none !important}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>Note 09 — Single Stock Futures: practice</h1>
+  <div class="sub">F = (S − Pv(d)) × (1 + (y − l)/2)<sup>n</sup>, with n the number of six-month periods. Answers are matched within 0.25%.</div>
+</header>
+
+<div class="topics" id="topics" role="group" aria-label="Choose topics"></div>
+
+<div class="modes" id="modes" role="group" aria-label="Question order">
+  <span>Order</span>
+  <button class="chip" id="mShuffle" type="button" aria-pressed="true">Shuffle</button>
+  <button class="chip" id="mSeq" type="button" aria-pressed="false">In order</button>
+  <span id="seqPos"></span>
+</div>
+
+<div class="card" id="card">
+  <div class="qhead">
+    <div class="qmeta" id="qmeta">—</div>
+    <button class="star" id="star" type="button" aria-pressed="false"
+            title="Star this question to practise it again under the Starred chip">☆ Star</button>
+  </div>
+  <div class="qtext" id="qtext">Loading…</div>
+  <div class="qfig" id="qfig" hidden></div>
+  <div class="ask" id="qask"></div>
+  <div class="opts" id="opts" hidden></div>
+  <div class="row" id="inputrow">
+    <input type="text" id="ans" autocomplete="off" inputmode="decimal"
+           placeholder="Your answer" aria-label="Your answer">
+    <button id="check">Check</button>
+    <button id="next" class="ghost">New question</button>
+  </div>
+  <div id="fb"></div>
+  <details id="soldetails" hidden>
+    <summary>Show the worked solution</summary>
+    <div class="steps" id="steps"></div>
+  </details>
+</div>
+
+<div class="prog">
+  <div class="progtop">
+    <span>Templates solved unaided <b id="pDone">0</b> of <b id="pTotal">0</b></span>
+    <button class="progreset" id="pReset" type="button">reset</button>
+  </div>
+  <div class="progbar"><div class="progfill" id="progfill"></div></div>
+</div>
+
+<div class="stats">
+  <span>Attempted <b id="sAtt">0</b></span>
+  <span>Correct first try <b id="sFirst">0</b></span>
+  <span>Accuracy <b id="sAcc">—</b></span>
+  <span>Streak <b id="sStreak">0</b></span>
+  <span>Solutions opened <b id="sPeek">0</b></span>
+</div>
+
+<footer>Numbers are randomised, so every attempt is different. Nothing you type leaves this page.<br>Use the &rarr; and &larr; arrow keys to move between questions.</footer>
+
+</div>
+
+<script>
+"use strict";
+
+/* ------------------------------------------------------------------ utils */
+const pick = a => a[Math.floor(Math.random()*a.length)];
+/* stepped range, e.g. range(0.04,0.24,0.0025) -> 81 rates instead of a list of 6 */
+const range = (lo,hi,step) => {
+  const out=[]; for(let v=lo; v<=hi+1e-9; v+=step) out.push(Number(v.toFixed(8)));
+  return out;
+};
+const ORD = n => n + (["th","st","nd","rd"][(n%100-n%10!=10)*(n%10<4)*(n%10)]||"th");
+const money = v => "$" + v.toLocaleString("en-US",{minimumFractionDigits:2, maximumFractionDigits:2});
+const pct   = (v,d=4) => (v*100).toFixed(d).replace(/\.?0+$/,"") + "%";
+const pctS  = (v,d=2) => (v*100).toFixed(d) + "%";
+const REL_SEP  = 0.01;    // distractors must sit >1% from everything else
+const REL_MATCH= 0.0025;  // student answer counts as a match within 0.25%
+
+const near = (a,b,tol) =>
+  Number.isFinite(a) && Number.isFinite(b) &&
+  Math.abs(a-b) / Math.max(Math.abs(a), Math.abs(b), 1e-12) < tol;
+
+/* Drop distractors too close to the answer (or to each other) to diagnose.
+   Templates about small effects (perpetuity timing) pass a tighter `sep`. */
+function usable(correct, cands, sep){
+  const s = sep || REL_SEP;
+  const kept = [];
+  for (const c of cands){
+    if (!Number.isFinite(c.val)) continue;
+    if (near(c.val, correct, s)) continue;
+    if (kept.some(k => near(k.val, c.val, s))) continue;
+    kept.push(c);
+  }
+  return kept;
+}
+
+/* ------------------------------------------------------------- templates */
+/* ---------------------------------------------------------------- Note 09 ---
+   Single stock futures (FIN 577, Lecture 1, 26 Oct 2026). The cost-of-carry model:
+   F = (S - Pv(d)) (1 + (y - l)/2)^n, n = number of six-month periods, y the zero yield
+   for the futures' maturity and l the stock lending rate, both p.a. compounded semiannually.
+   Built 24 Oct 2026 from Note 09 and Anh's FIN 577 exams (rule 5):
+     p1  <- 2024/2025 sample final 2(b), forwards (Pv(d) given since the blind sitting)
+     d1  <- 2024/2025 final 2(b) (F = 185, S = 190, l = 0, 3 months: Pv(d))
+     l1  <- the note's SHLD example (F = 62.57, S = 65.06: l = 15.37%)
+     a1  <- the note's SHLD arbitrage (short the share, buy the futures, bank the proceeds)
+     r1  <- the note's last section (y implied from no-dividend, zero-lending-rate stocks)
+     m1  <- 2025 midterm 3(b)(ii) (short sellers push S down 10% and l up: F falls by more)
+     d2, a2 <- external reviews 24 Oct 2026 (3- and 9-month futures bracket a dividend; John replaced by a broker)  */
+const farFrom = (correct,cands,sep) => cands.every(c=>Number.isFinite(c.val) && !near(c.val,correct,sep));
+const smoney = v => (v < 0 ? "&minus;" : "") + money(Math.abs(v));   // −$4.38, not $-4.38
+const keepFar = (correct,cands,sep) => cands.filter(c=>Number.isFinite(c.val) && !near(c.val,correct,sep));
+const spct = (v,d=2) => (v < 0 ? "&minus;" : "") + pctS(Math.abs(v),d);   // −1.25%, not -1.25%
+const MONTHS = m => `${m}-month`;
+const nOf = m => m/6;                                     // six-month periods
+
+const TEMPLATES = [{ id:"p1", topic:"price", also:["div","lend"], name:"The futures price with a dividend and a lending fee", gen(){
+    /* The full cost-of-carry model, forwards (sample final 2 turned round). Blind sitting 24 Oct 2026: with the
+       dividend's amount and date given, discounting it barely moved the key (skipping it nearly scored), so
+       the stem now gives Pv(d) and the maturity varies instead.                                             */
+    let S, pv, y, l, m, n, correct, cands;
+    do {
+      S=pick(range(40,80,1)); pv=pick([1.00,1.25,1.50,2.00,2.50]);
+      y=pick(range(0.02,0.05,0.0025)); l=pick([0.02,0.03,0.04,0.05,0.06,0.08,0.10]);
+      m=pick([3,6,9]); n=nOf(m);
+      const g=1+(y-l)/2;
+      correct=(S-pv)*Math.pow(g,n);
+      cands=[
+        {val:S*Math.pow(g,n), msg:`You left out the dividend. The exchange holds the share until the futures mature, so the dividend is paid to it and lowers its cost of carrying the share: subtract Pv(d) from S.`},
+        {val:(S-pv)*Math.pow(1+y/2,n), msg:`You left out the lending fee. The exchange can lend the share out while it holds it, and the fee lowers its carrying cost from y to y &minus; l.`},
+        {val:(S-pv)*Math.pow(1+(y+l)/2,n), msg:`The lending fee is income to the exchange, so it lowers the carrying cost: the rate is y &minus; l, not y + l.`},
+        {val:(S-pv)*Math.pow(g,m/12), msg:`You counted the time in years (${m}/12 = ${m/12}) instead of in six-month periods. With semiannual compounding, n = ${m}/6 = ${n}.`}
+      ];
+    } while (!farFrom(correct,cands,REL_SEP) || usable(correct,cands,REL_SEP).length<3);
+    return {
+      unit:"money",
+      text:`A stock trades at <b>${money(S)}</b>. The present value of the dividends it will pay before its ${MONTHS(m)} futures
+            mature is <b>${money(pv)}</b>. Its lending rate is <b>${pctS(l)} p.a.</b> and the ${MONTHS(m)} zero yield is
+            <b>${pctS(y)} p.a.</b>, both compounded semiannually.`,
+      ask:`What should the ${MONTHS(m)} futures price be? (Two decimals.)`,
+      correct, cands,
+      steps:[
+        `The futures price is the exchange's cost of carrying the share to maturity:<br>F = (S &minus; Pv(d)) &times; (1 + (y &minus; l)/2)<sup>n</sup>, where n is the number of six-month periods`,
+        `${m} months is ${n} six-month period${n===1?"":"s"}, so n = ${n}:<br>F = (${money(S)} &minus; ${money(pv)}) &times; (1 + (${pctS(y)} &minus; ${pctS(l)})/2)<sup>${n}</sup> = <b>${money(correct)}</b>`
+      ]};
+  }},
+
+{ id:"d1", topic:"div", name:"The dividend the futures price implies", gen(){
+    /* Final 2(b), and the note's MTB example: a stock that is not special (l = 0), so
+       Pv(d) = S - F/(1 + y/2)^n. F is printed to the cent and the key is worked from it.   */
+    let S, y, m, n, F, correct, cands, tol, sep;
+    do {
+      S=pick(range(40,120,1)); y=pick(range(0.03,0.06,0.0025)); m=pick([6,9]); n=nOf(m);   // blind sitting: at 3 months Fv(d) sat 0.6% from the key
+      const pv=pick(range(0.50,4.00,0.01));   // fine grid: the implied Pv(d) is not always a round number
+      F=+((S-pv)*Math.pow(1+y/2,n)).toFixed(2);
+      correct=S-F/Math.pow(1+y/2,n);
+      tol=Math.max(0.0025, 0.0051/Math.abs(correct)); sep=Math.max(REL_SEP, 0.02/Math.abs(correct));
+      cands=keepFar(correct,[
+        {val:S-F, msg:`You compared F with S directly. F is paid at maturity and S today, so take F back to today first: S &minus; F/(1 + y/2)<sup>n</sup>.`},
+        {val:S-F*Math.pow(1+y/2,n), msg:`You grew F instead of discounting it. F is paid at maturity; to compare it with S, divide by (1 + y/2)<sup>n</sup>.`},
+        {val:S*Math.pow(1+y/2,n)-F, msg:`That is the dividend's value at the futures' maturity, Fv(d). The question asks for its value today, Pv(d).`},
+        {val:F/Math.pow(1+y/2,n)-S, msg:`Sign reversed. The dividend lowers the futures price: Pv(d) = S &minus; F/(1 + y/2)<sup>n</sup>, which is positive here.`}
+      ],sep);
+    } while (usable(correct,cands,sep).length<3 || correct<0.25);
+    return {
+      unit:"money", tol, sep,
+      text:`A stock's lending rate is 0%. It trades at <b>${money(S)}</b>, and its ${MONTHS(m)} futures
+            trades at <b>${money(F)}</b>. The ${MONTHS(m)} zero yield is <b>${pctS(y)} p.a.</b>, compounded semiannually.`,
+      ask:"What is the present value of the dividends the market expects the stock to pay before the futures mature? (Two decimals.)",
+      correct, cands,
+      steps:[
+        `With no lending fee, F = (S &minus; Pv(d)) &times; (1 + y/2)<sup>n</sup>, so Pv(d) = S &minus; F/(1 + y/2)<sup>n</sup>`,
+        `${m} months is ${n===1?"one six-month period, so n = 1":"1.5 six-month periods, so n = 1.5"}`,
+        `Pv(d) = ${money(S)} &minus; ${money(F)}/(1 + ${pctS(y)}/2)<sup>${n}</sup> = <b>${money(correct)}</b>`
+      ]};
+  }},
+
+{ id:"d2", topic:"div", name:"Two futures, and the dividend between them", gen(){
+    /* claude.ai review 24 Oct 2026: each futures price reflects only the dividends paid before it matures, so the
+       3- and 9-month futures together give the Pv of the dividends between months 3 and 9 (l = 0).              */
+    let S, y3, y9, F3, F9, a, b, correct, cands, tol, sep;
+    do {
+      S=pick(range(40,90,1)); y3=pick(range(0.02,0.04,0.0025)); y9=y3+pick([0.0025,0.005,0.0075]);
+      const pvA=pick(range(0.30,1.20,0.01)), pvB=pick(range(0.50,2.50,0.01));   // before month 3; between months 3 and 9
+      F3=+((S-pvA)*Math.pow(1+y3/2,0.5)).toFixed(2); F9=+((S-pvA-pvB)*Math.pow(1+y9/2,1.5)).toFixed(2);
+      a=S-F3/Math.pow(1+y3/2,0.5); b=S-F9/Math.pow(1+y9/2,1.5);
+      correct=b-a;
+      tol=Math.max(0.0025, 0.0051/Math.abs(correct)); sep=Math.max(REL_SEP, 0.02/Math.abs(correct));
+      cands=keepFar(correct,[
+        {val:b, msg:`That is the Pv of all the dividends before month 9, including those paid before month 3. Take away the Pv the 3-month futures implies.`},
+        {val:F3-F9, msg:`You compared the two futures prices directly. They are paid at different dates; take each back to today first: Pv(d) = S &minus; F/(1 + y/2)<sup>n</sup>.`},
+        {val:F3/Math.pow(1+y9/2,0.5)-F9/Math.pow(1+y9/2,1.5), msg:`You used the 9-month zero yield for the 3-month futures. Each futures is discounted at the zero yield for its own maturity.`},
+        {val:a+b, msg:`The dividends before month 3 are inside both figures. The Pv for months 3 to 9 is the 9-month figure minus the 3-month one, not their sum.`}
+      ],sep);
+    } while (usable(correct,cands,sep).length<3 || correct<0.25);
+    return {
+      unit:"money", tol, sep,
+      text:`A stock's lending rate is 0%. It trades at <b>${money(S)}</b>. Its 3-month futures trades at <b>${money(F3)}</b>
+            and its 9-month futures at <b>${money(F9)}</b>. The 3-month zero yield is <b>${pctS(y3)} p.a.</b> and the 9-month
+            zero yield is <b>${pctS(y9)} p.a.</b>, both compounded semiannually.`,
+      ask:"What is the present value of the dividends the market expects the stock to pay between month 3 and month 9? (Two decimals.)",
+      correct, cands,
+      steps:[
+        `Each futures price reflects only the dividends paid before it matures. With no lending fee:<br>Pv(d) = S &minus; F/(1 + y/2)<sup>n</sup>`,
+        `Dividends before month 3 (n = 0.5): Pv(d) = ${money(S)} &minus; ${money(F3)}/(1 + ${pctS(y3)}/2)<sup>0.5</sup> = $${a.toFixed(4)}`,
+        `Dividends before month 9 (n = 1.5): Pv(d) = ${money(S)} &minus; ${money(F9)}/(1 + ${pctS(y9)}/2)<sup>1.5</sup> = $${b.toFixed(4)}`,
+        `Dividends between month 3 and month 9: $${b.toFixed(4)} &minus; $${a.toFixed(4)} = <b>${money(correct)}</b>`
+      ]};
+  }},
+
+{ id:"l1", topic:"lend", name:"The lending rate the futures price implies", gen(){
+    /* The note's SHLD example: no dividend, so F = S (1 + (y - l)/2)^n and
+       l = y - 2[(F/S)^(1/n) - 1]. The root is printed to six decimals and the key uses it.  */
+    let S, y, m, n, F, root, correct, cands, tol;
+    do {
+      S=pick(range(30,90,1)); y=pick(range(0.02,0.06,0.0025)); m=pick([3,9]); n=nOf(m);   // not 6 months: n = 1 makes it one division (blind sitting)
+      const l=pick(range(0.08,0.24,0.0001));   // fine grid: the implied l is not always a round number (the note's SHLD gives 15.37%)
+      F=+(S*Math.pow(1+(y-l)/2,n)).toFixed(2);
+      root=+Math.pow(F/S,1/n).toFixed(6);
+      correct=y-2*(root-1);
+      tol=Math.max(0.002, 0.000051/correct);
+      cands=keepFar(correct,[
+        {val:-2*(root-1), msg:`You left out the interest rate. The lending fee offsets the interest cost, so the futures price grows at y &minus; l: l = y &minus; 2[(F/S)<sup>1/n</sup> &minus; 1].`},
+        {val:y+2*(root-1), msg:`Sign slip. The futures price grows at y &minus; l, so (F/S)<sup>1/n</sup> &minus; 1 = (y &minus; l)/2 and l = y &minus; 2[(F/S)<sup>1/n</sup> &minus; 1].`},
+        {val:y-(root-1), msg:`(F/S)<sup>1/n</sup> &minus; 1 is the six-month rate. Quoted p.a. with semiannual compounding it is twice that: multiply by 2.`},
+        {val:y-2*(Math.pow(F/S,n)-1), msg:`n is the number of six-month periods, so take the n-th root of F/S, i.e. raise it to 1/n, not to n.`}
+      ],Math.max(REL_SEP,tol));
+    } while (usable(correct,cands,Math.max(REL_SEP,tol)).length<3);
+    return {
+      unit:"percent", tol, sep:Math.max(REL_SEP,tol),
+      text:`A stock will pay no dividend before its futures mature. It trades at <b>${money(S)}</b>, and its ${MONTHS(m)} futures
+            trades at <b>${money(F)}</b>. The ${MONTHS(m)} zero yield is <b>${pctS(y)} p.a.</b>, compounded semiannually.`,
+      ask:"What lending rate does the futures price imply, p.a. with semiannual compounding? (Two decimals.)",
+      correct, cands,
+      steps:[
+        `With no dividend, F = S &times; (1 + (y &minus; l)/2)<sup>n</sup>, so l = y &minus; 2 &times; [(F/S)<sup>1/n</sup> &minus; 1]`,
+        `${m} months is ${n} six-month period${n===1?"":"s"}, so n = ${n}: (F/S)<sup>1/n</sup> = (${money(F)}/${money(S)})<sup>1/${n}</sup> = ${root.toFixed(6)}`,
+        `l = ${pctS(y)} &minus; 2 &times; (${root.toFixed(6)} &minus; 1) = <b>${pctS(correct)}</b>`
+      ]};
+  }},
+
+{ id:"a1", topic:"arb", name:"Locking in the arbitrage when the futures is too cheap", gen(){
+    /* The note's SHLD arbitrage: no dividend, the share borrowed free from a friend. Short the share,
+       bank the proceeds, buy the futures: profit at maturity = S (1 + y/2)^n - F.                     */
+    let S, y, m, n, F, correct, cands, tol, sep;
+    do {
+      S=pick(range(30,90,1)); y=pick(range(0.01,0.05,0.0025)); m=pick([3,6]); n=nOf(m);
+      F=+(S-pick(range(1.50,4.00,0.25))).toFixed(2);
+      correct=S*Math.pow(1+y/2,n)-F;
+      tol=Math.max(0.0025, 0.0051/Math.abs(correct)); sep=Math.max(REL_SEP, 0.02/Math.abs(correct));
+      cands=keepFar(correct,[
+        {val:S-F, msg:`You left out the interest. The ${money(S)} from the short sale sits in the bank until the futures mature and earns interest: it grows to S &times; (1 + y/2)<sup>n</sup>.`},
+        {val:S*Math.pow(1+y/2,n)-S, msg:`That is only the interest on the short-sale proceeds. You also gain because the futures lets you buy the share back for ${money(F)}, less than the ${money(S)} you sold it for.`},
+        {val:F-S*Math.pow(1+y/2,n), msg:`Sign reversed. You receive S &times; (1 + y/2)<sup>n</sup> from the bank and pay F for the share, so the profit is the bank balance minus F.`},
+        {val:(S-F)*Math.pow(1+y/2,n), msg:`You grew the price gap S &minus; F, but F is paid at maturity and earns no interest. Only the ${money(S)} from the short sale is in the bank.`}
+      ],sep);
+    } while (usable(correct,cands,sep).length<3);
+    return {
+      unit:"money", tol, sep,
+      text:`A stock will pay no dividend before its ${MONTHS(m)} futures mature. It trades at <b>${money(S)}</b>, and the futures
+            trades at <b>${money(F)}</b>. A friend will lend you the share for ${m} months at no fee. You can deposit cash at the
+            ${MONTHS(m)} zero yield of <b>${pctS(y)} p.a.</b>, compounded semiannually.`,
+      ask:"What riskless profit per share can you lock in, measured at the futures' maturity? (Two decimals.)",
+      correct, cands,
+      steps:[
+        `The futures price is below the share price, so sell the share and buy it back through the futures: borrow the share from your friend, sell it for ${money(S)} and deposit the cash, and buy the futures at ${money(F)}`,
+        `At maturity the deposit has grown to S &times; (1 + y/2)<sup>n</sup>. You pay F for the share and return it to your friend`,
+        `${m} months is ${n===1?"one six-month period, so n = 1":"half of one six-month period, so n = 0.5"}: profit = ${money(S)} &times; (1 + ${pctS(y)}/2)<sup>${n}</sup> &minus; ${money(F)} = <b>${money(correct)}</b>`
+      ]};
+  }},
+
+{ id:"a2", topic:"arb", also:["lend"], name:"The lending fee and the arbitrage", gen(){
+    /* Sections 4 -> 5 of the note: John is replaced by a broker who charges S x l/2 for 6 months, paid at maturity,
+       so the short-and-buy-the-futures profit is S (1 + y/2) - S l/2 - F = S (1 + (y - l)/2) - F, often a loss.
+       claude.ai review 24 Oct 2026. Six months only, so the fee is the note's S x l/2 with no compounding question. */
+    let S, y, l, F, correct, cands, tol, sep;
+    do {
+      S=pick(range(40,90,1)); y=pick(range(0.01,0.05,0.0025)); l=pick(range(0.06,0.20,0.01));
+      F=+(S-pick(range(1.00,4.00,0.25))).toFixed(2);
+      correct=S*(1+(y-l)/2)-F;
+      tol=Math.max(0.0025, 0.0051/Math.abs(correct)); sep=Math.max(REL_SEP, 0.02/Math.abs(correct));
+      cands=keepFar(correct,[
+        {val:S*(1+y/2)-F, msg:`You left out the lending fee. The broker charges ${money(S)} &times; ${pctS(l)}/2 for the six months, paid when you return the share.`},
+        {val:S*(1+y/2)-S*l-F, msg:`The lending rate is per year; for six months the fee is S &times; l/2, not S &times; l.`},
+        {val:S*(1+(y+l)/2)-F, msg:`The fee is a cost to you, so it comes off: S &times; (1 + y/2) &minus; S &times; l/2 = S &times; (1 + (y &minus; l)/2).`},
+        {val:F-S*(1+(y-l)/2), msg:`Sign reversed. You end with the deposit less the fee, S &times; (1 + (y &minus; l)/2), and pay F for the share: profit = that minus F.`}
+      ],sep);
+    } while (usable(correct,cands,sep).length<3 || Math.abs(correct)<0.10);
+    return {
+      unit:"money", tol, sep,
+      text:`A stock will pay no dividend before its 6-month futures mature. It trades at <b>${money(S)}</b>, and the futures
+            trades at <b>${money(F)}</b>. A broker will lend you the share for 6 months at a lending rate of <b>${pctS(l)} p.a.</b>;
+            the fee is charged on today's share price and paid when you return the share. You can deposit cash at the 6-month
+            zero yield of <b>${pctS(y)} p.a.</b> Both rates are compounded semiannually. You borrow the share, sell it, deposit
+            the cash and buy the futures.`,
+      ask:"What is your profit per share at the futures' maturity? (Two decimals; enter a negative number for a loss.)",
+      correct, cands,
+      steps:[
+        `At maturity the deposit has grown to S &times; (1 + y/2). You pay the broker the fee S &times; l/2 and pay F for the share, which you return to the broker:<br>profit = S &times; (1 + y/2) &minus; S &times; l/2 &minus; F = S &times; (1 + (y &minus; l)/2) &minus; F`,
+        `Profit = ${money(S)} &times; (1 + (${pctS(y)} &minus; ${pctS(l)})/2) &minus; ${money(F)} = <b>${smoney(correct)}</b>`
+      ]};
+  }},
+
+{ id:"r1", topic:"rate", name:"The interest rate the futures price implies", gen(){
+    /* The note's last section (and Part 1 of the SSF project): for a stock with no dividend and a
+       zero lending rate, F = S (1 + y/2)^n, so y = 2[(F/S)^(1/n) - 1].                        */
+    let S, m, n, F, root, correct, cands, tol;
+    do {
+      S=pick(range(40,120,1)); m=pick([3,9]); n=nOf(m);   // not 6 months: n = 1 makes it one division (blind sitting)
+      const y=pick(range(0.015,0.06,0.0001));   // fine grid: the implied y is not always a round number
+      F=+(S*Math.pow(1+y/2,n)).toFixed(2);
+      root=+Math.pow(F/S,1/n).toFixed(6);
+      correct=2*(root-1);
+      tol=Math.max(0.002, 0.000051/correct);
+      cands=keepFar(correct,[
+        {val:root-1, msg:`(F/S)<sup>1/n</sup> &minus; 1 is the six-month rate. Quoted p.a. with semiannual compounding it is twice that.`},
+        {val:2*(Math.pow(F/S,n)-1), msg:`n is the number of six-month periods, so take the n-th root of F/S, i.e. raise it to 1/n, not to n.`},
+        {val:2*(Math.pow(F/S,2/n)-1), msg:`You counted the time in years (${m}/12) instead of in six-month periods. With semiannual compounding, n = ${m}/6 = ${n}.`},
+        {val:2*(Math.pow(S/F,1/n)-1), msg:`The ratio is upside down. The futures price is the share price grown at y, so F/S = (1 + y/2)<sup>n</sup>.`}
+      ],Math.max(REL_SEP,tol));
+    } while (usable(correct,cands,Math.max(REL_SEP,tol)).length<3 || correct<0.01);
+    return {
+      unit:"percent", tol, sep:Math.max(REL_SEP,tol),
+      text:`A stock pays no dividend and its lending rate is 0%. It trades at <b>${money(S)}</b>, and its
+            ${MONTHS(m)} futures trades at <b>${money(F)}</b>.`,
+      ask:`What ${MONTHS(m)} interest rate does the futures price imply, p.a. with semiannual compounding? (Two decimals.)`,
+      correct, cands,
+      steps:[
+        `With no dividend and no lending fee, F = S &times; (1 + y/2)<sup>n</sup>, so y = 2 &times; [(F/S)<sup>1/n</sup> &minus; 1]`,
+        `${m} months is ${n} six-month period${n===1?"":"s"}, so n = ${n}: (F/S)<sup>1/n</sup> = (${money(F)}/${money(S)})<sup>1/${n}</sup> = ${root.toFixed(6)}`,
+        `y = 2 &times; (${root.toFixed(6)} &minus; 1) = <b>${pctS(correct)}</b>`
+      ]};
+  }},
+
+{ id:"m1", topic:"lend", also:["price"], name:"A short sellers' attack and the futures price", gen(){
+    /* 2025 midterm 3(b)(ii): short sellers push the share down by x% and the lending rate up. With no
+       dividend, F = S (1 + (y - l)/2)^n, so F falls by more than x%. The share price cancels.        */
+    let x, y, l1, l2, m, n, g1, g2, correct, cands, tol;
+    do {
+      x=pick([0.05,0.08,0.10,0.12,0.15]); y=pick(range(0.02,0.05,0.0025));
+      l1=pick([0.005,0.01,0.015]); l2=pick(range(0.08,0.24,0.02)); m=pick([3,6]); n=nOf(m);
+      g1=1+(y-l1)/2; g2=1+(y-l2)/2;
+      correct=(1-x)*Math.pow(g2/g1,n)-1;
+      tol=Math.max(0.002, 0.000051/Math.abs(correct));
+      cands=keepFar(correct,[
+        {val:-x, msg:`That is the share price's fall alone. The jump in the lending rate lowers the futures price too: the exchange can lend the share out for more, so its carrying cost falls.`},
+        {val:Math.pow(g2/g1,n)-1, msg:`That is the lending rate's effect alone. The share price falls as well, and F is proportional to S.`},
+        {val:(1-x)*Math.pow(g1/g2,n)-1, msg:`A higher lending rate lowers the futures price: F grows at y &minus; l, so a bigger l means slower growth. You made it raise F.`},
+        {val:(1-x)*Math.pow(g2/g1,m/12)-1, msg:`You counted the time in years (${m}/12 = ${m/12}) instead of in six-month periods. With semiannual compounding, n = ${m}/6 = ${n}.`},
+        {val:(1-x)*(g2/g1)-1, msg:`You treated ${m} months as a full six-month period (n = 1). With semiannual compounding, n = ${m}/6 = ${n}.`}
+      ],Math.max(REL_SEP,tol));
+    } while (usable(correct,cands,Math.max(REL_SEP,tol)).length<3);
+    return {
+      unit:"percent", tol, sep:Math.max(REL_SEP,tol),
+      text:`A stock pays no dividend. Its lending rate is <b>${pctS(l1)} p.a.</b> and the ${MONTHS(m)} zero yield is
+            <b>${pctS(y)} p.a.</b>, both compounded semiannually. Short sellers then attack the stock. At that moment its price falls by
+            <b>${pctS(x,0)}</b> and its lending rate jumps to <b>${pctS(l2)} p.a.</b>, also compounded semiannually. The zero yield does not change,
+            and the futures still has ${m} months to maturity.`,
+      ask:`By what percentage does the ${MONTHS(m)} futures price change? (Two decimals; enter a negative number if it falls.)`,
+      correct, cands,
+      steps:[
+        `With no dividend, F = S &times; (1 + (y &minus; l)/2)<sup>n</sup>. Before and after the attack, with the same zero yield:<br>F<sub>before</sub> = S<sub>before</sub> &times; (1 + (y &minus; l<sub>before</sub>)/2)<sup>n</sup><br>F<sub>after</sub> = S<sub>after</sub> &times; (1 + (y &minus; l<sub>after</sub>)/2)<sup>n</sup>`,
+        `Dividing the second equation by the first, side by side:<br>F<sub>after</sub>/F<sub>before</sub> = (S<sub>after</sub>/S<sub>before</sub>) &times; [(1 + (y &minus; l<sub>after</sub>)/2)/(1 + (y &minus; l<sub>before</sub>)/2)]<sup>n</sup>`,
+        `${m} months is ${n===1?"one six-month period, so n = 1":"half of one six-month period, so n = 0.5"}:<br>F<sub>after</sub>/F<sub>before</sub> = ${(1-x).toFixed(2)} &times; [(1 + (${pctS(y)} &minus; ${pctS(l2)})/2)/(1 + (${pctS(y)} &minus; ${pctS(l1)})/2)]<sup>${n}</sup> = ${(1+correct).toFixed(6)}`,
+        `Change = ${(1+correct).toFixed(6)} &minus; 1 = <b>${spct(correct)}</b>: more than the share's ${pctS(x,0)} fall, because the higher lending rate lowers the carrying cost too`
+      ]};
+  }}
+
+];
+
+/* ======================= CHOICE-MODE ITEMS ==============================
+   Auto-graded by which option is clicked, not by a typed number.
+     topic "error"   — a worked solution with one planted mistake
+     topic "concept" — reason about the direction of an effect, no arithmetic
+   Directional items shuffle their own options so position carries no
+   information; spot-the-error items must stay in step order.            */
+
+function shuffle(a){
+  const out = a.slice();
+  for (let i=out.length-1; i>0; i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [out[i],out[j]] = [out[j],out[i]];
+  }
+  return out;
+}
+
+const CHOICE_TEMPLATES = [{ id:"k1", topic:"concept", also:["price"], name:"When the futures price is below the share price", gen(){
+    /* The note's two puzzles (MTB, SHLD) and the sample final 2(a). Blind sitting 24 Oct 2026: a "negative rates"
+       option contradicted the stem and the key was the only two-part option; every option now has two parts. */
+    const opts=shuffle([
+      {html:`The share pays a large enough dividend, or its lending rate is above the interest rate`, correct:true,
+       msg:`Right. F = (S &minus; Pv(d)) &times; (1 + (y &minus; l)/2)<sup>n</sup>. A large enough dividend pulls S &minus; Pv(d) far enough below S, and a lending rate above y makes the growth factor less than 1. Either one lowers the exchange's cost of carrying the share below S.`},
+      {html:`Traders expect the share price to fall, or the futures market is less liquid than the share`, correct:false,
+       msg:`Neither enters the pricing equation. The futures price is the cost of carrying the share, whatever traders expect the share to do; it is lowered only by income from the share, a dividend or a lending fee.`},
+      {html:`The exchange prices below cost to win business, or it is paid fees by the futures buyers`, correct:false,
+       msg:`The futures price is the exchange's cost of carrying the share; it cannot charge below that for long. What lowers the cost is income from the share: a dividend, or a lending fee.`},
+      {html:`Futures buyers bear more risk than shareholders, or they must post margin up front`, correct:false,
+       msg:`Risk and margin do not enter the pricing equation. The futures price is the cost of carrying the share, and that cost is lower when the share pays a dividend or can be lent out for a fee.`}
+    ]);
+    return {mode:"choice",
+      text:`Interest rates are positive, yet a stock's 3-month futures trades below the stock's own price.`,
+      ask:"What can explain this?",
+      options:opts,
+      steps:[
+        `The futures price is the exchange's cost of carrying the share: F = (S &minus; Pv(d)) &times; (1 + (y &minus; l)/2)<sup>n</sup>.`,
+        `A dividend paid while the exchange holds the share lowers that cost by Pv(d).`,
+        `A lending fee lowers it too: the carry rate is y &minus; l, which is negative when l is above y.`,
+        `So F can be below S with positive rates if the dividend is large enough or the lending rate is high enough.`
+      ]};
+  }},
+
+{ id:"k2", topic:"concept", also:["price","arb"], name:"Why one exchange still prices at cost", gen(){
+    /* The note, section 2: one exchange lists SSFs, but investors can "home-make" the futures. Blind sitting
+       24 Oct 2026: no course-meta in the stem, no printed formula, no throwaway options.                    */
+    const opts=shuffle([
+      {html:`Investors could borrow, buy the share and hold it themselves instead`, correct:true,
+       msg:`Right. By borrowing S and buying the share today, an investor owns it at maturity for S &times; (1 + y/2)<sup>n</sup>: a home-made futures. No one would pay the exchange more than that.`},
+      {html:`The exchange's own cost of carrying the share is only the interest on S`, correct:false,
+       msg:`A cost sets a floor, not a ceiling: a sole seller could charge above its cost. What stops it is that investors can home-make the futures by borrowing and buying the share.`},
+      {html:`Short sellers would push the share price down until the two prices matched`, correct:false,
+       msg:`The force works on the futures price, not the share price: buyers can home-make the futures, so they will not pay more than it costs them to do so.`},
+      {html:`Futures buyers would switch to call options on the share instead`, correct:false,
+       msg:`An option is a different contract with a different payoff. The competition comes from investors who can borrow, buy the share and hold it, which gives exactly the futures' payoff.`}
+    ]);
+    return {mode:"choice",
+      text:`Only one exchange lists futures on a stock that pays no dividend and has no lending fee. Even so, the exchange
+            cannot charge a futures price above the cost of carrying the share.`,
+      ask:"Why not?",
+      options:opts,
+      steps:[
+        `An investor can borrow S today, buy the share, and repay S &times; (1 + y/2)<sup>n</sup> at maturity.`,
+        `That gives the investor the share at maturity for S &times; (1 + y/2)<sup>n</sup>, paying nothing today: a home-made futures.`,
+        `So the exchange competes with investors and cannot charge more than the cost of carrying the share.`
+      ]};
+  }},
+
+{ id:"k3", topic:"concept", also:["div"], name:"A dividend cut and the futures price", gen(){
+    /* Section 3: the dividend belongs to whoever holds the share during the contract (the exchange), so it
+       lowers the carrying cost by Pv(d); cutting it raises F. Blind sitting 24 Oct 2026: the key was the only
+       "rises" option, so a second "rises" option with the wrong reason was added.                           */
+    const opts=shuffle([
+      {html:`It rises, because the exchange collects a smaller dividend while it holds the share`, correct:true,
+       msg:`Right. The exchange holds the share until the futures mature, so it receives the dividend, which lowers its cost of carrying the share. A smaller dividend means a smaller Pv(d) and a higher F = (S &minus; Pv(d)) &times; (1 + (y &minus; l)/2)<sup>n</sup>.`},
+      {html:`It rises, because the retained cash makes the share worth more at maturity`, correct:false,
+       msg:`Right direction, wrong reason. The futures price does not depend on what the share will be worth at maturity; it is the exchange's cost of carrying the share, and a smaller dividend raises that cost.`},
+      {html:`It falls, because a dividend cut is bad news for the company`, correct:false,
+       msg:`The question holds the share price fixed. The futures price then follows the exchange's carrying cost, and a smaller dividend raises that cost.`},
+      {html:`It does not change, because dividends go to shareholders, not to futures buyers`, correct:false,
+       msg:`True that the futures buyer does not get the dividend, but the exchange, which holds the share, does. That income lowers its cost, so a smaller dividend raises the futures price.`}
+    ]);
+    return {mode:"choice",
+      text:`A company unexpectedly cuts its next dividend, which it will pay before its futures mature. Hold the share price,
+            the interest rate and the lending rate fixed.`,
+      ask:"What happens to the futures price, and why?",
+      options:opts,
+      steps:[
+        `F = (S &minus; Pv(d)) &times; (1 + (y &minus; l)/2)<sup>n</sup>.`,
+        `The exchange holds the share until maturity and receives the dividend, which lowers its carrying cost.`,
+        `A smaller dividend means a smaller Pv(d), so S &minus; Pv(d) and the futures price both rise.`
+      ]};
+  }},
+
+{ id:"k4", topic:"concept", also:["div"], name:"Futures-implied dividends against the last dividend", gen(){
+    /* Section 3: Pv(d) backed out of futures prices is forward-looking, "the best summary of market expectation",
+       against the traditional practice of using the last dividend paid. Blind sitting 24 Oct 2026: absolutes
+       and course-meta removed. ChatGPT review 24 Oct: the stem asks for Pv(d) before maturity, not the next dividend.                                                                              */
+    const opts=shuffle([
+      {html:`It comes from today's prices, so it reflects what the market now expects the dividends to be`, correct:true,
+       msg:`Right. The implied Pv(d) is backed out of today's futures and share prices, so it uses all the information traders have. The last dividend looks backward and misleads exactly when a company changes its dividend.`},
+      {html:`It does not depend on the stock's lending rate, so short sellers cannot distort it`, correct:false,
+       msg:`It does: backing out Pv(d) uses y &minus; l, so the lending rate enters. Its advantage is that it comes from today's prices.`},
+      {html:`It is a value at the futures' maturity, so it needs no discounting`, correct:false,
+       msg:`It is a present value: Pv(d) = S &minus; F/(1 + (y &minus; l)/2)<sup>n</sup>, which uses the interest rate. Its advantage is that it comes from today's prices.`},
+      {html:`Companies rarely pay the same dividend twice, so the last one is a poor guide`, correct:false,
+       msg:`The opposite: companies seldom change their dividends, which is why the last dividend often works. It fails when a company does change its dividend.`}
+    ]);
+    return {mode:"choice",
+      text:`An analyst wants to estimate the present value of the dividends a stock will pay before its futures mature. The
+            analyst can base it on the last dividend paid, or back it out of today's futures price.`,
+      ask:"Why is the futures-implied estimate usually the better guide?",
+      options:opts,
+      steps:[
+        `Pv(d) = S &minus; F/(1 + (y &minus; l)/2)<sup>n</sup> comes from today's prices.`,
+        `Today's prices reflect everything traders know, so the implied Pv(d) is the market's current expectation.`,
+        `The last dividend paid is a good guide only if the company does not change its dividend.`
+      ]};
+  }},
+
+{ id:"k5", topic:"lend", also:["concept"], name:"Which stock are short sellers after?", gen(){
+    /* Section 5: "The higher the implied lending rate, the higher the current shorting demand" (no dividend).
+       Both reviews 24 Oct 2026. Second blind sitting: the key was always the cheaper stock, so the more-shorted
+       stock is now the cheaper or the dearer one at random; the dollar-gap and cheap-share options then name the
+       right stock on some draws (right stock, wrong reason) and the wrong one on others.                     */
+    let y, lh, ll, Sh, Sl, Fh, Fl;
+    do {
+      y=pick(range(0.01,0.04,0.0025)); lh=pick(range(0.12,0.24,0.01)); ll=lh-pick([0.04,0.05,0.06]);
+      Sh=pick(range(20,200,1)); Sl=pick(range(20,200,1));
+      Fh=+(Sh*(1+(y-lh)/2)).toFixed(2); Fl=+(Sl*(1+(y-ll)/2)).toFixed(2);
+    } while (!(ll>y+0.02 && Math.max(Sh,Sl)>1.5*Math.min(Sh,Sl) && Math.abs((Sh-Fh)-(Sl-Fl))>0.50));
+    const [hi,lo]=shuffle(["A","B"]);
+    const st={[hi]:{S:Sh,F:Fh},[lo]:{S:Sl,F:Fl}}, A=st.A, B=st.B;
+    const imp=(S,F)=>y-2*(F/S-1);
+    const dollar=(Sh-Fh)>(Sl-Fl)?hi:lo, cheap=Sh<Sl?hi:lo;
+    const why=`Stock ${hi}'s futures is further below its share price in percentage terms, so its implied lending rate, l = y &minus; 2(F/S &minus; 1), is higher.`;
+    const opts=shuffle([
+      {html:`Stock ${hi}, because its futures is further below its share price in percentage terms`, correct:true,
+       msg:`Right. With no dividend, l = y &minus; 2(F/S &minus; 1): the lower F/S, the higher the implied lending rate, and a high lending rate means short sellers want to borrow the share.`},
+      {html:`Stock ${dollar}, because its futures is further below its share price in dollars`, correct:false,
+       msg:`${dollar===hi?"Right stock, wrong reason. ":""}A dollar gap grows with the share price, so it says nothing on its own. ${why}`},
+      {html:`Stock ${lo}, because its implied lending rate is lower, so it is cheaper to borrow`, correct:false,
+       msg:`The causality runs the other way. Lenders charge a high rate because many short sellers want the share, so a high implied lending rate is the sign of shorting demand. ${why}`},
+      {html:`Stock ${cheap}, because a lower share price makes it cheaper to sell short`, correct:false,
+       msg:`${cheap===hi?"Right stock, wrong reason. ":""}The share price itself says nothing about shorting demand. ${why}`}
+    ]);
+    return {mode:"choice",
+      text:`Two stocks pay no dividend before their 6-month futures mature, and the 6-month zero yield is ${pctS(y)} p.a., compounded
+            semiannually. Stock A trades at ${money(A.S)} and its futures at ${money(A.F)}. Stock B trades at ${money(B.S)} and its
+            futures at ${money(B.F)}.`,
+      ask:"Which stock are short sellers more eager to borrow, and why?",
+      options:opts,
+      steps:[
+        `With no dividend and n = 1, F = S &times; (1 + (y &minus; l)/2), so l = y &minus; 2(F/S &minus; 1)`,
+        `Stock A: l = ${pctS(y)} &minus; 2(${money(A.F)}/${money(A.S)} &minus; 1) = ${pctS(imp(A.S,A.F))}. Stock B: l = ${pctS(y)} &minus; 2(${money(B.F)}/${money(B.S)} &minus; 1) = ${pctS(imp(B.S,B.F))}`,
+        `The higher the implied lending rate, the higher the shorting demand: Stock ${hi}`
+      ]};
+  }},
+
+{ id:"k6", topic:"lend", also:["div","concept"], name:"A dividend and a lending fee: what the prices allow", gen(){
+    /* Section 5 reads l off F and S "for a given non-dividend-paying stock". With a dividend there are two unknowns,
+       but Pv(d) >= 0 still caps l at y - 2(F/S - 1), reached only when Pv(d) = 0. ChatGPT review 24 Oct 2026; second
+       blind sitting: the "cannot be pinned down" key was guessable and restated k1, so the item now asks for the bound. */
+    let S, y, F, X;
+    do { S=pick(range(40,90,1)); y=pick(range(0.02,0.05,0.0025)); F=+(S-pick(range(1.00,3.00,0.25))).toFixed(2); X=y-2*(F/S-1); }
+    while (X<y+0.02);
+    const opts=shuffle([
+      {html:`It is at most ${pctS(X)}`, correct:true,
+       msg:`Right. l = y &minus; 2(F/(S &minus; Pv(d)) &minus; 1). A dividend makes S &minus; Pv(d) smaller, F/(S &minus; Pv(d)) larger and l smaller, so l is highest, ${pctS(X)}, when Pv(d) = 0.`},
+      {html:`It is exactly ${pctS(X)}`, correct:false,
+       msg:`That is the rate for a stock with no dividend. Here the dividend explains part of the gap between F and S, so l is ${pctS(X)} only if Pv(d) = 0, and lower otherwise.`},
+      {html:`It is at least ${pctS(X)}`, correct:false,
+       msg:`The dividend works the other way. It explains part of the gap between F and S, which leaves less for the lending fee to explain: l is at most ${pctS(X)}.`},
+      {html:`It is below ${pctS(y)}`, correct:false,
+       msg:`It could be, if the dividend is large, but nothing forces it: with a small dividend l is close to ${pctS(X)}. All the prices tell you is that l is at most ${pctS(X)}.`}
+    ]);
+    return {mode:"choice",
+      text:`A stock trades at ${money(S)} and its 6-month futures at ${money(F)}. The 6-month zero yield is ${pctS(y)} p.a., compounded
+            semiannually. The stock will pay a dividend before the futures mature.`,
+      ask:"What can you say about the stock's lending rate (p.a., compounded semiannually) from these prices alone?",
+      options:opts,
+      steps:[
+        `F = (S &minus; Pv(d)) &times; (1 + (y &minus; l)/2), so l = y &minus; 2(F/(S &minus; Pv(d)) &minus; 1). Pv(d) is not known, so l cannot be found exactly`,
+        `A larger Pv(d) means a smaller S &minus; Pv(d) and so a smaller l. The highest l is at Pv(d) = 0:<br>l = ${pctS(y)} &minus; 2(${money(F)}/${money(S)} &minus; 1) = ${pctS(X)}`,
+        `So the lending rate is <b>at most ${pctS(X)}</b>`
+      ]};
+  }},
+
+{ id:"k7", topic:"div", also:["concept"], name:"The trader who disagrees with the market's dividend", gen(){
+    /* The note's footnote in Section 3: someone sure that Pv(d) differs from the market's figure trades on it, which
+       keeps F in line with expectations. claude.ai review 24 Oct 2026. Second blind sitting: always "buy", the
+       market's Pv(d) in the stem gave the direction away, and one option echoed k3. Now the trader's Pv(d) is lower
+       (buy) or higher (sell) at random, the stem gives no market Pv(d), and the price must be worked out: the
+       computed wrong option (no interest when buying; y not halved when selling) points the other way.           */
+    let S, y, pv, F, q, fair, wrong, up;
+    do {
+      S=pick(range(40,90,1)); y=pick(range(0.02,0.05,0.0025)); pv=pick(range(1.00,2.50,0.01)); up=pick([true,false]);
+      F=+((S-pv)*(1+y/2)).toFixed(2); q=+(pv+(up?-1:1)*pick(range(0.30,0.80,0.01))).toFixed(2);
+      fair=(S-q)*(1+y/2); wrong=up?S-q:(S-q)*(1+y);
+    } while (!(q>=0.20 && (up ? fair>F+0.10 && wrong<F-0.10 : fair<F-0.10 && wrong>F+0.10)));
+    const buy=`Buy the futures`, sell=`Sell the futures`;
+    const opts=shuffle(up ? [
+      {html:`${buy}: on the trader's view it is worth ${money(fair)}, more than ${money(F)}`, correct:true,
+       msg:`Right. F = (S &minus; Pv(d)) &times; (1 + y/2) = (${money(S)} &minus; ${money(q)}) &times; (1 + ${pctS(y)}/2) = ${money(fair)}, above ${money(F)}: the futures is cheap on the trader's view.`},
+      {html:`${sell}: on the trader's view it is worth ${money(wrong)}, less than ${money(F)}`, correct:false,
+       msg:`You left out the interest. The fair price is the cost of carrying the share for six months: (S &minus; Pv(d)) &times; (1 + y/2) = ${money(fair)}, above ${money(F)}.`},
+      {html:`${buy}: with less paid out as dividends, more of the company's value goes to the futures buyer`, correct:false,
+       msg:`Right action, wrong reason. The futures buyer gets no dividend either way. The futures price is the exchange's cost of carrying the share, and on the trader's view it is ${money(fair)}, above ${money(F)}.`},
+      {html:`Do nothing: the futures price already reflects everything the market knows`, correct:false,
+       msg:`It reflects the market's view, but the trader is sure of a different one, and on that view the futures is worth ${money(fair)}. Traders acting on such views are what keep futures prices in line with expectations.`}
+    ] : [
+      {html:`${sell}: on the trader's view it is worth ${money(fair)}, less than ${money(F)}`, correct:true,
+       msg:`Right. F = (S &minus; Pv(d)) &times; (1 + y/2) = (${money(S)} &minus; ${money(q)}) &times; (1 + ${pctS(y)}/2) = ${money(fair)}, below ${money(F)}: the futures is dear on the trader's view.`},
+      {html:`${buy}: on the trader's view it is worth ${money(wrong)}, more than ${money(F)}`, correct:false,
+       msg:`You grew the share for a full year. Six months at ${pctS(y)} p.a., compounded semiannually, is (1 + y/2): (S &minus; Pv(d)) &times; (1 + y/2) = ${money(fair)}, below ${money(F)}.`},
+      {html:`${sell}: paying out a bigger dividend leaves the company weaker, so the share will fall`, correct:false,
+       msg:`Right action, wrong reason. The futures price is the exchange's cost of carrying the share, not a forecast of it; on the trader's view it is ${money(fair)}, below ${money(F)}.`},
+      {html:`Do nothing: the futures price already reflects everything the market knows`, correct:false,
+       msg:`It reflects the market's view, but the trader is sure of a different one, and on that view the futures is worth ${money(fair)}. Traders acting on such views are what keep futures prices in line with expectations.`}
+    ]);
+    return {mode:"choice",
+      text:`A stock trades at ${money(S)} and its lending rate is 0%. The 6-month zero yield is ${pctS(y)} p.a., compounded semiannually,
+            and the 6-month futures trades at ${money(F)}. A trader is sure that the dividends the stock will pay before the futures
+            mature are worth ${money(q)} today.`,
+      ask:"What should the trader do?",
+      options:opts,
+      steps:[
+        `The futures price is the cost of carrying the share: F = (S &minus; Pv(d)) &times; (1 + y/2)`,
+        `On the trader's view: F = (${money(S)} &minus; ${money(q)}) &times; (1 + ${pctS(y)}/2) = ${money(fair)}`,
+        `That is ${up?"above":"below"} ${money(F)}, so the futures is ${up?"cheap":"dear"} on the trader's view: <b>${up?"buy":"sell"} it</b>`
+      ]};
+  }}
+
+/* Dropped after the blind sitting (24 Oct 2026; backup n09_ch.js.bak24oct-blind): the first k6 (which stocks reveal y:
+   trivial, and k2's stem printed its key), the first k7 (the arbitrage's weak link: its key was half of k1's), the first
+   a2 (cash-and-carry: the mirror of a1 and of k2), e1 (find the mistake: the same inversion as l1). The first k5
+   (shareholders who don't lend: the convenience of holding the share is not in the note) was dropped after the external
+   reviews (backup n09_ch.js.bak24oct-new). The ids k5, k6, k7 and a2 now belong to the templates added that day. */
+];
+
+const TOPICS = [
+  {key:"all", label:"Mixed"},
+  {key:"price", label:"Futures pricing"},
+  {key:"div", label:"Dividends"},
+  {key:"lend", label:"Lending fees"},
+  {key:"arb", label:"Arbitrage"},
+  {key:"rate", label:"Implied interest rates"},
+  {key:"concept", label:"Reason it out"}
+];
+
+/* ----------------------------------------------------------------- state */
+let active = "all", current = null, tries = 0;
+let peeked = false, solved = false, tallied = false;  // tallied = already counted in `attempted`
+const stats = {att:0, first:0, streak:0, peek:0};
+
+const $ = id => document.getElementById(id);
+
+/* One-period trees for templates that return q.fig = [{label, now, outs:[...], probs:[...]?}, ...]
+   (added 22 Oct 2026 for Note 13, at Anh's request). Values come from the same draw as the text. */
+function figHTML(fig){
+  const txt = s => String(s).replace(/<[^>]+>/g, "");
+  const len = s => txt(s).replace(/&[a-z]+;/g, "x").length;
+  /* A multi-period recombining tree (Notes 16 and 19, 22 Oct 2026): t.lat[k] lists the nodes at
+     date k from the top; a node is a string or an array of lines; t.times labels the dates.      */
+  const latSVG = t => {
+    const L = t.lat.length, lines = v => (Array.isArray(v) ? v : [v]).map(txt);
+    const colW = t.lat.map(col => Math.max(24, ...col.map(v => Math.max(...lines(v).map(len))*8.2)));
+    const nl = Math.max(...t.lat.flat().map(v => lines(v).length)), lh = 17, h = nl > 1 ? 30 : 17, top = 30;
+    const cx = []; let x = 4;
+    colW.forEach((w, k) => { cx.push(x + w/2); x += w + 44; });
+    const W = Math.max(x - 44 + 4, 8.5*len(t.label) + 10);
+    const yOf = (k, i) => top + h*(2*i + (L-1-k)) + (nl-1)*lh/2;
+    const H = top + h*2*(L-1) + nl*lh + (t.times ? 26 : 6);
+    /* t.on (23 Oct 2026, Anh): the nodes the question works at, as "k,i". The rest of the tree is drawn
+       in grey, with a dot for a node that carries no figure, so students see where in the tree they are. */
+    const on = t.on ? new Set(t.on) : null, isOn = (k, i) => !on || on.has(k + "," + i);
+    const half = (k, i) => lines(t.lat[k][i]).join("") ? colW[k]/2 + 4 : 6;
+    let g = `<text class="tl" x="${W/2}" y="14" text-anchor="middle">${txt(t.label)}</text>`;
+    t.lat.forEach((col, k) => col.forEach((v, i) => {
+      const y = yOf(k, i), ls = lines(v);
+      if (ls.join("")) ls.forEach((s, j) => g += `<text x="${cx[k]}" y="${y + 5 + (j - (ls.length-1)/2)*lh}" text-anchor="middle">${s}</text>`);
+      else g += `<circle cx="${cx[k]}" cy="${y}" r="3.2"${isOn(k, i) ? "" : ` class="off"`}/>`;
+      if (k < L-1) [i, i+1].forEach(c => {
+        const y2 = yOf(k+1, c);
+        g += `<line x1="${cx[k] + half(k, i)}" y1="${y}" x2="${cx[k+1] - half(k+1, c)}" y2="${y2}" stroke-width="1.6"${isOn(k, i) && isOn(k+1, c) ? "" : ` class="off"`}/>`;
+      });
+    }));
+    if (t.times) t.times.forEach((s, k) => g += `<text class="tp" x="${cx[k]}" y="${H - 6}" text-anchor="middle">${txt(s)}</text>`);
+    return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${txt(t.label)}: ${t.lat.map(c => c.map(v => lines(v).join(" ")).join(" / ")).join("; then ")}">${g}</svg>`;
+  };
+  return fig.map(t => {
+    if (t.lat) return latSVG(t);
+    const n = t.outs.length, gap = n > 2 ? 30 : 46, top = 34;
+    const x1 = Math.max(40, 12 + 8.5*len(t.now)), x2 = x1 + 56;
+    const wide = Math.max(...t.outs.map((v, i) => 8.4*len(v) + (t.probs ? 6.6*(len(t.probs[i]) + 2) + 6 : 0)));
+    const W = Math.max(x2 + 10 + wide, 8.5*len(t.label) + 10), H = top + gap*(n-1) + 14, mid = top + gap*(n-1)/2;
+    let g = `<text class="tl" x="${(x1 + x2)/2}" y="14" text-anchor="middle">${txt(t.label)}</text>`;
+    g += `<text x="${x1-8}" y="${mid+5}" text-anchor="end">${txt(t.now)}</text>`;
+    t.outs.forEach((v, i) => {
+      const y = top + gap*i, dx = x2-x1, dy = y-mid, L = Math.hypot(dx, dy), ux = dx/L, uy = dy/L;
+      const ex = x2 - 2*ux, ey = y - 2*uy, bx = ex - 9*ux, by = ey - 9*uy;
+      g += `<line x1="${x1}" y1="${mid}" x2="${bx}" y2="${by}" stroke-width="1.8"/>`;
+      g += `<polygon points="${ex},${ey} ${bx-4*uy},${by+4*ux} ${bx+4*uy},${by-4*ux}" stroke-width="0"/>`;
+      g += `<text x="${x2+6}" y="${y+5}">${txt(v)}${t.probs ? `<tspan class="tp" dx="6">(${txt(t.probs[i])})</tspan>` : ""}</text>`;
+    });
+    return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${txt(t.label)}: ${txt(t.now) || "today"}, then ${t.outs.map(txt).join(" or ")}">${g}</svg>`;
+  }).join("");
+}
+
+function buildTopics(){
+  const box = $("topics");
+  TOPICS.forEach(t=>{
+    const b = document.createElement("button");
+    b.className = "chip"; b.textContent = t.label;
+    b.setAttribute("aria-pressed", String(t.key===active));
+    b.onclick = ()=>{
+      active = t.key;
+      [...box.children].forEach(c=>c.setAttribute("aria-pressed","false"));
+      b.setAttribute("aria-pressed","true");
+      seqIdx = 0;                 // a new topic restarts the sequence
+      newQuestion();
+    };
+    box.appendChild(b);
+  });
+  /* the Starred chip: practise only the questions starred on this page */
+  const s = document.createElement("button");
+  s.className = "chip"; s.id = "chipStar";
+  s.setAttribute("aria-pressed", "false");
+  s.onclick = ()=>{
+    active = "starred";
+    [...box.children].forEach(c=>c.setAttribute("aria-pressed","false"));
+    s.setAttribute("aria-pressed","true");
+    seqIdx = 0;
+    newQuestion();
+  };
+  box.appendChild(s);
+  updateStarChip();
+}
+
+const ALL_TEMPLATES = TEMPLATES.concat(CHOICE_TEMPLATES);
+
+/* A template's primary topic is `topic`; it may also list secondary topics in
+   `also`, so one item can appear under several chips. */
+function inTopic(t, key){
+  return t.topic === key || (Array.isArray(t.also) && t.also.includes(key));
+}
+
+/* ---- progress: distinct templates solved without opening the solution ---- */
+const PROG_KEY = "practice-progress:" + document.title;
+let mastered = new Set();
+try { mastered = new Set(JSON.parse(localStorage.getItem(PROG_KEY) || "[]")); }
+catch (e) { mastered = new Set(); }
+
+function saveProgress(){
+  try { localStorage.setItem(PROG_KEY, JSON.stringify([...mastered])); } catch (e) {}
+}
+function markMastered(id){
+  if (!id || mastered.has(id)) return;
+  mastered.add(id);
+  saveProgress();
+}
+
+/* ---- starred questions: kept per template, so a starred question comes back with new
+   numbers. Starred automatically on a wrong answer or on opening the solution before
+   solving; the student can star or unstar any question by hand. ---- */
+const STAR_KEY = "practice-starred:" + document.title;
+let starred = new Set();
+try { starred = new Set(JSON.parse(localStorage.getItem(STAR_KEY) || "[]")); }
+catch (e) { starred = new Set(); }
+starred = new Set([...starred].filter(id => ALL_TEMPLATES.some(t => t.id === id)));
+
+function saveStars(){
+  try { localStorage.setItem(STAR_KEY, JSON.stringify([...starred])); } catch (e) {}
+}
+function updateStarChip(){
+  const c = document.getElementById("chipStar");   // made by buildTopics, not in the markup
+  if (c) c.textContent = "★ Starred (" + starred.size + ")";
+}
+function showStar(){
+  const on = !!(current && starred.has(current.id));
+  $("star").hidden = !current;
+  $("star").setAttribute("aria-pressed", String(on));
+  $("star").textContent = on ? "★ Starred" : "☆ Star";
+}
+function setStar(id, on){
+  if (!id) return;
+  if (on) starred.add(id); else starred.delete(id);
+  saveStars(); updateStarChip(); showStar();
+}
+function autoStar(){ if (current && !starred.has(current.id)) setStar(current.id, true); }
+
+function poolFor(key){
+  if (key === "all") return ALL_TEMPLATES;
+  if (key === "starred") return ALL_TEMPLATES.filter(t => starred.has(t.id));
+  return ALL_TEMPLATES.filter(t => inTopic(t, key));
+}
+
+/* Templates are drawn WITHOUT immediate repeats. Sampling with replacement
+   looks fine on the full bank, but a topic holding only three or four
+   templates repeats roughly one press in three, which reads as the button
+   being broken. Hold the most recent half of the pool out of the draw. */
+let recentIds = [];
+/* Questions seen this session, so the arrow keys can step back and forth through them. */
+let history = [], histIdx = -1;
+let navKey = false;      // true while an arrow key is doing the rendering
+let order = "shuffle";   // "shuffle" | "seq"
+let seqIdx = 0;
+
+function newQuestion(replay){
+  let q;
+  if (replay){ q = replay.q; }
+  else {
+  const pool = poolFor(active);
+  if (!pool.length){
+    current = null;
+    $("qmeta").textContent = "Starred";
+    $("qtext").innerHTML = "No starred questions yet. A question is starred when you answer it " +
+      "wrongly or open its solution before solving it, and you can star any question yourself with " +
+      "<b>☆ Star</b>. Pick another chip to practise.";
+    $("qask").innerHTML = "";
+    $("opts").hidden = true; $("opts").innerHTML = "";
+    $("ans").hidden = true; $("check").hidden = true; $("next").hidden = true;
+    $("fb").innerHTML = ""; $("soldetails").hidden = true; $("seqPos").textContent = "";
+    showStar();
+    return;
+  }
+  let tpl;
+  if (order === "seq"){
+    /* walk the bank in order, wrapping at the end */
+    if (seqIdx >= pool.length) seqIdx = 0;
+    tpl = pool[seqIdx];
+    seqIdx = (seqIdx + 1) % pool.length;
+    $("seqPos").textContent = `${seqIdx === 0 ? pool.length : seqIdx} of ${pool.length}`;
+  } else {
+    const hold = Math.max(1, Math.floor(pool.length / 2));
+    let choices = pool.filter(t => !recentIds.slice(0, hold).includes(t.id));
+    if (!choices.length) choices = pool;        // pool of one, or all held out
+    tpl = pick(choices);
+    recentIds.unshift(tpl.id);
+    if (recentIds.length > 40) recentIds.length = 40;
+    $("seqPos").textContent = "";
+  }
+  q = tpl.gen();
+  q.name = tpl.name;
+  q.id   = tpl.id;
+  q.seqPos = $("seqPos").textContent;   // carried so stepping back shows its own position
+  if (q.mode !== "choice") q.distractors = usable(q.correct, q.cands, q.sep);
+  }
+  current = q;
+  if (replay){
+    tries = replay.tries; peeked = replay.peeked; solved = replay.solved; tallied = replay.tallied;
+  } else {
+    tries = 0; peeked = false; solved = false; tallied = false;
+    history = history.slice(0, histIdx + 1);           // a new draw discards anything ahead
+    history.push({q, tries:0, peeked:false, solved:false, tallied:false, fb:"", ans:""});
+    if (history.length > 50){ history.shift(); }
+    histIdx = history.length - 1;
+  }
+
+  const isChoice = q.mode === "choice";
+  $("qmeta").textContent = q.name;
+  $("qtext").innerHTML   = q.text;
+  $("qfig").innerHTML    = q.fig ? figHTML(q.fig) : "";
+  $("qfig").hidden       = !q.fig;
+  $("qask").innerHTML    = q.ask;
+  /* Hide the input and Check individually, NOT the whole row -- the
+     "New question" button lives in that row and must stay reachable
+     on choice questions. */
+  $("ans").hidden   = isChoice;
+  $("check").hidden = isChoice;
+  $("next").hidden  = false;
+  showStar();
+  $("opts").hidden     = !isChoice;
+  const box = $("opts");
+  box.innerHTML = "";              // always clear, even when the panel is hidden
+  if (isChoice){
+    q.options.forEach((o,k)=>{
+      const btn = document.createElement("button");
+      btn.className = "opt"; btn.innerHTML = o.html;
+      btn.onclick = () => pickOption(k);
+      box.appendChild(btn);
+    });
+  }
+  $("ans").value = "";
+  $("ans").placeholder = q.unit==="money" ? "e.g. 1234.56"
+                     : q.unit==="percent" ? "e.g. 12.34  (percent)"
+                     : "e.g. 18";
+  $("ans").disabled = false;
+  $("check").disabled = false;
+  $("fb").innerHTML = "";
+  $("steps").innerHTML = q.steps.map(s=>`<div>${s}</div>`).join("");
+  const d = $("soldetails"); d.hidden = false; d.open = false;
+  if (replay){
+    /* Put the question back exactly as it was left --- the feedback, what was typed, and
+       whether it had already been answered. The tallied/solved flags come back with it,
+       so revisiting a question never re-counts an attempt or re-awards mastery. */
+    $("fb").innerHTML = replay.fb || "";
+    $("ans").value    = replay.ans || "";
+    $("seqPos").textContent = q.seqPos || "";
+    if (isChoice && q.wrong){
+      [...$("opts").children].forEach((b,j)=>{
+        if (q.wrong.indexOf(j) >= 0){ b.classList.add("wrong"); b.disabled = true; }
+      });
+    }
+    if (solved || q.done){
+      if (isChoice){
+        [...$("opts").children].forEach((b,j)=>{ b.disabled = true;
+          if (q.options[j].correct) b.classList.add("right"); });
+      } else { $("ans").disabled = true; $("check").disabled = true; }
+    }
+    d.open = peeked || solved;
+  }
+  /* Arriving by arrow key must not park the cursor in the answer box: a restored answer
+     sitting there would swallow the next arrow press and strand the student. */
+  if (navKey) $("ans").blur();
+  else if (!isChoice && !$("ans").disabled) $("ans").focus();
+}
+
+function parseInput(raw){
+  const cleaned = raw.replace(/[$,%\s,]/g,"");
+  if (cleaned === "" ) return NaN;
+  return Number(cleaned);
+}
+
+function say(kind, title, body){
+  $("fb").innerHTML = `<div class="fb ${kind}"><strong>${title}</strong>${body}</div>`;
+}
+
+function pickOption(k){
+  const q = current;
+  if (q.done) return;
+  const o    = q.options[k];
+  const btns = [...$("opts").children];
+
+  tries++;
+  if (!tallied){ tallied = true; stats.att++; }
+
+  if (o.correct){
+    q.done = true; solved = true;
+    btns.forEach((b2,j)=>{ b2.disabled = true; if (q.options[j].correct) b2.classList.add("right"); });
+    if (peeked){
+      stats.streak = 0;
+      say("ok","Correct — but you read the solution first.",
+          "It still counts as attempted, just not toward first-try accuracy or your streak. " + o.msg);
+    } else {
+      stats.streak++;
+      if (tries === 1) stats.first++;
+      markMastered(q.id);
+      say("ok", tries===1 ? "Correct — first try." : "Correct.", o.msg);
+    }
+    $("soldetails").open = true;
+  } else {
+    stats.streak = 0;
+    btns[k].classList.add("wrong");
+    btns[k].disabled = true;
+    (q.wrong || (q.wrong = [])).push(k);   // remembered so a revisit keeps it eliminated
+    autoStar();
+    say("no","Not that one.", o.msg);
+  }
+  render();
+}
+
+function check(){
+  const raw = $("ans").value;
+  const parsed = parseInput(raw);
+  if (!Number.isFinite(parsed)){
+    say("hint","Enter a number","Type your answer as a number — you can include $ , or % and it will be ignored.");
+    return;
+  }
+  const q = current;
+  const val = q.unit==="percent" ? parsed/100 : parsed;
+  const TOL = q.tol || REL_MATCH;
+
+  /* Unit slips are formatting mistakes, not wrong answers, so they cost
+     neither an attempt nor first-try credit. Guarded so a genuinely
+     correct entry can never be mistaken for one. */
+  if (!near(val, q.correct, TOL)){
+    if (q.unit==="percent" && near(parsed, q.correct, TOL)){
+      say("hint","Right number, wrong units.",
+          `You entered <code>${raw}</code> as a decimal. This box wants a percent — enter <code>${(q.correct*100).toFixed(4).replace(/\.?0+$/,"")}</code> instead.`);
+      return;
+    }
+    if (near(val*100, q.correct, TOL) || near(val/100, q.correct, TOL)){
+      say("hint","Check your units.","Your figure is off by a factor of 100. Re-read what the box is asking for.");
+      return;
+    }
+  }
+
+  tries++;
+  if (!tallied){ tallied = true; stats.att++; }   // count each question once, right or wrong
+
+  if (near(val, q.correct, TOL)){
+    solved = true;
+    if (peeked){
+      stats.streak = 0;
+      say("ok","Correct — but you read the solution first.",
+          "That is a perfectly good way to learn, and it still counts as attempted. It does " +
+          "not count toward first-try accuracy or your streak, so those numbers stay honest. " +
+          "Try the next one before opening the solution.");
+    } else {
+      stats.streak++;
+      if (tries === 1) stats.first++;
+      markMastered(q.id);
+      say("ok","Correct.", tries===1 ? "First try — well done." : "Got there.");
+    }
+    $("check").disabled = true; $("ans").disabled = true;
+    $("soldetails").open = true;
+    render(); return;
+  }
+
+  stats.streak = 0;
+  autoStar();
+  const hit = q.distractors.find(d => near(val, d.val, TOL));
+  say("no", hit ? "Not quite — and I can see why." : "Not quite.",
+      hit ? hit.msg
+          : "That does not match any of the usual slips, so it may be an arithmetic error. Try again, or open the worked solution below.");
+  render();
+}
+
+function render(){
+  $("sAtt").textContent    = stats.att;
+  $("sFirst").textContent  = stats.first;
+  $("sAcc").textContent    = stats.att ? Math.round(stats.first/stats.att*100)+"%" : "—";
+  $("sStreak").textContent = stats.streak;
+  $("sPeek").textContent   = stats.peek;
+  const total = ALL_TEMPLATES.length;
+  $("pTotal").textContent  = total;
+  $("pDone").textContent   = mastered.size;
+  $("progfill").style.width = (total ? 100*mastered.size/total : 0).toFixed(1) + "%";
+}
+
+$("check").onclick = () => { if (current) check(); };
+$("star").onclick  = () => { if (current) setStar(current.id, !starred.has(current.id)); };
+$("next").onclick  = () => newQuestion();   // arrow fn: never pass the click Event as `replay`
+
+/* ---- arrow keys: right for the next question, left for the previous one -------------
+   Ignored while the answer box is being typed in, where the arrows move the caret, and
+   ignored with a modifier held so the browser's own shortcuts still work.            */
+function snapshotQuestion(){
+  const h = history[histIdx];
+  if (!h) return;
+  h.tries = tries; h.peeked = peeked; h.solved = solved; h.tallied = tallied;
+  h.fb = $("fb").innerHTML; h.ans = $("ans").value;
+}
+function goBack(){
+  if (histIdx <= 0) return;
+  snapshotQuestion(); histIdx--;
+  navKey = true; newQuestion(history[histIdx]); navKey = false;
+}
+function goForward(){
+  snapshotQuestion();
+  navKey = true;
+  if (histIdx < history.length - 1){ histIdx++; newQuestion(history[histIdx]); }
+  else newQuestion();
+  navKey = false;
+}
+document.addEventListener("keydown", e => {
+  if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+  if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
+  const t = e.target;
+  if (t && (t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+  /* Inside the answer box the arrows belong to the caret --- but only while it still has
+     somewhere to go. Once it sits at the end you are pressing toward, the press is free,
+     so a half-typed answer never traps a student in the field. */
+  if (t && t.tagName === "INPUT" && !t.disabled){
+    const at = t.selectionStart, to = t.selectionEnd, n = String(t.value).length;
+    if (at === null || at !== to) return;                       // a selection: leave it alone
+    if (e.key === "ArrowRight" ? at < n : at > 0) return;
+  }
+  e.preventDefault();
+  if (e.key === "ArrowRight") goForward(); else goBack();
+});
+$("ans").addEventListener("keydown", e=>{ if(e.key==="Enter" && !$("check").disabled) check(); });
+$("soldetails").addEventListener("toggle", ()=>{
+  if ($("soldetails").open && !solved && !peeked){
+    peeked = true;
+    stats.peek++;
+    autoStar();
+    if (!tallied){ tallied = true; stats.att++; }  // opening it counts as engaging with the question
+    render();
+  }
+});
+
+function setOrder(o){
+  order = o; seqIdx = 0;
+  $("mShuffle").setAttribute("aria-pressed", String(o === "shuffle"));
+  $("mSeq").setAttribute("aria-pressed",     String(o === "seq"));
+  newQuestion();
+}
+$("mShuffle").onclick = () => setOrder("shuffle");
+$("mSeq").onclick     = () => setOrder("seq");
+
+$("pReset").onclick = () => {
+  if (!mastered.size) return;
+  mastered.clear(); saveProgress(); render();
+};
+
+buildTopics();
+newQuestion();
+render();
+</script>
+</body>
+</html>
