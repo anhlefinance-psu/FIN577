@@ -1,0 +1,1708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Note 13 — Risk-neutral Pricing: practice</title>
+<style>
+  :root{
+    --bg:#ffffff; --fg:#1a1a1a; --muted:#5f6672; --line:#e2e5ea;
+    --card:#f7f8fa; --accent:#00205b; --accent-fg:#ffffff;
+    --ok-bg:#e8f5ec; --ok-line:#2e7d47; --ok-fg:#17532c;
+    --no-bg:#fdeceb; --no-line:#c0392b; --no-fg:#8e2b20;
+    --hint-bg:#fff8e6; --hint-line:#b8860b; --hint-fg:#6b4e00;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#14161a; --fg:#e8eaed; --muted:#9aa3af; --line:#2b2f36;
+      --card:#1b1e24; --accent:#7f9cd4; --accent-fg:#0d1015;
+      --ok-bg:#132a1c; --ok-line:#4caf70; --ok-fg:#9fdcb4;
+      --no-bg:#2c1614; --no-line:#e06c5d; --no-fg:#f0a99f;
+      --hint-bg:#2a2313; --hint-line:#d4a017; --hint-fg:#e5c976;
+    }
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:0; background:var(--bg); color:var(--fg);
+    font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  .wrap{max-width:760px; margin:0 auto; padding:24px 18px 64px}
+  header{border-bottom:1px solid var(--line); padding-bottom:14px; margin-bottom:20px}
+  h1{font-size:1.35rem; margin:0 0 4px}
+  .sub{color:var(--muted); font-size:.9rem}
+  .topics{display:flex; flex-wrap:wrap; gap:7px; margin:18px 0}
+  .chip{
+    border:1px solid var(--line); background:var(--card); color:var(--fg);
+    padding:6px 12px; border-radius:999px; cursor:pointer; font-size:.85rem;
+    font-family:inherit;
+  }
+  .chip[aria-pressed="true"]{background:var(--accent); color:var(--accent-fg); border-color:var(--accent)}
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:10px;
+    padding:20px; margin-bottom:16px;
+  }
+  .qmeta{font-size:.75rem; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin-bottom:10px}
+  .qtext{font-size:1.05rem; margin-bottom:6px}
+  .qtext b{font-variant-numeric:tabular-nums}
+  .qfig{display:flex; flex-wrap:wrap; gap:6px 26px; margin:10px 0 2px}
+  .qfig svg{max-width:100%; height:auto; overflow:visible}
+  .qfig text{fill:var(--fg); font-family:inherit; font-variant-numeric:tabular-nums}
+  .qfig .tl{font-weight:600}
+  .qfig .tp{fill:var(--muted); font-size:13px}
+  .qfig line, .qfig polygon{stroke:var(--accent); fill:var(--accent)}
+  .qfig circle{fill:var(--accent)}
+  .qfig line.off{stroke:var(--muted); opacity:.35}
+  .qfig circle.off{fill:var(--muted); opacity:.45}
+  .ask{margin-top:14px; font-weight:600}
+  .row{display:flex; gap:9px; margin-top:14px; flex-wrap:wrap}
+  input[type=text]{
+    flex:1 1 190px; min-width:0; padding:11px 13px; font-size:1rem; font-family:inherit;
+    border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--fg);
+  }
+  input[type=text]:focus{outline:2px solid var(--accent); outline-offset:1px}
+  button{
+    padding:11px 17px; font-size:.95rem; font-family:inherit; border-radius:8px;
+    border:1px solid var(--accent); background:var(--accent); color:var(--accent-fg);
+    cursor:pointer; font-weight:600;
+  }
+  button.ghost{background:transparent; color:var(--fg); border-color:var(--line); font-weight:500}
+  button:disabled{opacity:.45; cursor:default}
+  .fb{border-radius:8px; padding:13px 15px; margin-top:15px; border-left:4px solid; font-size:.95rem}
+  .fb.ok{background:var(--ok-bg); border-color:var(--ok-line); color:var(--ok-fg)}
+  .fb.no{background:var(--no-bg); border-color:var(--no-line); color:var(--no-fg)}
+  .fb.hint{background:var(--hint-bg); border-color:var(--hint-line); color:var(--hint-fg)}
+  .fb strong{display:block; margin-bottom:3px}
+  details{margin-top:15px; border-top:1px solid var(--line); padding-top:13px}
+  summary{cursor:pointer; font-size:.9rem; color:var(--muted); font-weight:600}
+  .steps{margin-top:11px; font-size:.92rem}
+  .steps div{padding:5px 0; border-bottom:1px dashed var(--line)}
+  .steps div:last-child{border-bottom:none; font-weight:600}
+  .steps table.eqs{border-collapse:collapse; margin:2px 0}
+  .steps table.eqs td{padding:0; vertical-align:top}
+  .steps table.eqs td:first-child{text-align:right; padding-right:.3em}
+  code{
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.88em;
+    background:var(--bg); padding:1px 5px; border-radius:4px; border:1px solid var(--line);
+  }
+  .opts{display:flex; flex-direction:column; gap:8px; margin-top:14px}
+  .opt{
+    text-align:left; padding:11px 14px; border:1px solid var(--line); background:var(--bg);
+    color:var(--fg); border-radius:8px; cursor:pointer; font-family:inherit;
+    font-size:.95rem; font-weight:400; line-height:1.55;
+  }
+  .opt:hover:not(:disabled){border-color:var(--accent)}
+  .opt.right{background:var(--ok-bg); border-color:var(--ok-line); border-width:2px}
+  .opt.wrong{background:var(--no-bg); border-color:var(--no-line)}
+  .opt:disabled{cursor:default}
+  .opt sup{font-size:.75em}
+  .stats{display:flex; gap:22px; font-size:.86rem; color:var(--muted); margin-top:22px;
+         border-top:1px solid var(--line); padding-top:14px; flex-wrap:wrap}
+  .stats b{color:var(--fg); font-variant-numeric:tabular-nums}
+  footer{margin-top:26px; font-size:.78rem; color:var(--muted); text-align:center}
+  /* The hidden attribute's UA rule is only [hidden]{display:none}, which loses
+     to author rules like .opts{display:flex} and .row{display:flex}. Without
+     this, hiding those panels silently does nothing. */
+  .modes{display:flex; gap:8px; align-items:center; margin-top:10px;
+         font-size:.84rem; color:var(--muted); flex-wrap:wrap}
+  .modes .chip{font-size:.84rem; padding:5px 12px}
+  .prog{margin-top:18px}
+  .progtop{display:flex; justify-content:space-between; align-items:baseline;
+           font-size:.86rem; color:var(--muted); margin-bottom:6px}
+  .progtop b{color:var(--fg); font-variant-numeric:tabular-nums}
+  .progbar{height:9px; border-radius:999px; background:var(--line); overflow:hidden}
+  .progfill{height:100%; width:0%; border-radius:999px; background:var(--accent);
+            transition:width .35s ease}
+  .progreset{background:none; border:none; color:var(--muted); font-size:.8rem;
+             padding:0; cursor:pointer; text-decoration:underline; font-weight:400}
+  .progreset:hover{color:var(--fg)}
+  .qhead{display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:10px}
+  .qhead .qmeta{margin-bottom:0}
+  .star{background:transparent; color:var(--muted); border:1px solid var(--line); border-radius:999px;
+        padding:3px 11px; font-size:.8rem; font-weight:500; white-space:nowrap; flex:none}
+  .star[aria-pressed="true"]{color:var(--hint-fg); background:var(--hint-bg); border-color:var(--hint-line)}
+  .star:hover{border-color:var(--accent)}
+  [hidden]{display:none !important}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>Note 13 — Risk-neutral Pricing: practice</h1>
+  <div class="sub">One-period binomial trees. Answers are matched within 0.25%.</div>
+</header>
+
+<div class="topics" id="topics" role="group" aria-label="Choose topics"></div>
+
+<div class="modes" id="modes" role="group" aria-label="Question order">
+  <span>Order</span>
+  <button class="chip" id="mShuffle" type="button" aria-pressed="true">Shuffle</button>
+  <button class="chip" id="mSeq" type="button" aria-pressed="false">In order</button>
+  <span id="seqPos"></span>
+</div>
+
+<div class="card" id="card">
+  <div class="qhead">
+    <div class="qmeta" id="qmeta">—</div>
+    <button class="star" id="star" type="button" aria-pressed="false"
+            title="Star this question to practise it again under the Starred chip">☆ Star</button>
+  </div>
+  <div class="qtext" id="qtext">Loading…</div>
+  <div class="qfig" id="qfig" hidden></div>
+  <div class="ask" id="qask"></div>
+  <div class="opts" id="opts" hidden></div>
+  <div class="row" id="inputrow">
+    <input type="text" id="ans" autocomplete="off" inputmode="decimal"
+           placeholder="Your answer" aria-label="Your answer">
+    <button id="check">Check</button>
+    <button id="next" class="ghost">New question</button>
+  </div>
+  <div id="fb"></div>
+  <details id="soldetails" hidden>
+    <summary>Show the worked solution</summary>
+    <div class="steps" id="steps"></div>
+  </details>
+</div>
+
+<div class="prog">
+  <div class="progtop">
+    <span>Templates solved unaided <b id="pDone">0</b> of <b id="pTotal">0</b></span>
+    <button class="progreset" id="pReset" type="button">reset</button>
+  </div>
+  <div class="progbar"><div class="progfill" id="progfill"></div></div>
+</div>
+
+<div class="stats">
+  <span>Attempted <b id="sAtt">0</b></span>
+  <span>Correct first try <b id="sFirst">0</b></span>
+  <span>Accuracy <b id="sAcc">—</b></span>
+  <span>Streak <b id="sStreak">0</b></span>
+  <span>Solutions opened <b id="sPeek">0</b></span>
+</div>
+
+<footer>Numbers are randomised, so every attempt is different. Nothing you type leaves this page.<br>Use the &rarr; and &larr; arrow keys to move between questions.</footer>
+
+</div>
+
+<script>
+"use strict";
+
+/* ------------------------------------------------------------------ utils */
+const pick = a => a[Math.floor(Math.random()*a.length)];
+/* stepped range, e.g. range(0.04,0.24,0.0025) -> 81 rates instead of a list of 6 */
+const range = (lo,hi,step) => {
+  const out=[]; for(let v=lo; v<=hi+1e-9; v+=step) out.push(Number(v.toFixed(8)));
+  return out;
+};
+const ORD = n => n + (["th","st","nd","rd"][(n%100-n%10!=10)*(n%10<4)*(n%10)]||"th");
+const money = v => "$" + v.toLocaleString("en-US",{minimumFractionDigits:2, maximumFractionDigits:2});
+const pct   = (v,d=4) => (v*100).toFixed(d).replace(/\.?0+$/,"") + "%";
+const pctS  = (v,d=2) => (v*100).toFixed(d) + "%";
+const REL_SEP  = 0.01;    // distractors must sit >1% from everything else
+const REL_MATCH= 0.0025;  // student answer counts as a match within 0.25%
+
+const near = (a,b,tol) =>
+  Number.isFinite(a) && Number.isFinite(b) &&
+  Math.abs(a-b) / Math.max(Math.abs(a), Math.abs(b), 1e-12) < tol;
+
+/* Drop distractors too close to the answer (or to each other) to diagnose.
+   Templates about small effects (perpetuity timing) pass a tighter `sep`. */
+function usable(correct, cands, sep){
+  const s = sep || REL_SEP;
+  const kept = [];
+  for (const c of cands){
+    if (!Number.isFinite(c.val)) continue;
+    if (near(c.val, correct, s)) continue;
+    if (kept.some(k => near(k.val, c.val, s))) continue;
+    kept.push(c);
+  }
+  return kept;
+}
+
+/* ------------------------------------------------------------- templates */
+/* ---------------------------------------------------------------- Note 13 ---
+   Risk-neutral pricing in a one-period binomial tree.  The bond costs $100 and
+   pays $100(1+rf), matching the note's setup, so a portfolio of nS shares and
+   nB bonds costs S0*nS + 100*nB.                                             */
+/* Rule for worked solutions (Anh, 22 Oct 2026): before any step uses risk-neutral pricing, state it:
+   "The risk-neutral pricing equation says that the value of any security must be its risk-neutral
+   expected payoff, discounted at the risk-free rate." Then "Applying this to <the security>: ...". */
+const upDn = (S0,u,d) => [S0*(1+u), S0*(1-d)];
+const qUp  = (u,d,rf) => (rf + d)/(u + d);          // ((1+rf) - (1-d)) / ((1+u) - (1-d))
+/* Draws keep rf strictly below u, so the risk-neutral probability stays in (0,1). */
+const drawTree = () => {
+  const S0=pick([50,100,200]);
+  const u=pick([.04,.05,.06,.08,.10]);
+  const d=pick([.04,.05,.06,.08,.10]);
+  const rf=pick(range(.01,.03,.005));
+  const [Su,Sd]=upDn(S0,u,d);
+  return {S0,u,d,rf,Su,Sd,q:qUp(u,d,rf),B1:100*(1+rf)};
+};
+const farFrom = (correct,cands,sep) => cands.every(c=>Number.isFinite(c.val) && !near(c.val,correct,sep));
+// Quiz viability (rule 19, added 9 Oct 2026): redraw until three wrong options survive usable().
+const atLeast3 = f => { let q; for (let i=0; i<500; i++) { q=f(); if (usable(q.correct,q.cands,q.sep).length>=3) return q; } return q; };
+const tr = (label, now, outs, probs) => probs ? {label, now, outs, probs} : {label, now, outs};   // one tree for q.fig (22 Oct 2026)
+const smoney = v => (v < 0 ? "&minus;" : "") + money(Math.abs(v));   // −$20.69, not $-20.69 (22 Sep 2026)
+const snum = (v,d) => (v < 0 ? "&minus;" : "") + Math.abs(v).toFixed(d);   // −0.2070, not -0.2070 (22 Sep 2026)
+
+/* ---- Added 9 Oct 2026 (Anh): the fixed-income half of the note (Section 4) and the exam bets.
+   z1-z3 follow HW_06 (2025 UG) Questions 1 and A and the note's two-zero example; b1, b2, b4
+   follow the exam bets (Democrats win: sample/real finals 2019-25 UG, MBA, MF; Federer/Roddick:
+   UG and MF sample finals). Zero prices are printed to four decimals and every key is worked from
+   the printed figures (rule 9).                                                              */
+const zeroTree = () => {
+  // P05: today's 0.5-year zero; Vu < Vd: the 1-year zero's value at 0.5 in the up (rates up) and
+  // down states; q: the risk-neutral up probability used to set today's 1-year zero, P1
+  const P05=pick([0.97,0.975,0.98,0.985]);
+  const Vd=pick([0.975,0.98,0.985,0.99]), Vu=+(Vd-pick([0.02,0.025,0.03,0.035])).toFixed(3);
+  const q0=pick([0.3,0.4,0.5,0.6,0.7]);
+  const P1=+(P05*(q0*Vu+(1-q0)*Vd)).toFixed(4);
+  const q=(Vd-P1/P05)/(Vd-Vu);                                   // from the printed figures
+  return {P05,Vu,Vd,P1,q};
+};
+const zeroStem = z => `Today a \$1-par zero maturing at time 0.5 costs <b>${z.P05.toFixed(3)}</b> and a \$1-par zero
+            maturing at time 1 costs <b>${z.P1.toFixed(4)}</b>. At time 0.5 the 1-year zero will be worth either
+            <b>${z.Vu.toFixed(3)}</b> (the &ldquo;up&rdquo; state, when rates have risen) or <b>${z.Vd.toFixed(3)}</b>
+            (the &ldquo;down&rdquo; state).`;
+
+/* ---- Bets, rebuilt 9 Oct 2026 (Anh): "if you know how much it costs to place a bet on Federer you can figure
+   out how much it costs on Nadal, if you know the risk-free rate... given the bets on Federer as well as Nadal
+   figure out the risk-free rate", in varied settings. A bet pays $100 if its side wins; its price today is
+   100 q/(1 + r/2), so the two bets together cost 100/(1 + r/2): a sure $100 in six months.               */
+const betCtx = () => pick([
+  {a:"Federer", b:"Nadal", ev:"a tennis final between Federer and Nadal, to be played in six months"},
+  {a:"Ohio State", b:"Penn State", ev:"the Ohio State vs Penn State football game, to be played in six months"},
+  {a:"candidate X", b:"candidate Y", ev:"an election between candidates X and Y, to be held in six months"}]);
+const betTail = "The betting market is efficient (no transaction costs) and fully integrated with the financial markets.";
+
+const TEMPLATES = [{ id:"rp1", topic:"rep", name:"The replicating share position", gen(){
+    const t=drawTree();
+    const K=+((t.Su+t.Sd)/2).toFixed(0);
+    const cfu=Math.max(t.Su-K,0), cfd=Math.max(t.Sd-K,0);
+    const correct=(cfu-cfd)/(t.Su-t.Sd);
+    return {
+      unit:"number",
+      text:`A share costs <b>${money(t.S0)}</b> and in six months is worth either
+            <b>${money(t.Su)}</b> or <b>${money(t.Sd)}</b>. A call with a strike price of <b>${money(K)}</b>
+            therefore pays <b>${money(cfu)}</b> or <b>${money(cfd)}</b>.`,
+      fig:[tr("Share", money(t.S0), [money(t.Su), money(t.Sd)]), tr(`Call, strike price ${money(K)}`, "?", [money(cfu), money(cfd)])],   // trees drawn from this draw (Anh, 22 Oct 2026)
+      ask:"How many shares does the replicating portfolio hold?",
+      correct,
+      cands:[
+        {val:(cfu-cfd)/(t.Su+t.Sd), msg:`You divided by the <em>sum</em> of the two share prices. The portfolio has to match a payoff <em>spread</em> of ${money(cfu-cfd)} against a share spread of ${money(t.Su-t.Sd)}.`},
+        {val:(t.Su-t.Sd)/(cfu-cfd), msg:`Upside down. The share count is the payoff spread over the share spread.`},
+        {val:cfu/t.Su, msg:`That is the up-state payoff over the up-state share price, which is not the ratio that matches the two states.`},
+        {val:1, msg:`One whole share overshoots: the share moves ${money(t.Su-t.Sd)} between states while the option moves only ${money(cfu-cfd)}.`}
+      ],
+      steps:[
+        `The replicating portfolio holds n<sub>S</sub> shares and n<sub>B</sub> risk-free bonds. Each bond pays the same amount, B<sub>1</sub>, in six months in either state. The portfolio must pay what the call pays in each state:`,
+        `Up state: n<sub>S</sub> &times; ${money(t.Su)} + n<sub>B</sub> &times; B<sub>1</sub> = ${money(cfu)}<br>Down state: n<sub>S</sub> &times; ${money(t.Sd)} + n<sub>B</sub> &times; B<sub>1</sub> = ${money(cfd)}`,
+        `Whatever B<sub>1</sub> is, it is the same in both states. So subtracting the down-state equation from the up-state equation, side by side, removes the bond term: n<sub>S</sub> &times; (${money(t.Su)} &minus; ${money(t.Sd)}) = ${money(cfu)} &minus; ${money(cfd)}`,
+        `n<sub>S</sub> = ${money(cfu-cfd)} / ${money(t.Su-t.Sd)} = <b>${correct.toFixed(4)}</b>`
+      ]};
+  }},
+
+{ id:"rp2", topic:"rep", name:"The replicating bond position", gen(){ return atLeast3(()=>{
+    const t=drawTree();
+    const K=+((t.Su+t.Sd)/2).toFixed(0);
+    const cfu=Math.max(t.Su-K,0), cfd=Math.max(t.Sd-K,0);
+    const nS=+((cfu-cfd)/(t.Su-t.Sd)).toFixed(4);
+    const correct=(cfu-nS*t.Su)/t.B1;
+    return {
+      unit:"number",
+      // No "In the same tree": every draw is its own tree (22 Sep 2026).
+      text:`The share is worth <b>${money(t.Su)}</b> or <b>${money(t.Sd)}</b>
+            in six months, and the risk-free bond costs <b>\$100</b> today and pays
+            <b>${money(t.B1)}</b>. A call with a strike price of <b>${money(K)}</b> pays <b>${money(cfu)}</b> in the up
+            state and <b>${money(cfd)}</b> in the down state. The portfolio that replicates it holds
+            <b>${nS.toFixed(4)}</b> shares.`,
+      fig:[tr("Share", "", [money(t.Su), money(t.Sd)]), tr("Bond", "$100", [money(t.B1), money(t.B1)]), tr(`Call, strike price ${money(K)}`, "?", [money(cfu), money(cfd)])],   // trees drawn from this draw (Anh, 22 Oct 2026)
+      ask:"How many bonds does it hold?",
+      correct,
+      cands:[
+        {val:(cfu-nS*t.Su)/100, msg:`You divided by the bond's price today rather than its payoff. The up-state equation is about what the portfolio delivers in six months, so it is ${money(t.B1)} that scales n<sub>B</sub>.`},
+        {val:(cfd-nS*t.Su)/t.B1, msg:`You matched the up-state share value against the <em>down</em>-state payoff. Keep both terms in the same state.`},
+        {val:-(cfu-nS*t.Su)/t.B1, msg:`Sign flipped. Buying shares to replicate a call means borrowing, so n<sub>B</sub> comes out negative &mdash; but check which way round.`}
+      ],
+      /* The share leg is printed as the shares times the share price, not rounded to the
+         cent first: "($2.00 − $23.11) / $102.00" gives −0.2070, where the step printed the
+         key's −0.2069 (gridall 13, 22 Sep 2026). The printed figures now reproduce the key
+         exactly, since nS is itself the four-decimal figure the stem gives.              */
+      steps:[
+        `Up state: n<sub>S</sub> &times; S<sub>u</sub> + n<sub>B</sub> &times; B<sub>1</sub> = the call's up-state payoff, so ${nS.toFixed(4)} &times; ${money(t.Su)} + n<sub>B</sub> &times; ${money(t.B1)} = ${money(cfu)}`,
+        `n<sub>B</sub> = (payoff &minus; n<sub>S</sub> &times; S<sub>u</sub>) / B<sub>1</sub> = (${money(cfu)} &minus; ${nS.toFixed(4)} &times; ${money(t.Su)}) / ${money(t.B1)} = <b>${snum(correct,4)}</b>`,
+        correct<0 ? `Negative, so the portfolio borrows &mdash; a call is a levered position in the share.`
+                  : `Positive, so the portfolio lends alongside its share position.`
+      ]};
+  });
+  }},
+
+{ id:"rp3", topic:"rep", name:"What does the portfolio cost?", gen(){
+    let t=drawTree();
+    // Never a $100 share: the bond costs $100 too, and "priced both legs at the share price"
+    // is then the key (gridall 13, 22 Sep 2026: 125 of 375 draws scored).
+    while (t.S0 === 100) t=drawTree();
+    const K=+((t.Su+t.Sd)/2).toFixed(0);
+    const cfu=Math.max(t.Su-K,0), cfd=Math.max(t.Sd-K,0);
+    const nS=+((cfu-cfd)/(t.Su-t.Sd)).toFixed(4);
+    const nB=+((cfu-nS*t.Su)/t.B1).toFixed(4);
+    const correct=t.S0*nS + 100*nB;
+    // The steps add the two legs as printed, to the cent, so the total reproduces from the
+    // page; it can sit half a cent from the key. They used to print the key instead:
+    // "$23.34 + $-20.69 = $2.64", where the printed legs make $2.65 (22 Sep 2026).
+    const legS=+(t.S0*nS).toFixed(2), legB=+(100*nB).toFixed(2), total=+(legS+legB).toFixed(2);
+    // Keys run as low as $0.99, where a cent is more than 0.25%: accept the key to the cent
+    // (gridall 13, 22 Sep 2026: 18 printed answers marked wrong).
+    const tol=Math.max(0.0025, 0.0051/Math.abs(correct));
+    return {
+      unit:"money",
+      tol, sep:Math.max(0.01, tol),
+      text:`A portfolio replicates a call option on a share. It holds <b>${nS.toFixed(4)}</b> shares at <b>${money(t.S0)}</b> each and
+            <b>${snum(nB, 4)}</b> bonds at <b>\$100</b> each.`,
+      ask:"What does it cost today, and hence what is the option worth?",
+      correct,
+      cands:[
+        {val:t.S0*(nS+nB), msg:`That works only when the share and the bond happen to cost the same. Here the share is ${money(t.S0)} and the bond is \$100, so price each leg at its own price.`},
+        {val:t.S0*nS, msg:`That is the share leg alone. The bond leg costs ${smoney(100*nB)} on top.`},
+        {val:t.S0*nS-100*nB, msg:`The two legs are added. The sign of n<sub>B</sub> already carries whether you are lending or borrowing.`}
+      ],
+      steps:[
+        `Portfolio value = shares &times; share price + bonds &times; bond price`,
+        `= ${nS.toFixed(4)} &times; ${money(t.S0)} ${nB<0 ? "&minus;" : "+"} ${Math.abs(nB).toFixed(4)} &times; \$100`,
+        `= ${money(legS)} ${legB<0 ? "&minus;" : "+"} ${money(Math.abs(legB))} = <b>${smoney(total)}</b>`,
+        `By no-arbitrage the option must trade at exactly this. Any other price is a free lunch.`
+      ]};
+  }},
+
+{ id:"q1", topic:"rn", name:"The risk-neutral probability", gen(){ return atLeast3(()=>{
+    let t=drawTree();
+    // q must sit away from 0.5, as in q2: at q = 0.5 (d + 2r = u) the coin-flip and 1 - q
+    // distractors are the key (gridall 13, 22 Sep 2026: 24 of 375 draws scored).
+    while (Math.abs(t.q-0.5) < 0.08) t=drawTree();
+    const correct=t.q;
+    return {
+      unit:"number",
+      text:`A share costs <b>${money(t.S0)}</b> and in six months is worth <b>${money(t.Su)}</b>
+            or <b>${money(t.Sd)}</b>. The risk-free rate over the six months is
+            <b>${pctS(t.rf,1)}</b>.`,
+      fig:[tr("Share", money(t.S0), [money(t.Su), money(t.Sd)])],   // trees drawn from this draw (Anh, 22 Oct 2026)
+      ask:"What is the risk-neutral probability of the up state?",
+      correct,
+      cands:[
+        {val:0.5, msg:`Not a coin flip. The risk-neutral probability is whatever makes the share itself price correctly at ${money(t.S0)} when discounted at the risk-free rate.`},
+        {val:1-correct, msg:`That is the probability of the <em>down</em> state.`},
+        {val:(t.S0-t.Sd)/(t.Su-t.Sd), msg:`You left the risk-free rate out. The share's price must first be carried forward: it is (1+r)S<sub>0</sub> that sits in the numerator, not S<sub>0</sub>.`},
+        {val:t.rf/(t.u+t.d), msg:`The down move belongs in the numerator too: q = (r + d)/(u + d).`}
+      ],
+      steps:[
+        `The risk-neutral pricing equation says that the value of any security must be its risk-neutral expected payoff, discounted at the risk-free rate.`,
+        `Applying this to the share price: ${money(t.S0)} = [q &times; ${money(t.Su)} + (1&minus;q) &times; ${money(t.Sd)}] / ${(1+t.rf).toFixed(3)}`,
+        `Multiplying both sides by ${(1+t.rf).toFixed(3)} and collecting the q terms: ${money(t.S0*(1+t.rf))} = ${money(t.Sd)} + q &times; (${money(t.Su)} &minus; ${money(t.Sd)})`,
+        `q = (${money(t.S0*(1+t.rf))} &minus; ${money(t.Sd)}) / ${money(t.Su-t.Sd)} = <b>${correct.toFixed(4)}</b>`,
+        `Note that no actual probability was used or needed anywhere.`
+      ]};
+  });
+  }},
+
+{ id:"q2", topic:"price", name:"Price any payoff with q", gen(){ return atLeast3(()=>{
+    let t=drawTree();
+    // Two guards. The discount rate must be big enough that "forgot to discount" is a
+    // visibly different number, and q must sit away from 0.5 or the even-odds and
+    // swapped-weight distractors both land on the key.
+    while (t.rf < .02 || Math.abs(t.q-0.5) < 0.08) t=drawTree();
+    const q=+t.q.toFixed(4);
+    const cfu=pick([3,5,7,10,12]), cfd=pick([0,2,4,6]);
+    const correct=(q*cfu+(1-q)*cfd)/(1+t.rf);
+    // Keys run as low as $1.70, where a cent is more than 0.25%: accept the key to the cent
+    // (gridall 13, 22 Sep 2026: 6 printed answers marked wrong).
+    const tol=Math.max(0.0025, 0.0051/Math.abs(correct));
+    return {
+      unit:"money",
+      tol, sep:Math.max(0.01, tol),
+      text:`In a six-month tree with a risk-neutral up probability of <b>${q.toFixed(4)}</b>, where the
+            risk-free rate over the six months is <b>${pctS(t.rf,1)}</b>, a security pays
+            <b>${money(cfu)}</b> in the up state and <b>${money(cfd)}</b> in the down state.`,
+      fig:[tr("Security", "?", [money(cfu), money(cfd)], [q.toFixed(4), (1-q).toFixed(4)])],   // trees drawn from this draw (Anh, 22 Oct 2026)
+      ask:"What is it worth today?",
+      correct,
+      cands:[
+        {val:q*cfu+(1-q)*cfd, msg:`That is the risk-neutral expected payoff, undiscounted. It still has to be brought back at the risk-free rate.`},
+        {val:(0.5*cfu+0.5*cfd)/(1+t.rf), msg:`You used even odds. The risk-neutral weights are ${q.toFixed(4)} and ${(1-q).toFixed(4)}.`},
+        {val:((1-q)*cfu+q*cfd)/(1+t.rf), msg:`The weights are swapped: ${q.toFixed(4)} belongs to the up state.`},
+        {val:(q*cfu+(1-q)*cfd)*(1+t.rf), msg:`You compounded forward instead of discounting back.`}
+      ],
+      steps:[
+        `The risk-neutral pricing equation says that the value of any security must be its risk-neutral expected payoff, discounted at the risk-free rate.`,
+        `Applying this to the security: Price = [q &times; CF<sub>u</sub> + (1&minus;q) &times; CF<sub>d</sub>] / (1 + r)`,
+        `= [${q.toFixed(4)} &times; ${money(cfu)} + ${(1-q).toFixed(4)} &times; ${money(cfd)}] / ${(1+t.rf).toFixed(3)}`,
+        `= <b>${money(correct)}</b>`,
+        `The same q prices every security written on this share &mdash; that is why it is worth computing once.`
+      ]};
+  });
+  }},
+
+{ id:"q3", topic:"price", name:"Price the call", gen(){ return atLeast3(()=>{
+    let t=drawTree();
+    // q must sit away from 0.5, as in q2: there even odds and swapped weights both give
+    // the key, so either slip would be marked right (22 Sep 2026).
+    while (Math.abs(t.q-0.5) < 0.08) t=drawTree();
+    const q=+t.q.toFixed(4);
+    const K=+((t.Su+t.Sd)/2).toFixed(0);
+    const cfu=Math.max(t.Su-K,0), cfd=Math.max(t.Sd-K,0);
+    const correct=(q*cfu+(1-q)*cfd)/(1+t.rf);
+    // Keys run as low as $1.06, where a cent is more than 0.25%: accept the key to the cent
+    // (gridall 13, 22 Sep 2026: 16 printed answers marked wrong).
+    const tol=Math.max(0.0025, 0.0051/Math.abs(correct));
+    return {
+      unit:"money",
+      tol, sep:Math.max(0.01, tol),
+      text:`The share is worth <b>${money(t.Su)}</b> or <b>${money(t.Sd)}</b> in six months, the
+            risk-neutral up probability is <b>${q.toFixed(4)}</b>, and the six-month risk-free
+            rate is <b>${pctS(t.rf,1)}</b>.`,
+      fig:[tr("Share", "", [money(t.Su), money(t.Sd)], [q.toFixed(4), (1-q).toFixed(4)])],   // trees drawn from this draw (Anh, 22 Oct 2026)
+      ask:`What is a call with a strike price of ${money(K)} worth?`,
+      correct,
+      cands:[
+        {val:(q*(t.Su-K)+(1-q)*(t.Sd-K))/(1+t.rf), msg:`You let the down state pay a negative amount. An option is a right, not an obligation &mdash; the down-state payoff is floored at zero.`},
+        {val:cfu/(1+t.rf), msg:`You discounted the up-state payoff without weighting it by ${q.toFixed(4)}.`},
+        {val:q*cfu, msg:`Weighted but not discounted.`}
+      ],
+      steps:[
+        `The risk-neutral pricing equation says that the value of any security must be its risk-neutral expected payoff, discounted at the risk-free rate.`,
+        `Payoffs: up ${money(cfu)}, down ${money(cfd)} &mdash; the down state is worthless, not negative`,
+        `Applying this to the call: Price = [q &times; CF<sub>u</sub> + (1&minus;q) &times; CF<sub>d</sub>] / (1 + r)`,
+        `= [${q.toFixed(4)} &times; ${money(cfu)} + ${(1-q).toFixed(4)} &times; ${money(cfd)}] / ${(1+t.rf).toFixed(3)}`,
+        `= <b>${money(correct)}</b>`
+      ]};
+  });
+  }},
+
+{ id:"q4", topic:"price", name:"Price the put", gen(){
+    let t=drawTree();
+    // q must sit away from 0.5, as in q2: at q = 0.5 the weights-on-the-wrong-states
+    // distractor is the key (gridall 13, 22 Sep 2026: 24 of 375 draws scored).
+    while (Math.abs(t.q-0.5) < 0.08) t=drawTree();
+    const q=+t.q.toFixed(4);
+    const K=+((t.Su+t.Sd)/2).toFixed(0);
+    const cfu=Math.max(K-t.Su,0), cfd=Math.max(K-t.Sd,0);
+    const correct=(q*cfu+(1-q)*cfd)/(1+t.rf);
+    // Keys run as low as $0.24, where a cent is more than 0.25%: accept the key to the cent
+    // (gridall 13, 22 Sep 2026: 68 printed answers marked wrong). There tol tops 1%, so sep
+    // rises with it to keep usable() honest.
+    const tol=Math.max(0.0025, 0.0051/Math.abs(correct));
+    return {
+      unit:"money",
+      tol, sep:Math.max(0.01, tol),
+      // No "Same tree:": every draw is its own tree (22 Sep 2026).
+      text:`The share is worth <b>${money(t.Su)}</b> or <b>${money(t.Sd)}</b> in six months, the
+            risk-neutral up probability is <b>${q.toFixed(4)}</b>, and the six-month risk-free
+            rate is <b>${pctS(t.rf,1)}</b>.`,
+      fig:[tr("Share", "", [money(t.Su), money(t.Sd)], [q.toFixed(4), (1-q).toFixed(4)])],   // trees drawn from this draw (Anh, 22 Oct 2026)
+      ask:`What is a put with a strike price of ${money(K)} worth?`,
+      correct,
+      cands:[
+        {val:(q*cfd+(1-q)*cfu)/(1+t.rf), msg:`The weights are on the wrong states. A put pays in the <em>down</em> state, which carries weight ${(1-q).toFixed(4)}.`},
+        {val:cfd/(1+t.rf), msg:`You discounted the down-state payoff without weighting it.`},
+        {val:(q*(K-t.Su)+(1-q)*(K-t.Sd))/(1+t.rf), msg:`You let the up state pay a negative amount. The holder simply walks away, so that payoff is zero.`}
+      ],
+      steps:[
+        `The risk-neutral pricing equation says that the value of any security must be its risk-neutral expected payoff, discounted at the risk-free rate.`,
+        `Payoffs: up ${money(cfu)}, down ${money(cfd)}`,
+        `Applying this to the put: Price = [q &times; CF<sub>u</sub> + (1&minus;q) &times; CF<sub>d</sub>] / (1 + r)`,
+        `= [${q.toFixed(4)} &times; ${money(cfu)} + ${(1-q).toFixed(4)} &times; ${money(cfd)}] / ${(1+t.rf).toFixed(3)}`,
+        `= <b>${money(correct)}</b>`
+      ]};
+  }},
+
+{ id:"t1", topic:"price", also:["concept"], name:"The traditional route", gen(){ return atLeast3(()=>{
+    const cfu=pick([12,15,20]), cfd=pick([8,10,11]);
+    const p=pick([.6,.7,.8]);
+    const rf=pick(range(.02,.04,.005));
+    // A 1% premium leaves the risk-free-discounted distractor within 1% of the key.
+    const prem=pick(range(.02,.04,.005));
+    const E=p*cfu+(1-p)*cfd;
+    const correct=E/(1+rf+prem);
+    return {
+      unit:"money",
+      text:`A security pays <b>${money(cfu)}</b> with actual probability <b>${pctS(p,0)}</b> and
+            <b>${money(cfd)}</b> otherwise. The risk-free rate over the six months is <b>${pctS(rf,1)}</b>
+            and this security's risk premium over the same six months is <b>${pctS(prem,1)}</b>.`,
+      fig:[tr("Security", "?", [money(cfu), money(cfd)], [pctS(p,0), pctS(1-p,0)])],   // trees drawn from this draw (Anh, 22 Oct 2026)
+      ask:"Price it the traditional way, in dollars.",
+      correct,
+      cands:[
+        {val:E/(1+rf), msg:`You discounted at the risk-free rate while using the <em>actual</em> probabilities. That combination ignores the risk altogether &mdash; either use actual probabilities with a risk-adjusted rate, or risk-neutral probabilities with the risk-free rate.`},
+        {val:E, msg:`That is the expected payoff, undiscounted.`},
+        {val:E/(1+prem), msg:`You discounted at the premium alone, leaving out the risk-free rate.`}
+      ],
+      steps:[
+        `Expected payoff = ${pctS(p,0)} &times; ${money(cfu)} + ${pctS(1-p,0)} &times; ${money(cfd)} = ${money(E)}`,
+        `Discount rate = ${pctS(rf,1)} + ${pctS(prem,1)} = ${pctS(rf+prem,1)}`,
+        `Price = ${money(E)} / ${(1+rf+prem).toFixed(3)} = <b>${money(correct)}</b>`,
+        `The risk-neutral route reaches the same number by shrinking the numerator instead of inflating the denominator.`
+      ]};
+  });
+  }},
+
+{ id:"z1", topic:"zeros", also:["rep"], name:"Replicating a claim with two zeros", gen(){ return atLeast3(()=>{
+    /* 23 Oct 2026 (Anh): each "Approach N" is its own heading step; the proof sheet restarts the step numbers under it.
+       HW_06 Q1(a) and the note's portfolio approach: n_short + Vu n_long = 1, n_short + Vd n_long = 0.
+       Asked for n_long, the 1-year zeros; the claim pays $1 in the up or the down state.                  */
+    let z, upClaim, correct, cands;
+    do {
+      z=zeroTree(); upClaim=pick([true,false]);
+      correct = upClaim ? 1/(z.Vu-z.Vd) : 1/(z.Vd-z.Vu);
+      const n05 = upClaim ? -z.Vd*correct : -z.Vu*correct;
+      cands=[
+        {val:-correct, msg:`Right size, wrong sign. Subtract the two state equations: (${upClaim?z.Vu.toFixed(3):z.Vd.toFixed(3)} &minus; ${upClaim?z.Vd.toFixed(3):z.Vu.toFixed(3)}) &times; n<sub>long</sub> = 1 &minus; 0.`},
+        {val:n05, msg:`That is the number of 0.5-year zeros, n<sub>short</sub>. The question asks for the 1-year zeros, n<sub>long</sub>.`},
+        {val:1/(upClaim?z.Vu:z.Vd), msg:`One 1-year zero is not enough on its own: it pays something in both states. The portfolio has to pay \$1 in one state and nothing in the other, so it needs both zeros, solved together.`}
+      ];
+    } while (!farFrom(correct,cands,REL_SEP));
+    const a = upClaim ? z.Vu : z.Vd, b = upClaim ? z.Vd : z.Vu;
+    return {
+      unit:"number",
+      text:`${zeroStem(z)} A claim pays <b>\$1</b> at time 0.5 in the ${upClaim?"up":"down"} state and nothing in the
+            ${upClaim?"down":"up"} state. You replicate it with n<sub>short</sub> 0.5-year zeros and n<sub>long</sub> 1-year zeros.`,
+      fig:[tr("0.5-year zero", z.P05.toFixed(3), ["$1", "$1"]), tr("1-year zero", z.P1.toFixed(4), [z.Vu.toFixed(3), z.Vd.toFixed(3)]), tr("Claim", "?", upClaim ? ["$1", "$0"] : ["$0", "$1"])],   // trees drawn from this draw (Anh, 22 Oct 2026)
+      ask:"How many 1-year zeros, n<sub>long</sub>, does the replicating portfolio hold? (Negative means short.)",
+      correct,
+      cands,
+      steps:[
+        `In each state, each 0.5-year zero pays \$1 and each 1-year zero is worth that state's value. The portfolio must pay what the claim pays in each state:`,
+        `${upClaim?"Up":"Down"} state: n<sub>short</sub> &times; \$1 + n<sub>long</sub> &times; ${a.toFixed(3)} = \$1<br>${upClaim?"Down":"Up"} state: n<sub>short</sub> &times; \$1 + n<sub>long</sub> &times; ${b.toFixed(3)} = \$0`,
+        `Subtracting the second from the first: n<sub>long</sub> &times; (${a.toFixed(3)} &minus; ${b.toFixed(3)}) = 1, so n<sub>long</sub> = 1 / ${(a-b).toFixed(3)} = <b>${correct.toFixed(4)}</b>`,
+        `From the ${upClaim?"down":"up"}-state equation, n<sub>short</sub> = &minus;${b.toFixed(3)} &times; ${correct.toFixed(4)} = ${snum(-b*+correct.toFixed(4),4)}`
+      ]};
+  });
+  }},
+
+{ id:"z2", topic:"zeros", also:["price"], name:"Pricing a claim from two zeros", gen(){
+    /* The note's Section 4 and HW_06 Q1(b,c): R_f from the 0.5-year zero, q from the 1-year zero,
+       then the claim's price. Payoffs drawn so the claim is not a plain zero.                  */
+    let z, cu, cd, correct, cands, nL, nS;
+    do {
+      z=zeroTree(); cu=pick([0,10,20,50,100]); cd=pick([0,10,20,50,100]);
+      correct=z.P05*(z.q*cu+(1-z.q)*cd);
+      const qu=(z.Vd-z.P1)/(z.Vd-z.Vu);                          // forgot to grow the 1-year zero
+      cands=[
+        {val:z.q*cu+(1-z.q)*cd, msg:`That is the risk-neutral expected payoff at time 0.5, not yet discounted. Discount it at the risk-free rate, i.e. multiply by the 0.5-year zero price, ${z.P05.toFixed(3)}.`},
+        {val:z.P05*(qu*cu+(1-qu)*cd), msg:`You set the risk-neutral expectation of the 1-year zero's time-0.5 value equal to its price today. It equals the price <em>grown at the risk-free rate</em>: ${z.P1.toFixed(4)}/${z.P05.toFixed(3)}.`},
+        {val:z.P05*((1-z.q)*cu+z.q*cd), msg:`You swapped the states: q is the risk-neutral probability of the up state (the 1-year zero at ${z.Vu.toFixed(3)}).`},
+        {val:z.P05*(0.5*cu+0.5*cd), msg:`The risk-neutral probabilities are not 50/50 here; back them out of the 1-year zero's price.`}
+      ];
+      // Approach 1 prints n_long and n_short to four decimals; reject the few draws (16 of 5120)
+      // where those printed figures land on the other side of a half cent from the key, and keys
+      // sitting on a half cent, which round either way (gridall 13, 22 Oct 2026).
+      nL=+((cu-cd)/(z.Vu-z.Vd)).toFixed(4), nS=+(cd-z.Vd*nL).toFixed(4);
+    } while (cu===cd || cu+cd===0 || !farFrom(correct,cands,REL_SEP)
+             || Math.abs((correct*100)%1 - 0.5) < 0.01 || (nS*z.P05+nL*z.P1).toFixed(2) !== correct.toFixed(2));
+    // q from P1 = P05 [q Vu + (1-q) Vd] expanded, so every printed figure is exact: P05 Vd has six
+    // decimals, P05 (Vd - Vu) five. Dividing through by a rounded 1 + r drifted q in the fifth
+    // decimal and the price by up to a quarter cent (22 Oct 2026).
+    const gr=1/z.P05, a0=+(z.P05*z.Vd).toFixed(6), a1=+(z.P05*(z.Vd-z.Vu)).toFixed(6), qd=(a0-z.P1)/a1;
+    // Two routes side by side (Anh, 22 Oct 2026): the replicating portfolio of the two zeros, then
+    // risk-neutral pricing broken into r, q and the price.
+    const par = v => v<0 ? `(${snum(v,4)})` : v.toFixed(4);
+    return {
+      unit:"money",
+      text:`${zeroStem(z)} A claim pays <b>${money(cu)}</b> at time 0.5 in the up state and <b>${money(cd)}</b> in the
+            down state.`,
+      fig:[tr("0.5-year zero", z.P05.toFixed(3), ["$1", "$1"]), tr("1-year zero", z.P1.toFixed(4), [z.Vu.toFixed(3), z.Vd.toFixed(3)]), tr("Claim", "?", [money(cu), money(cd)])],   // trees drawn from this draw (Anh, 22 Oct 2026)
+      ask:"What is the claim worth today?",
+      correct,
+      cands,
+      steps:[
+        `<b>Approach 1: the replicating portfolio</b>`,
+        `Hold n<sub>short</sub> 0.5-year zeros and n<sub>long</sub> 1-year zeros. At time 0.5 each 0.5-year zero pays \$1 and each 1-year zero is worth that state's value. The portfolio must pay what the claim pays in each state:`,
+        `Up state: n<sub>short</sub> &times; \$1 + n<sub>long</sub> &times; ${z.Vu.toFixed(3)} = ${money(cu)}<br>Down state: n<sub>short</sub> &times; \$1 + n<sub>long</sub> &times; ${z.Vd.toFixed(3)} = ${money(cd)}`,
+        `Subtracting the down-state equation from the up-state equation removes n<sub>short</sub>: n<sub>long</sub> &times; (${z.Vu.toFixed(3)} &minus; ${z.Vd.toFixed(3)}) = ${money(cu)} &minus; ${money(cd)}, so n<sub>long</sub> = ${snum(cu-cd,0)} / ${snum(z.Vu-z.Vd,3)} = ${snum(nL,4)}`,
+        `From the down-state equation: n<sub>short</sub> = ${money(cd)} &minus; ${z.Vd.toFixed(3)} &times; ${par(nL)} = ${snum(nS,4)}`,
+        `Cost today = n<sub>short</sub> &times; ${z.P05.toFixed(3)} + n<sub>long</sub> &times; ${z.P1.toFixed(4)} = ${par(nS)} &times; ${z.P05.toFixed(3)} + ${par(nL)} &times; ${z.P1.toFixed(4)} = <b>${money(correct)}</b>. By no-arbitrage the claim is worth what the portfolio costs.`,
+        `<b>Approach 2: risk-neutral probabilities</b>`,
+        `The discount factor for time 0.5 is the price of the 0.5-year zero, which pays \$1 for sure: d<sub>0.5</sub> = ${z.P05.toFixed(3)}. (Equivalently, 1 + r = 1 / ${z.P05.toFixed(3)}, so r = ${pctS(gr-1,4)} over the six months.)`,
+        `The risk-neutral pricing equation says that the value of any security must be its risk-neutral expected payoff, discounted at the risk-free rate: Price = d<sub>0.5</sub> &times; [q &times; CF<sub>u</sub> + (1&minus;q) &times; CF<sub>d</sub>]. Applying this to the 1-year zero: ${z.P1.toFixed(4)} = ${z.P05.toFixed(3)} &times; [q &times; ${z.Vu.toFixed(3)} + (1&minus;q) &times; ${z.Vd.toFixed(3)}] = ${z.P05.toFixed(3)} &times; [${z.Vd.toFixed(3)} &minus; q &times; (${z.Vd.toFixed(3)} &minus; ${z.Vu.toFixed(3)})]`,
+        `Multiplying out: ${z.P1.toFixed(4)} = ${a0.toFixed(6)} &minus; q &times; ${a1.toFixed(6)}, so q = (${a0.toFixed(6)} &minus; ${z.P1.toFixed(4)}) / ${a1.toFixed(6)} = ${qd.toFixed(6)}`,
+        `Applying the same equation to the claim: Price = d<sub>0.5</sub> &times; [q &times; CF<sub>u</sub> + (1&minus;q) &times; CF<sub>d</sub>] = ${z.P05.toFixed(3)} &times; [${qd.toFixed(6)} &times; ${money(cu)} + ${(1-qd).toFixed(6)} &times; ${money(cd)}] = <b>${money(correct)}</b>`,
+        `Both approaches give the same price: the risk-neutral probability is a short cut for the replicating portfolio.`
+      ]};
+  }},
+
+{ id:"z3", topic:"zeros", also:["rn"], name:"Pricing the 1-year zero from the tree", gen(){ return atLeast3(()=>{
+    /* HW_06 Question A: given the risk-neutral probabilities, the tree and the 0.5-year zero, the
+       1-year zero's price is P05 x (q Vu + (1-q) Vd).                                           */
+    let P05, Vu, Vd, q, correct, cands;
+    do {
+      P05=pick([0.97,0.975,0.98,0.985]); Vd=pick([0.975,0.98,0.985,0.99]); Vu=+(Vd-pick([0.02,0.025,0.03])).toFixed(3);
+      q=pick([0.4,0.5,0.6]);
+      correct=P05*(q*Vu+(1-q)*Vd);
+      cands=[
+        {val:q*Vu+(1-q)*Vd, msg:`That is the risk-neutral expected value at time 0.5. Discount it back six months at the risk-free rate: multiply by ${P05.toFixed(3)}.`},
+        {val:P05*P05, msg:`Squaring the 0.5-year zero price assumes the six-month rate will not change. The tree says it will: use the 1-year zero's possible values at 0.5.`},
+        {val:(q*Vu+(1-q)*Vd)/P05, msg:`Discounting multiplies by the 0.5-year zero price; dividing by it grows the value instead.`}
+      ];
+    } while (q===0.5 && false || !farFrom(correct,cands,0.0015));
+    return {
+      unit:"number", tol:0.0005, sep:0.0015,
+      text:`Today a \$1-par zero maturing at time 0.5 costs <b>${P05.toFixed(3)}</b>. At time 0.5 a \$1-par zero maturing
+            at time 1 will be worth either <b>${Vu.toFixed(3)}</b> (the up state) or <b>${Vd.toFixed(3)}</b> (the down state),
+            with risk-neutral probabilities of <b>${pctS(q,0)}</b> (up) and <b>${pctS(1-q,0)}</b> (down).`,
+      fig:[tr("0.5-year zero", P05.toFixed(3), ["$1", "$1"]), tr("1-year zero", "?", [Vu.toFixed(3), Vd.toFixed(3)], [pctS(q,0), pctS(1-q,0)])],   // trees drawn from this draw (Anh, 22 Oct 2026)
+      ask:"What is the 1-year zero worth today, per \$1 of par? (Four decimals.)",
+      correct,
+      cands,
+      steps:[
+        `The risk-neutral pricing equation says that the value of any security must be its risk-neutral expected payoff, discounted at the risk-free rate. Applying this to the 1-year zero: P = [q &times; V<sub>u</sub> + (1&minus;q) &times; V<sub>d</sub>] &times; (price of the 0.5-year zero), since multiplying by the 0.5-year zero's price discounts at the risk-free rate.`,
+        `Risk-neutral expected value at 0.5: ${q} &times; ${Vu.toFixed(3)} + ${(1-q).toFixed(1)} &times; ${Vd.toFixed(3)} = ${(q*Vu+(1-q)*Vd).toFixed(4)}`,
+        `Discount at the risk-free rate, i.e. multiply by the 0.5-year zero price: ${(q*Vu+(1-q)*Vd).toFixed(4)} &times; ${P05.toFixed(3)} = <b>${correct.toFixed(4)}</b>`
+      ]};
+  });
+  }},
+
+{ id:"d1", topic:"dist", also:["rn"], name:"The risk-free rate in a risk-neutral distribution", gen(){ return atLeast3(()=>{
+    /* MF sample final (2024-26): S_T can take four values with given risk-neutral probabilities;
+       S0 = E*[S_T]/(1 + Rf/2), so Rf = 2(E*[S_T]/S0 - 1), p.a. compounded semi-annually.      */
+    let s, q, S0, E, correct, cands;
+    do {
+      const base=pick([90,95,100]), st=pick([5,10]);
+      s=[base,base+st,base+2*st,base+3*st];
+      q=pick([[0.2,0.25,0.3,0.25],[0.1,0.3,0.4,0.2],[0.25,0.25,0.25,0.25],[0.15,0.35,0.3,0.2]]);
+      E=s.reduce((a,x,i)=>a+x*q[i],0);
+      S0=+(E/(1+pick([0.006,0.008,0.01,0.012,0.015]))).toFixed(0);
+      correct=2*(E/S0-1);
+      cands=[
+        {val:E/S0-1, msg:`That is the return over six months. The question asks for a rate p.a. with semi-annual compounding: double it.`},
+        {val:2*(s.reduce((a,x)=>a+x,0)/4/S0-1), msg:`You averaged the four prices equally. Weight each by its risk-neutral probability.`},
+        {val:2*(1-S0/E), msg:`Discounting: S<sub>0</sub> = E*[S<sub>T</sub>]/(1 + R<sub>f</sub>/2), so 1 + R<sub>f</sub>/2 = E*[S<sub>T</sub>]/S<sub>0</sub>, not 1 &minus; S<sub>0</sub>/E*.`}
+      ];
+    } while (correct<=0 || !farFrom(correct,cands,REL_SEP));
+    return {
+      unit:"percent", tol:0.002,
+      text:`Six months from now, ABC's share price can be <b>${money(s[0])}</b>, <b>${money(s[1])}</b>, <b>${money(s[2])}</b>
+            or <b>${money(s[3])}</b>, with risk-neutral probabilities of <b>${q.map(x=>pctS(x,0)).join("</b>, <b>").replace(/<\/b>, <b>([^<]*)$/,"</b> and <b>$1")}</b>.
+            ABC trades at <b>${money(S0)}</b> today and pays no dividend.`,
+      fig:[tr("ABC", money(S0), s.map(money).reverse(), q.map(x=>pctS(x,0)).reverse())],   // trees drawn from this draw (Anh, 22 Oct 2026)
+      ask:"What is the 6-month risk-free rate, p.a. with semi-annual compounding, in percent?",
+      correct,
+      cands,
+      steps:[
+        `The risk-neutral pricing equation says that the value of any security must be its risk-neutral expected payoff, discounted at the risk-free rate. Applying this to ABC's share: S<sub>0</sub> = E*[S<sub>T</sub>] / (1 + R<sub>f</sub>/2), where E*[S<sub>T</sub>] is the risk-neutral expected share price in six months.`,
+        `E*[S<sub>T</sub>] = ${s.map((x,i)=>`${pctS(q[i],0)} &times; ${x}`).join(" + ")} = ${E.toFixed(2)}`,
+        `${money(S0)} = ${E.toFixed(2)}/(1 + R<sub>f</sub>/2), so 1 + R<sub>f</sub>/2 = ${E.toFixed(2)}/${S0} = ${(E/S0).toFixed(6)}`,
+        `R<sub>f</sub> = 2 &times; ${(E/S0-1).toFixed(6)} = ${(2*+(E/S0-1).toFixed(6)).toFixed(6)}, that is <b>${pctS(correct,4)}</b>`
+      ]};
+  });
+  }},
+
+{ id:"d2", topic:"dist", also:["price"], name:"A digital bet on the share", gen(){ return atLeast3(()=>{
+    /* MF sample final (2024-26), part (b): a bet that pays $100 if S_T is below a level; its price is
+       100 x (risk-neutral probability of those states)/(1 + Rf/2).                             */
+    let s, q, r, k, st, correct, cands;
+    do {
+      const base=pick([90,95,100]); st=pick([5,10]);
+      s=[base,base+st,base+2*st,base+3*st];
+      q=pick([[0.2,0.25,0.3,0.25],[0.1,0.3,0.4,0.2],[0.15,0.35,0.3,0.2]]);
+      r=pick(range(2.0,5.0,0.2)); k=pick([1,2]);              // the bet pays if S_T is in the lowest k states
+      const P=q.slice(0,k).reduce((a,x)=>a+x,0);
+      correct=100*P/(1+r/200);
+      cands=[
+        {val:100*P, msg:`That is the risk-neutral expected payoff, not yet discounted. Divide by 1 + R<sub>f</sub>/2.`},
+        {val:100*q[k-1]/(1+r/200), msg:`Count every state in which the bet pays: S<sub>T</sub> below ${money(s[k]-st/2)} includes ${k===1?"only the lowest":"the two lowest"} state${k>1?"s":""}.`},
+        {val:100*(1-P)/(1+r/200), msg:`That is the price of a bet that pays when S<sub>T</sub> is <em>above</em> the level.`},
+        {val:100*P/(1+r/100), msg:`The rate is p.a. with semi-annual compounding; over six months divide by 1 + R<sub>f</sub>/2.`}
+      ];
+    } while (!farFrom(correct,cands,REL_SEP));
+    const lvl=s[k]-st/2;
+    return {
+      unit:"money",
+      text:`Six months from now, ABC's share price can be <b>${money(s[0])}</b>, <b>${money(s[1])}</b>, <b>${money(s[2])}</b>
+            or <b>${money(s[3])}</b>, with risk-neutral probabilities of <b>${pctS(q[0],0)}</b>, <b>${pctS(q[1],0)}</b>,
+            <b>${pctS(q[2],0)}</b> and <b>${pctS(q[3],0)}</b>. The 6-month risk-free rate is <b>${r.toFixed(2)}% p.a.</b>,
+            compounded semi-annually.`,
+      fig:[tr("ABC", "", s.map(money).reverse(), q.map(x=>pctS(x,0)).reverse())],   // trees drawn from this draw (Anh, 22 Oct 2026)
+      ask:`What is the price of a bet that pays \$100 in six months if ABC's price is then below ${money(lvl)}, and nothing otherwise?`,
+      correct,
+      cands,
+      steps:[
+        `The risk-neutral pricing equation says that the value of any security must be its risk-neutral expected payoff, discounted at the risk-free rate. Applying this to the bet: Price = [risk-neutral probability that the bet pays &times; \$100 + risk-neutral probability that it doesn't &times; \$0] / (1 + R<sub>f</sub>/2)`,
+        `The bet pays in ${k===1?"the lowest state":"the two lowest states"}: risk-neutral probability ${q.slice(0,k).map(x=>pctS(x,0)).join(" + ")} = ${pctS(q.slice(0,k).reduce((a,x)=>a+x,0),0)}`,
+        `Price = 100 &times; ${q.slice(0,k).reduce((a,x)=>a+x,0).toFixed(2)} / (1 + ${r.toFixed(2)}%/2) = <b>${money(correct)}</b>`
+      ]};
+  });
+  }},
+
+{ id:"b3", topic:"bets", also:["price"], name:"Pricing any payoff off the bets", gen(){ return atLeast3(()=>{
+    /* The Democrats question, part (d): a security paying A if one side wins and B otherwise. From the
+       price of the $100 bet, q = P (1 + r/2)/100; price = [q A + (1-q) B]/(1 + r/2).              */
+    let c, PA, r, A, B, q, correct, cands;
+    do {
+      c=betCtx(); PA=pick(range(20,80,2)); r=pick(range(2.0,5.0,0.2));
+      A=pick([10,20,40]); B=pick([30,50,80]);
+      q=PA*(1+r/200)/100; correct=(q*A+(1-q)*B)/(1+r/200);
+      cands=[
+        {val:q*A+(1-q)*B, msg:`That is the risk-neutral expected payoff, not yet discounted: divide by 1 + r/2.`},
+        {val:(A+B)/2/(1+r/200), msg:`Even odds are not the risk-neutral probabilities. Back q out of the bet's price.`},
+        {val:((1-q)*A+q*B)/(1+r/200), msg:`The weights are swapped: q is the probability that ${c.a} wins, and the security pays ${money(A)} then.`},
+        {val:(A+B)*PA/100, msg:`Each dollar paid if ${c.a} wins costs ${PA}/100, but a dollar paid if ${c.b} wins costs something else: (1 &minus; q)/(1 + r/2).`}
+      ];
+    } while (q>=0.95 || !farFrom(correct,cands,REL_SEP));
+    return {
+      unit:"money",
+      text:`Consider ${c.ev}. A bet that pays <b>\$100</b> if ${c.a} wins, and nothing otherwise, costs <b>${money(PA)}</b>
+            today. ${betTail} The 6-month risk-free rate is <b>${r.toFixed(2)}% p.a.</b>, compounded semi-annually.`,
+      fig:[tr(`Bet on ${c.a}`, money(PA), ["$100", "$0"], [`${c.a} wins`, `${c.b} wins`]), tr("Security", "?", [money(A), money(B)], [`${c.a} wins`, `${c.b} wins`])],   // trees drawn from this draw (Anh, 22 Oct 2026)
+      ask:`What is the price of a security that pays ${money(A)} if ${c.a} wins and ${money(B)} if ${c.b} wins?`,
+      correct,
+      cands,
+      steps:[
+        `The risk-neutral pricing equation says that the value of any security must be its risk-neutral expected payoff, discounted at the risk-free rate. With q the risk-neutral probability that ${c.a} wins: Price = [q &times; (payoff if ${c.a} wins) + (1&minus;q) &times; (payoff if ${c.b} wins)] / (1 + r/2)`,
+        `Applying this to the bet on ${c.a}: ${money(PA)} = [q &times; \$100 + (1&minus;q) &times; \$0] / (1 + ${r.toFixed(2)}%/2) = q &times; \$100 / (1 + ${r.toFixed(2)}%/2)`,
+        `Solving for q: q = ${money(PA)} &times; (1 + ${r.toFixed(2)}%/2) / \$100 = ${PA} &times; ${(1+r/200).toFixed(4)} / 100 = ${q.toFixed(6)}`,
+        `Applying the same equation to the security: Price = [${q.toFixed(6)} &times; ${money(A)} + ${(1-q).toFixed(6)} &times; ${money(B)}] / (1 + ${r.toFixed(2)}%/2) = <b>${money(correct)}</b>`
+      ]};
+  });
+  }},
+
+{ id:"s1", topic:"zeros", also:["price"], name:"Zero prices from state prices", gen(){ return atLeast3(()=>{
+    /* HW_06 Question 2: two assets each pay $1 in one state at time 0.5 (state prices); the 1-year
+       zero is worth Vu or Vd at 0.5. Its price today = Vu x A1 + Vd x A2; the 0.5-year zero's is A1 + A2. */
+    let A1, A2, Vu, Vd, ask05, correct, cands;
+    do {
+      A1=pick([0.38,0.42,0.45,0.48,0.52]); A2=+(pick([0.97,0.975,0.98])-A1).toFixed(3);
+      Vd=pick([0.985,0.99]); Vu=+(Vd-pick([0.02,0.03])).toFixed(3); ask05=pick([true,false]);
+      correct = ask05 ? A1+A2 : Vu*A1+Vd*A2;
+      cands = ask05 ? [
+        {val:Vu*A1+Vd*A2, msg:`That is the 1-year zero. The 0.5-year zero pays \$1 in <em>both</em> states, so it costs one of each state asset.`},
+        {val:(A1+A2)/2, msg:`The 0.5-year zero pays \$1 in each state, so it is one unit of each asset, not half.`},
+        {val:A1, msg:`That buys \$1 in the up state only. The 0.5-year zero pays in both states.`}
+      ] : [
+        {val:A1+A2, msg:`That is the 0.5-year zero, which pays \$1 in both states. At time 0.5 the 1-year zero is worth ${Vu.toFixed(3)} or ${Vd.toFixed(3)}, not \$1.`},
+        {val:Vd*A1+Vu*A2, msg:`The values are swapped: the up-state asset pays when the 1-year zero is worth ${Vu.toFixed(3)}.`},
+        {val:(Vu+Vd)/2*(A1+A2)/2, msg:`Replicate state by state: ${Vu.toFixed(3)} units of the up-state asset and ${Vd.toFixed(3)} of the down-state asset.`}
+      ];
+    } while (!farFrom(correct,cands,0.002));
+    return {
+      unit:"number", tol:0.0005, sep:0.002,
+      text:`At time 0.5, a \$1-par zero maturing at time 1 will be worth either <b>${Vu.toFixed(3)}</b> (the up state) or
+            <b>${Vd.toFixed(3)}</b> (the down state). Asset 1 pays \$1 at time 0.5 in the up state and nothing otherwise, and
+            costs <b>${A1.toFixed(3)}</b> today; Asset 2 pays \$1 at time 0.5 in the down state and nothing otherwise, and costs
+            <b>${A2.toFixed(3)}</b> today.`,
+      fig:[tr("1-year zero", "", [Vu.toFixed(3), Vd.toFixed(3)]), tr("Asset 1", A1.toFixed(3), ["$1", "$0"]), tr("Asset 2", A2.toFixed(3), ["$0", "$1"])],   // trees drawn from this draw (Anh, 22 Oct 2026)
+      ask: ask05 ? "What is the price today of a \$1-par zero maturing at time 0.5? (Four decimals.)"
+                 : "What is the price today of the \$1-par zero maturing at time 1? (Four decimals.)",
+      correct,
+      cands,
+      steps: ask05 ? [
+        `The 0.5-year zero pays \$1 in both states: one unit of Asset 1 plus one of Asset 2`,
+        `Price = ${A1.toFixed(3)} + ${A2.toFixed(3)} = <b>${correct.toFixed(4)}</b>`
+      ] : [
+        `At 0.5 the 1-year zero is worth ${Vu.toFixed(3)} (up) or ${Vd.toFixed(3)} (down): ${Vu.toFixed(3)} units of Asset 1 plus ${Vd.toFixed(3)} of Asset 2 pay the same`,
+        `Price = ${Vu.toFixed(3)} &times; ${A1.toFixed(3)} + ${Vd.toFixed(3)} &times; ${A2.toFixed(3)} = <b>${correct.toFixed(4)}</b>`
+      ]};
+  });
+  }},
+
+{ id:"r2", topic:"zeros", also:["rn"], name:"A 1-year rate from a tree of 6-month rates", gen(){ return atLeast3(()=>{
+    /* UG/MBA/MF finals: a one-period tree of 6-month rates (p.a., semi-annual) with 50/50
+       risk-neutral probabilities; price a 1-year zero and back out its yield.                   */
+    let r0, ru, rd, q, P, correct, cands;
+    do {
+      r0=pick(range(3.0,5.0,0.2)); ru=+(r0+pick([1.0,1.6,2.0])).toFixed(2); rd=+(r0-pick([0.6,1.0])).toFixed(2);
+      q=pick([0.5,0.5,0.4,0.6]);
+      const Pu=1/(1+ru/200), Pd=1/(1+rd/200);
+      P=(q*Pu+(1-q)*Pd)/(1+r0/200);
+      correct=2*(Math.pow(P,-0.5)-1);
+      cands=[
+        {val:2*(1/P-1), msg:`The 1-year zero has two half-year periods: P = 1/(1 + y/2)<sup>2</sup>, so y = 2(P<sup>&minus;1/2</sup> &minus; 1).`},
+        {val:2*(Math.pow(q*Pu+(1-q)*Pd,-0.5)-1), msg:`You stopped at the risk-neutral expected value at time 0.5. Discount it back to today at the first 6-month rate, ${r0.toFixed(2)}%, before backing out the yield.`},
+        {val:(q*ru+(1-q)*rd)/100, msg:`That is the risk-neutral expected 6-month rate in six months. The 1-year rate also covers the first six months, at ${r0.toFixed(2)}%.`}
+      ];
+      /* Averaging today's rate with the expected 6-month rate lands within about 0.01% of the key
+         (a convexity effect only), so that shortcut cannot be separated here and is not offered. */
+    } while (!farFrom(correct,cands,0.003));
+    const Pu=+(1/(1+ru/200)).toFixed(6), Pd=+(1/(1+rd/200)).toFixed(6);
+    const Pp=+((q*Pu+(1-q)*Pd)/(1+r0/200)).toFixed(6);                // worked from the printed figures
+    return {
+      unit:"percent", tol:0.001, sep:0.003,
+      text:`The 6-month risk-free rate is <b>${r0.toFixed(2)}%</b> today. In six months it will be either <b>${ru.toFixed(2)}%</b>
+            (the up state) or <b>${rd.toFixed(2)}%</b> (the down state), with risk-neutral probabilities of
+            <b>${pctS(q,0)}</b> and <b>${pctS(1-q,0)}</b>. All rates are p.a., compounded semi-annually.`,
+      fig:[tr("6-month rate", `${r0.toFixed(2)}%`, [`${ru.toFixed(2)}%`, `${rd.toFixed(2)}%`], [pctS(q,0), pctS(1-q,0)])],   // trees drawn from this draw (Anh, 22 Oct 2026)
+      ask:"What is the 1-year zero rate implied by the tree (the yield on a 1-year zero), p.a. with semi-annual compounding, in percent?",
+      correct,
+      cands,
+      steps:[
+        `At 0.5, a \$1 zero maturing at 1 is worth 1/(1 + ${ru.toFixed(2)}%/2) = ${Pu.toFixed(6)} (up) or 1/(1 + ${rd.toFixed(2)}%/2) = ${Pd.toFixed(6)} (down)`,
+        `The risk-neutral pricing equation says that the value of any security must be its risk-neutral expected payoff, discounted at the risk-free rate. The first 6-month rate, ${r0.toFixed(2)}%, is the risk-free rate for the first six months.`,
+        `Applying this to the 1-year zero today: P = (${q} &times; ${Pu.toFixed(6)} + ${(1-q).toFixed(1)} &times; ${Pd.toFixed(6)}) / (1 + ${r0.toFixed(2)}%/2) = ${Pp.toFixed(6)}`,
+        `1/(1 + y/2)<sup>2</sup> = ${Pp.toFixed(6)}, so y = 2 &times; (${Pp.toFixed(6)}<sup>&minus;1/2</sup> &minus; 1) = ${(2*(Math.pow(Pp,-0.5)-1)).toFixed(6)}, that is <b>${pctS(2*(Math.pow(Pp,-0.5)-1),4)}</b>`
+      ]};
+  });
+  }},
+
+{ id:"b1", topic:"bets", also:["rn"], name:"A bet's risk-neutral probability", gen(){ return atLeast3(()=>{
+    /* The exam bets (Democrats win; Federer/Roddick), in Anh's price form: q = P_A (1 + r/2)/100. */
+    let c, PA, r, correct, cands;
+    do {
+      c=betCtx(); PA=pick(range(20,80,2)); r=pick(range(2.0,5.0,0.2));
+      correct=PA*(1+r/200)/100;
+      cands=[
+        {val:PA/100, msg:`The price is the risk-neutral expected payoff <em>discounted</em>: ${PA} = q &times; 100/(1 + r/2). Grow the price at the risk-free rate before dividing by 100.`},
+        {val:PA*(1+r/100)/100, msg:`The rate is p.a. with semi-annual compounding, and the bet runs six months: grow at 1 + r/2.`},
+        {val:1-correct, msg:`That is the risk-neutral probability that ${c.b} wins.`}
+      ];
+    } while (correct>=0.97 || !farFrom(correct,cands,REL_SEP));
+    return {
+      unit:"percent",
+      text:`Consider ${c.ev}. A bet that pays <b>\$100</b> if ${c.a} wins, and nothing otherwise, costs <b>${money(PA)}</b>
+            today. ${betTail} The 6-month risk-free rate is <b>${r.toFixed(2)}% p.a.</b>, compounded semi-annually.`,
+      fig:[tr(`Bet on ${c.a}`, money(PA), ["$100", "$0"], [`${c.a} wins`, `${c.b} wins`])],   // trees drawn from this draw (Anh, 22 Oct 2026)
+      ask:`What is the risk-neutral probability that ${c.a} wins, in percent?`,
+      correct,
+      cands,
+      steps:[
+        `The risk-neutral pricing equation says that the value of any security must be its risk-neutral expected payoff, discounted at the risk-free rate.`,
+        `Applying this to the bet: ${PA} = [q &times; 100 + (1&minus;q) &times; 0] / (1 + ${r.toFixed(2)}%/2) = q &times; 100 / (1 + ${r.toFixed(2)}%/2)`,
+        `Solving for q: q = ${PA} &times; ${(1+r/200).toFixed(4)} / 100 = <b>${pctS(correct,4)}</b>`
+      ]};
+  });
+  }},
+
+{ id:"b2", topic:"bets", also:["price"], name:"The price of the bet on the other side", gen(){ return atLeast3(()=>{
+    /* Both bets together pay $100 for sure, so P_A + P_B = 100/(1 + r/2).                      */
+    let c, PA, r, correct, cands;
+    do {
+      c=betCtx(); PA=pick(range(20,80,2)); r=pick(range(2.0,5.0,0.2));
+      correct=100/(1+r/200)-PA;
+      cands=[
+        {val:100-PA, msg:`The two bets together pay \$100 for sure, but that \$100 arrives in six months: together they cost 100/(1 + r/2), not 100.`},
+        {val:100/(1+r/100)-PA, msg:`The rate is p.a. with semi-annual compounding; over six months, discount at 1 + r/2.`},
+        {val:PA, msg:`The two bets cost the same only if both sides are equally likely under the risk-neutral probabilities.`},
+        {val:(1-PA*(1+r/200)/100)*100, msg:`That is the risk-neutral expected payoff of the bet on ${c.b}, not yet discounted.`}
+      ];
+    } while (correct<=2 || !farFrom(correct,cands,REL_SEP));
+    const q2=PA*(1+r/200)/100;   // Approach 2 (Anh, 22 Oct 2026): q from the bet, then 1 - q prices the other side
+    return {
+      unit:"money",
+      text:`Consider ${c.ev}. A bet that pays <b>\$100</b> if ${c.a} wins, and nothing otherwise, costs <b>${money(PA)}</b>
+            today. ${betTail} The 6-month risk-free rate is <b>${r.toFixed(2)}% p.a.</b>, compounded semi-annually.`,
+      fig:[tr(`Bet on ${c.a}`, money(PA), ["$100", "$0"], [`${c.a} wins`, `${c.b} wins`]), tr(`Bet on ${c.b}`, "?", ["$0", "$100"], [`${c.a} wins`, `${c.b} wins`])],   // trees drawn from this draw (Anh, 22 Oct 2026)
+      ask:`What does a bet that pays \$100 if ${c.b} wins cost today?`,
+      correct,
+      cands,
+      steps:[
+        `<b>Approach 1: both bets together</b>`,
+        `Holding both bets pays \$100 in six months whoever wins: a risk-free zero with \$100 face`,
+        `So the two bets cost 100/(1 + ${r.toFixed(2)}%/2) = ${(100/(1+r/200)).toFixed(4)} together`,
+        `Bet on ${c.b} = ${(100/(1+r/200)).toFixed(4)} &minus; ${PA} = <b>${money(correct)}</b>`,
+        `<b>Approach 2: the risk-neutral probability</b>`,
+        `The risk-neutral pricing equation says that the value of any security must be its risk-neutral expected payoff, discounted at the risk-free rate.`,
+        `Applying this to the bet on ${c.a}, with q the risk-neutral probability that ${c.a} wins: ${money(PA)} = [q &times; \$100 + (1&minus;q) &times; \$0] / (1 + ${r.toFixed(2)}%/2)`,
+        `Solving for q: q = ${PA} &times; ${(1+r/200).toFixed(4)} / 100 = ${q2.toFixed(6)}, so the risk-neutral probability that ${c.b} wins is 1 &minus; q = ${(1-q2).toFixed(6)}`,
+        `Applying the same equation to the bet on ${c.b}: Price = [q &times; \$0 + (1&minus;q) &times; \$100] / (1 + ${r.toFixed(2)}%/2) = ${(1-q2).toFixed(6)} &times; 100 / ${(1+r/200).toFixed(4)} = <b>${money(correct)}</b>`,
+        `Both approaches give the same price.`
+      ]};
+  });
+  }},
+
+{ id:"b4", topic:"bets", also:["rn"], name:"The risk-free rate hidden in two bets", gen(){ return atLeast3(()=>{
+    /* Federer/Roddick part (c), in price form: P_A + P_B = 100/(1 + r/2).                     */
+    let c, PA, PB, correct, cands;
+    do {
+      c=betCtx(); PA=pick(range(20,80,1)); PB=+(pick(range(97.6,99.4,0.2))-PA).toFixed(2);       // both together: a 1.2%-4.9% rate
+      const S=PA+PB; correct=2*(100/S-1);
+      cands=[
+        {val:100/S-1, msg:`That is the return over six months. Quote it p.a. with semi-annual compounding: double it.`},
+        {val:2*(1-S/100), msg:`The rate is what \$${S.toFixed(2)} grows into: 100/${S.toFixed(2)} = 1 + r/2. Not 1 &minus; S/100.`},
+        {val:(100-S)/100, msg:`That is the six-month discount on \$100, as a fraction of \$100; the rate is 100/${S.toFixed(2)} &minus; 1 over six months, doubled for p.a.`}
+      ];
+    } while (PB<=2 || !farFrom(correct,cands,REL_SEP));
+    const S=PA+PB;
+    return {
+      unit:"percent", tol:0.002,
+      text:`Consider ${c.ev}. A bet that pays <b>\$100</b> if ${c.a} wins costs <b>${money(PA)}</b> today; a bet that pays
+            <b>\$100</b> if ${c.b} wins costs <b>${money(PB)}</b>. ${betTail}`,
+      fig:[tr(`Bet on ${c.a}`, money(PA), ["$100", "$0"], [`${c.a} wins`, `${c.b} wins`]), tr(`Bet on ${c.b}`, money(PB), ["$0", "$100"], [`${c.a} wins`, `${c.b} wins`])],   // trees drawn from this draw (Anh, 22 Oct 2026)
+      ask:"What 6-month risk-free rate do the bets imply, p.a. with semi-annual compounding, in percent?",
+      correct,
+      cands,
+      steps:[
+        `Both bets together pay \$100 in six months whoever wins, and cost ${PA.toFixed(2)} + ${PB.toFixed(2)} = ${S.toFixed(2)}`,
+        `So 100/(1 + r/2) = ${S.toFixed(2)}: 1 + r/2 = 100/${S.toFixed(2)} = ${(100/S).toFixed(6)}`,
+        `r = 2 &times; ${(100/S-1).toFixed(6)} = ${(2*+(100/S-1).toFixed(6)).toFixed(6)}, that is <b>${pctS(correct,4)}</b> p.a.`
+      ]};
+  });
+  }},
+
+{ id:"i1", topic:"bets", also:["rn"], name:"Car insurance: the risk-neutral chance of a bad accident", gen(){ return atLeast3(()=>{
+    /* Anh, 9 Oct 2026: car insurance priced off the risk-neutral probability. Rebuilt 22 Oct 2026 (Anh): no
+       deductible, which implied every accident cost the same. The policy covers only a bad accident (damage
+       above L) and then pays a fixed L at the end of the six months: premium = q L/(1 + r/2).            */
+    let L, prem, r, correct, cands;
+    do {
+      L=pick([5000,8000,10000,12000,15000,20000]); r=pick(range(2.0,5.0,0.2));
+      prem=pick([150,200,250,300,400]);
+      correct=prem*(1+r/200)/L;
+      cands=[
+        {val:prem/L, msg:`The premium is paid today and the payout comes in six months, so the premium is the <em>discounted</em> risk-neutral expected payout. Grow it at 1 + r/2 first.`},
+        {val:prem/(1+r/200)/L, msg:`The premium is already a value today. To match it with the payout in six months, grow it at 1 + r/2; don't discount it again.`},
+        {val:prem*(1+r/100)/L, msg:`The rate is p.a. with semi-annual compounding; over six months, grow at 1 + r/2.`},
+        {val:1-correct, msg:`That is the risk-neutral probability of <em>no</em> bad accident.`}
+      ];
+    } while (!farFrom(correct,cands,REL_SEP));
+    const mL=`\$${L.toLocaleString("en-US")}`;   // $20,000, not $20,000.00
+    return {
+      unit:"percent", tol:0.002,
+      text:`A 6-month car insurance policy covers only bad accidents: those that cause more than <b>${mL}</b> of damage.
+            If the driver has a bad accident in the next six months, the policy pays a fixed <b>${mL}</b> at the end of
+            the six months; otherwise it pays nothing. The premium, paid today, is <b>${money(prem)}</b>. The insurance market is
+            efficient and fully integrated with the financial markets; the 6-month risk-free rate is <b>${r.toFixed(2)}% p.a.</b>,
+            compounded semi-annually.`,
+      fig:[tr("Policy", money(prem), [money(L), "$0"], ["bad accident", "no bad accident"])],   // tree (Anh, 22 Oct 2026)
+      ask:"What is the risk-neutral probability of a bad accident, in percent?",
+      correct,
+      cands,
+      steps:[
+        `The risk-neutral pricing equation says that the value of any security must be its risk-neutral expected payoff, discounted at the risk-free rate.`,
+        `Applying this to the policy, with q the risk-neutral probability of a bad accident: ${money(prem)} = [q &times; ${mL} + (1&minus;q) &times; \$0] / (1 + ${r.toFixed(2)}%/2) = q &times; ${mL} / (1 + ${r.toFixed(2)}%/2)`,
+        `Solving for q: q = ${money(prem)} &times; ${(1+r/200).toFixed(4)} / ${mL} = ${correct.toFixed(6)}, that is <b>${pctS(correct,4)}</b>`
+      ]};
+  });
+  }}
+
+];
+
+/* ======================= CHOICE-MODE ITEMS ==============================
+   Auto-graded by which option is clicked, not by a typed number.
+     topic "error"   — a worked solution with one planted mistake
+     topic "concept" — reason about the direction of an effect, no arithmetic
+   Directional items shuffle their own options so position carries no
+   information; spot-the-error items must stay in step order.            */
+
+function shuffle(a){
+  const out = a.slice();
+  for (let i=out.length-1; i>0; i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [out[i],out[j]] = [out[j],out[i]];
+  }
+  return out;
+}
+
+const CHOICE_TEMPLATES = [{ id:"k1", topic:"concept", name:"Why they are not real probabilities", gen(){
+    /* Rebuilt 22 Oct 2026 (Anh): the stem used to say "the pricing formula" without giving it. It now
+       gives the equation, and the key is the risk argument: actual probabilities in it would discount
+       the actual expected cash flow at the risk-free rate and ignore the cash flow's risk.          */
+    const opts=shuffle([
+      {html:`With actual probabilities, the formula would discount the actual expected cash flow at the risk-free rate, ignoring the cash flow's risk`, correct:true,
+       msg:`Right. Discounting the actual expected cash flow at R<sub>f</sub> is correct only for a riskless cash flow. For a risky one, the risk adjustment has to go somewhere; in this formula it goes into the probabilities.`},
+      {html:`Nobody knows the actual probabilities, so the formula has to use made-up ones`, correct:false,
+       msg:`The risk-neutral probabilities are not made up: they are backed out of market prices. Even if we knew the actual probabilities, putting them into this formula would discount at R<sub>f</sub> and leave out the risk.`},
+      {html:`Risk-neutral probabilities are always 50/50, and actual probabilities rarely are`, correct:false,
+       msg:`Risk-neutral probabilities are not 50/50 in general; they come from the prices in the tree. The reason they differ from actual probabilities is risk: with actual probabilities the formula would discount at R<sub>f</sub> with no risk adjustment.`},
+      {html:`Actual probabilities already include the risk-free rate, so it would be counted twice`, correct:false,
+       msg:`Probabilities don't include any rate. The problem is the opposite of double counting: with actual probabilities, the risk premium would be left out altogether.`}
+    ]);
+    return {mode:"choice",
+      text:`The risk-neutral pricing equation says Price = E*[cash flow] / (1 + R<sub>f</sub>), where E*[cash flow] is the
+            expected cash flow computed with the risk-neutral probabilities.`,
+      ask:"Why are the risk-neutral probabilities used to compute E*[cash flow] generally not the same as the actual probabilities?",
+      options:opts,
+      steps:[
+        `If the actual probabilities were used, E*[cash flow] would be the actual expected cash flow, and the formula would discount it at the risk-free rate.`,
+        `That is right only for a riskless cash flow. A risky cash flow must be discounted at the risk-free rate plus a risk premium.`,
+        `So the risk-neutral probabilities must differ from the actual ones: they adjust the expected cash flow for risk, so that the risk-free rate is then the right discount rate.`
+      ]};
+  }},
+
+{ id:"k2", topic:"concept", name:"Two routes to the same price", gen(){
+    const opts=shuffle([
+      {html:`Same price: one adds a premium to the rate, the other uses risk-neutral weights`, correct:true,
+       msg:`Right. The traditional route makes the denominator bigger with a risk premium; the risk-neutral route makes the numerator smaller by using pessimistic, risk-neutral weights and then discounts at the risk-free rate. Both account for the same risk, so they give the same price.`},
+      {html:`Same price, because the risk-neutral weights equal the true probabilities`, correct:false,
+       msg:`They give the same price, but not for that reason. The risk-neutral weights are more pessimistic than the true probabilities; that is how they carry the risk adjustment the premium carries in the other route.`},
+      {html:`Different prices: the risk-neutral route leaves the security's risk out`, correct:false,
+       msg:`The risk is not left out; it is moved. The risk-neutral weights tilt towards the bad state, which does the job the risk premium does in the other route. The prices are the same.`},
+      {html:`Different prices: the traditional route counts the risk twice`, correct:false,
+       msg:`It counts it once, in the discount rate, with the true probabilities in the numerator. Counting twice would be using risk-neutral weights <em>and</em> a premium. Done properly, the two routes agree.`}
+    ]);
+    return {mode:"choice",
+      text:`There are two routes to valuing a security. One route discounts actual expected cash flows at the risk-free
+            rate plus a risk premium. The other discounts risk-neutral expected cash flows at the risk-free rate.`,
+      ask:"How do the two routes relate?",
+      options:opts,
+      steps:[
+        `Traditional: expected CF / (1 + r<sub>f</sub> + premium).`,
+        `Risk-neutral: risk-neutral expected CF / (1 + r<sub>f</sub>).`,
+        `Same answer, adjustment made in different places.`
+      ]};
+  }},
+
+{ id:"k3", topic:"concept", name:"Why bother with q at all?", gen(){
+    const opts=shuffle([
+      {html:`One set of risk-neutral weights prices every derivative on the share`, correct:true,
+       msg:`Right. The risk-neutral probabilities belong to the underlying, so once you have them you can price any payoff on it. Risk premiums differ from security to security, even for derivatives built on the same share, so the traditional route needs a new one each time.`},
+      {html:`Risk premiums cannot be estimated, so the traditional route is unusable`, correct:false,
+       msg:`They can be estimated (with the CAPM or one of its siblings, as the note says). The trouble is that each derivative on the share has its own premium; the risk-neutral weights serve them all.`},
+      {html:`The risk-neutral route does not need a risk-free rate`, correct:false,
+       msg:`It does: risk-neutral expectations are discounted at the risk-free rate. What it does not need is a separate risk premium for every security.`},
+      {html:`The risk-neutral route is exact; the traditional one only approximates`, correct:false,
+       msg:`Done properly, both are exact and give the same price. The advantage is practical: one set of weights prices every derivative on the share.`}
+    ]);
+    return {mode:"choice",
+      text:`There are two routes to valuing a security. One route discounts actual expected cash flows at the risk-free
+            rate plus a risk premium. The other discounts risk-neutral expected cash flows at the risk-free rate. The two
+            routes give the same answer, and the risk-neutral one requires learning a probability that is not a probability.`,
+      ask:"So what makes the risk-neutral route worth the trouble?",
+      options:opts,
+      steps:[
+        `q depends only on the underlying's tree and the risk-free rate.`,
+        `The same q prices the share, the bond, a call, a put, or any payoff you like.`,
+        `A risk premium, by contrast, is specific to the security being priced.`
+      ]};
+  }},
+
+{ id:"k4", topic:"concept", name:"Which is bigger, q or the true probability?", gen(){
+    const opts=shuffle([
+      {html:`Higher than 0.6`, correct:true,
+       msg:`Right. To express their risk aversion, investors inflate the probabilities of bad outcomes and deflate the probabilities of good outcomes. The up state is the good outcome for the share, so q = 0.6 is below its true probability.`},
+      {html:`Lower than 0.6`, correct:false,
+       msg:`It is the other way round. To express their risk aversion, investors deflate the probability of a good outcome, and the up state is the good outcome for the share. So the true probability is higher than q.`},
+      {html:`Exactly 0.6`, correct:false,
+       msg:`q is not anyone's guess of the chance of a rise. It was derived without using any probability, and it equals the true probability only if investors demand no premium for the share's risk.`},
+      {html:`It cannot be said without knowing which option is priced`, correct:false,
+       msg:`Neither q nor the true probability depends on the option: both belong to the share. The up state is the good outcome for the share, so its true probability exceeds the deflated 0.6.`}
+    ]);
+    return {mode:"choice",
+      text:`A share is worth \$100 today and \$105 or \$95 in six months. The risk-neutral probability of the up state,
+            q, is 0.6. Investors expect the share to earn more than the risk-free rate.`,
+      fig:[tr("Share", "$100", ["$105", "$95"])],   // trees drawn from this draw (Anh, 22 Oct 2026)
+      ask:"How does the true probability of the up state compare with the risk-neutral probability of 0.6?",
+      options:opts,
+      steps:[
+        `The risk-neutral probabilities are not the true probabilities. To express their risk aversion, investors inflate the probabilities of bad outcomes and deflate the probabilities of good outcomes.`,
+        `For the share, the up state (\$105) is the good outcome and the down state (\$95) is the bad outcome. So the risk-neutral probability of the up state, 0.6, is a deflated version of the true probability.`,
+        `So the true probability of the up state is higher than 0.6.`
+      ]};
+  }},
+
+{ id:"k5", topic:"error", name:"Find the mistake — mixing the two routes", gen(){
+    const cfu=pick([12,16,20]), cfd=pick([8,10]);
+    const p=pick([.7,.8]);
+    const rf=pick([.03,.04]);
+    const prem=pick([.02,.03]);
+    /* 9 Oct 2026 (blind sitting): q was p - 0.11, which did not match the stated rate and premium.
+       Now q is backed out of the inputs: the traditional price E/(1+rf+prem), carried at rf.  */
+    const Ptrad=(p*cfu+(1-p)*cfd)/(1+rf+prem);
+    const q=+((Ptrad*(1+rf)-cfd)/(cfu-cfd)).toFixed(4);
+    const E=p*cfu+(1-p)*cfd, Eq=q*cfu+(1-q)*cfd;
+    const fault=pick(["actualWithRf","rnWithPremium"]);
+    // Step 4 works from Step 2's printed cents (rule 21): $16.68/1.06 = $15.74, not $15.73 from the unrounded expectation (review 11 Oct 2026).
+    const shown = fault==="actualWithRf" ? +E.toFixed(2)/(1+rf) : +Eq.toFixed(2)/(1+rf+prem);
+    const st=[
+      fault==="actualWithRf"
+        ? `<b>Step 1.</b> Use the traditional route: weight the payoffs by the true probabilities, ${pctS(p,0)} and ${pctS(1-p,0)}`
+        : `<b>Step 1.</b> Use the risk-neutral route: weight the payoffs by the risk-neutral probabilities, ${q.toFixed(4)} and ${(1-q).toFixed(4)}`,
+      fault==="actualWithRf"
+        ? `<b>Step 2.</b> Expected payoff = ${pctS(p,0)} &times; ${money(cfu)} + ${pctS(1-p,0)} &times; ${money(cfd)} = ${money(E)}`
+        : `<b>Step 2.</b> Risk-neutral expected payoff = ${q.toFixed(4)} &times; ${money(cfu)} + ${(1-q).toFixed(4)} &times; ${money(cfd)} = ${money(Eq)}`,
+      fault==="actualWithRf"
+        ? `<b>Step 3.</b> Discount at the risk-free rate of ${pctS(rf,0)}`
+        : `<b>Step 3.</b> Discount at the risk-free rate plus the ${pctS(prem,0)} risk premium, i.e. ${pctS(rf+prem,0)}`,
+      `<b>Step 4.</b> Price = ${money(shown)}`
+    ];
+    const fine=[
+      `Step 1 is fine &mdash; either route is valid, and this one is followed through Step 2.`,
+      `Step 2 is fine &mdash; that is the expectation the route chosen in Step 1 calls for.`,
+      `Step 3 is fine &mdash; that rate matches the weights used in step 2.`,
+      `Step 4 is fine &mdash; that is step 2 divided by step 3.`
+    ];
+    let at=2, why;
+    if(fault==="actualWithRf"){
+      why=`The weights and the discount rate have to match. Step 2 used the <em>actual</em> probabilities, so the discount rate must carry a risk premium. Discounting actual expectations at the risk-free rate prices the security as though it were riskless, and overstates it.`;
+    } else {
+      why=`The weights and the discount rate have to match. Step 2 used the <em>risk-neutral</em> weights, which already carry the risk adjustment, so adding a premium to the discount rate charges for the same risk twice and understates the price.`;
+    }
+    return {mode:"choice",
+      text:`A security pays ${money(cfu)} in the up state and ${money(cfd)} in the down state. The true probability of the
+            up state is ${pctS(p,0)}; the risk-free rate over the six months is ${pctS(rf,0)}, and the security's risk premium
+            over the same six months is ${pctS(prem,0)}. Its risk-neutral up probability is ${q.toFixed(4)}. A student prices
+            it like this:`,
+      fig:[tr("Security", "?", [money(cfu), money(cfd)], [`true ${Math.round(p*100)}%`, `true ${Math.round((1-p)*100)}%`])],   // trees drawn from this draw (Anh, 22 Oct 2026)
+      ask:"Which step introduces the mistake?",
+      options:st.map((html,q2)=>({html, correct:q2===at, msg:q2===at?why:fine[q2]})),
+      steps:[
+        `Actual probabilities go with the risk-adjusted discount rate.`,
+        `Risk-neutral probabilities go with the risk-free rate.`,
+        `Mixing them either double-counts risk or ignores it.`
+      ]};
+  }},
+
+{ id:"k6", topic:"concept", also:["rep"], name:"What no-arbitrage actually buys you", gen(){
+    const opts=shuffle([
+      {html:`Because otherwise you could buy the cheaper of the two, sell the dearer and keep the gap`, correct:true,
+       msg:`Right. The portfolio and the call pay the same in both states. If their prices differed, buying the cheaper and selling the dearer would lock in the difference today with nothing owed later: an arbitrage.`},
+      {html:`Because the call and the portfolio have the same expected return`, correct:false,
+       msg:`Nothing about expected returns was used, and none is needed. They pay exactly the same in every state, so any price gap could be locked in riskless.`},
+      {html:`Because the share rises with a 0.6 chance, which sets the call's value`, correct:false,
+       msg:`No chance of a rise was used to get \$3.56. The 0.6 is a risk-neutral weight, not the probability that the share goes up.`},
+      {html:`Because \$3.56 is the call's expected payoff at the true probabilities, discounted`, correct:false,
+       msg:`True probabilities never entered. \$3.56 is the cost of a portfolio that pays what the call pays in every state; if the call traded elsewhere, you could arbitrage the gap.`}
+    ]);
+    return {mode:"choice",
+      text:`A portfolio of shares and bonds reproduces a call's payoff in both states, and costs
+            \$3.56 today.`,
+      ask:"Why must the call trade at \$3.56?",
+      options:opts,
+      steps:[
+        `Same payoff in the up state and the down state &mdash; there are no other states.`,
+        `Two things with identical payoffs must have identical prices.`,
+        `If not, buy the cheaper, sell the dearer, and the difference is riskless profit.`
+      ]};
+  }},
+
+{ id:"k7", topic:"concept", also:["dist"], name:"The true chance of a bad outcome", gen(){
+    /* MF final A (2024-26), part (b), and the Democrats question, part (c).                    */
+    const qb=pick([15,20,25,30]);
+    const opts=shuffle([
+      {html:`Lower than ${qb}%`, correct:true,
+       msg:`Right. Risk-neutral weights are pessimistic: they put more weight on bad states than the true probabilities do. A crash in the share is a bad state, so its true probability is below its ${qb}% risk-neutral probability.`},
+      {html:`Higher than ${qb}%`, correct:false,
+       msg:`That has the direction backwards. Risk-neutral weights inflate the bad states, so the true probability of a bad state is lower than its risk-neutral one.`},
+      {html:`Exactly ${qb}%`, correct:false,
+       msg:`They would be equal only if investors demanded no premium for bearing the share's risk. With a risk premium, the bad state gets extra risk-neutral weight.`},
+      {html:`It cannot be compared without the share's price today`, correct:false,
+       msg:`No price is needed for the direction. Risk-neutral weights tilt towards bad states whenever investors are risk-averse, so the true probability of this bad state is lower.`}
+    ]);
+    return {mode:"choice",
+      text:`Six months from now, ABC's share price will be at its lowest level, after a market-wide crash, with a
+            risk-neutral probability of ${qb}%. Investors are risk-averse.`,
+      ask:"What can you say about the true probability of that outcome?",
+      options:opts,
+      steps:[
+        `Risk-neutral probabilities build the risk adjustment into the weights.`,
+        `Due to risk aversion, investors inflate the probability of a bad state and downplay the probability of a good state.`,
+        `So for a bad state, the true probability is below the risk-neutral one.`
+      ]};
+  }},
+
+/* k8 "Which zero earns more?" dropped 22 Oct 2026 (Anh): the honest answer is "it cannot be said", since
+   which state is good and which is bad for the 1-year zero's holder is not clear. */
+
+{ id:"k9", topic:"concept", also:["dist"], name:"A full set of state bets", gen(){
+    /* MF final A (2024-26), part (a): the bets on every possible state, together, pay $100 for sure. */
+    const n=pick([3,4,5]);
+    const opts=shuffle([
+      {html:`Together they pay \$100 whatever happens, like a risk-free zero with \$100 face`, correct:true,
+       msg:`Right. Exactly one of the states occurs, so holding every bet pays \$100 for sure. A portfolio with a certain payoff must cost what a risk-free zero with the same payoff costs, 100/(1 + R<sub>f</sub>/2); otherwise there is an arbitrage.`},
+      {html:`The true probabilities of the states add up to one`, correct:false,
+       msg:`They do, but the bets are not priced with true probabilities, so that cannot be the reason. Together the bets pay \$100 for sure, like a zero, and no-arbitrage does the rest.`},
+      {html:`The bets are priced at their expected payoffs, which add up to \$100`, correct:false,
+       msg:`The bets are not priced at their expected payoffs, and the sum is not \$100 but 100/(1 + R<sub>f</sub>/2): the discounted value of a sure \$100.`},
+      {html:`It holds only if the share pays no dividend in the meantime`, correct:false,
+       msg:`It holds whatever the share does: the bets together pay \$100 in every state, and that alone pins their total price to the zero's.`}
+    ]);
+    return {mode:"choice",
+      text:`A share can end up at one of ${n} prices in six months. For each price there is a bet that pays \$100 if the
+            share ends there and nothing otherwise.`,
+      ask:"Why must the prices of all " + n + " bets add up to the price of a 6-month zero with \$100 face?",
+      options:opts,
+      steps:[
+        `Exactly one state happens, so the full set of bets pays \$100 for certain.`,
+        `A certain \$100 in six months is what a risk-free zero with \$100 face delivers.`,
+        `Same payoff in every state, so the same price, or there is an arbitrage.`
+      ]};
+  }},
+
+{ id:"k10", topic:"concept", also:["bets"], name:"Why an insurer's accident probability looks high", gen(){
+    /* Anh, 9 Oct 2026: the insurance example. Accidents are bad states for the insured, so the
+       risk-neutral probability built into the premium exceeds the true accident rate.            */
+    const tp=pick([2,3,4,5]), qp=tp+pick([1,2,3]);
+    const opts=shuffle([
+      {html:`Because, due to risk aversion, investors inflate the probability of a bad state, and an accident is a bad state`, correct:true,
+       msg:`Right. People pay more than the expected loss to be protected against a bad outcome, so the premium is above the discounted expected claim at the true ${tp}% rate. Backing a probability out of that premium gives a risk-neutral probability, which overweights the bad state: ${qp}% here.`},
+      {html:`Because the insurer's estimate of the accident rate is too pessimistic`, correct:false,
+       msg:`No estimate is involved. The ${qp}% is backed out of the premium, so it is a risk-neutral probability, and those overweight bad states whatever anyone estimates.`},
+      {html:`Because the premium is paid today but the claim is paid in six months`, correct:false,
+       msg:`The timing is handled by discounting at the risk-free rate, which the ${qp}% already allows for. The gap comes from the risk adjustment in the weights.`},
+      {html:`Because the insurer has to cover its costs and earn a profit`, correct:false,
+       msg:`The stem rules that out: no costs, no fees. Even so, the premium is above the discounted expected claim, because protection against a bad outcome is worth more than its expected value.`}
+    ]);
+    return {mode:"choice",
+      text:`An insurer has no costs and charges no fees, and a driver's true chance of an accident in the next six months
+            is ${tp}%, a fact everyone knows. Backed out of the driver's premium (allowing for the risk-free rate), the
+            risk-neutral probability of an accident is ${qp}%.`,
+      ask:"Why is the risk-neutral probability higher?",
+      options:opts,
+      steps:[
+        `The premium is the risk-neutral expected claim, discounted at the risk-free rate.`,
+        `Due to risk aversion, investors inflate the probability of a bad state and downplay the probability of a good state.`,
+        `An accident is a bad state for the insured, so its risk-neutral probability exceeds its true one.`
+      ]};
+  }}
+];
+
+const TOPICS = [
+  {key:"all", label:"Mixed"},
+  {key:"rep", label:"Replication"},
+  {key:"rn", label:"Risk-neutral probabilities"},
+  {key:"price", label:"Pricing"},
+  {key:"dist", label:"Distributions"},
+  {key:"zeros", label:"With zeros"},
+  {key:"bets", label:"Bets and insurance"},
+  {key:"concept", label:"Reason it out"},
+  {key:"error", label:"Find the mistake"}
+];
+
+/* ----------------------------------------------------------------- state */
+let active = "all", current = null, tries = 0;
+let peeked = false, solved = false, tallied = false;  // tallied = already counted in `attempted`
+const stats = {att:0, first:0, streak:0, peek:0};
+
+const $ = id => document.getElementById(id);
+
+/* One-period trees for templates that return q.fig = [{label, now, outs:[...], probs:[...]?}, ...]
+   (added 22 Oct 2026 for Note 13, at Anh's request). Values come from the same draw as the text. */
+function figHTML(fig){
+  const txt = s => String(s).replace(/<[^>]+>/g, "");
+  const len = s => txt(s).replace(/&[a-z]+;/g, "x").length;
+  /* A multi-period recombining tree (Notes 16 and 19, 22 Oct 2026): t.lat[k] lists the nodes at
+     date k from the top; a node is a string or an array of lines; t.times labels the dates.      */
+  const latSVG = t => {
+    const L = t.lat.length, lines = v => (Array.isArray(v) ? v : [v]).map(txt);
+    const colW = t.lat.map(col => Math.max(24, ...col.map(v => Math.max(...lines(v).map(len))*8.2)));
+    const nl = Math.max(...t.lat.flat().map(v => lines(v).length)), lh = 17, h = nl > 1 ? 30 : 17, top = 30;
+    const cx = []; let x = 4;
+    colW.forEach((w, k) => { cx.push(x + w/2); x += w + 44; });
+    const W = Math.max(x - 44 + 4, 8.5*len(t.label) + 10);
+    const yOf = (k, i) => top + h*(2*i + (L-1-k)) + (nl-1)*lh/2;
+    const H = top + h*2*(L-1) + nl*lh + (t.times ? 26 : 6);
+    /* t.on (23 Oct 2026, Anh): the nodes the question works at, as "k,i". The rest of the tree is drawn
+       in grey, with a dot for a node that carries no figure, so students see where in the tree they are. */
+    const on = t.on ? new Set(t.on) : null, isOn = (k, i) => !on || on.has(k + "," + i);
+    const half = (k, i) => lines(t.lat[k][i]).join("") ? colW[k]/2 + 4 : 6;
+    let g = `<text class="tl" x="${W/2}" y="14" text-anchor="middle">${txt(t.label)}</text>`;
+    t.lat.forEach((col, k) => col.forEach((v, i) => {
+      const y = yOf(k, i), ls = lines(v);
+      if (ls.join("")) ls.forEach((s, j) => g += `<text x="${cx[k]}" y="${y + 5 + (j - (ls.length-1)/2)*lh}" text-anchor="middle">${s}</text>`);
+      else g += `<circle cx="${cx[k]}" cy="${y}" r="3.2"${isOn(k, i) ? "" : ` class="off"`}/>`;
+      if (k < L-1) [i, i+1].forEach(c => {
+        const y2 = yOf(k+1, c);
+        g += `<line x1="${cx[k] + half(k, i)}" y1="${y}" x2="${cx[k+1] - half(k+1, c)}" y2="${y2}" stroke-width="1.6"${isOn(k, i) && isOn(k+1, c) ? "" : ` class="off"`}/>`;
+      });
+    }));
+    if (t.times) t.times.forEach((s, k) => g += `<text class="tp" x="${cx[k]}" y="${H - 6}" text-anchor="middle">${txt(s)}</text>`);
+    return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${txt(t.label)}: ${t.lat.map(c => c.map(v => lines(v).join(" ")).join(" / ")).join("; then ")}">${g}</svg>`;
+  };
+  return fig.map(t => {
+    if (t.lat) return latSVG(t);
+    const n = t.outs.length, gap = n > 2 ? 30 : 46, top = 34;
+    const x1 = Math.max(40, 12 + 8.5*len(t.now)), x2 = x1 + 56;
+    const wide = Math.max(...t.outs.map((v, i) => 8.4*len(v) + (t.probs ? 6.6*(len(t.probs[i]) + 2) + 6 : 0)));
+    const W = Math.max(x2 + 10 + wide, 8.5*len(t.label) + 10), H = top + gap*(n-1) + 14, mid = top + gap*(n-1)/2;
+    let g = `<text class="tl" x="${(x1 + x2)/2}" y="14" text-anchor="middle">${txt(t.label)}</text>`;
+    g += `<text x="${x1-8}" y="${mid+5}" text-anchor="end">${txt(t.now)}</text>`;
+    t.outs.forEach((v, i) => {
+      const y = top + gap*i, dx = x2-x1, dy = y-mid, L = Math.hypot(dx, dy), ux = dx/L, uy = dy/L;
+      const ex = x2 - 2*ux, ey = y - 2*uy, bx = ex - 9*ux, by = ey - 9*uy;
+      g += `<line x1="${x1}" y1="${mid}" x2="${bx}" y2="${by}" stroke-width="1.8"/>`;
+      g += `<polygon points="${ex},${ey} ${bx-4*uy},${by+4*ux} ${bx+4*uy},${by-4*ux}" stroke-width="0"/>`;
+      g += `<text x="${x2+6}" y="${y+5}">${txt(v)}${t.probs ? `<tspan class="tp" dx="6">(${txt(t.probs[i])})</tspan>` : ""}</text>`;
+    });
+    return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${txt(t.label)}: ${txt(t.now) || "today"}, then ${t.outs.map(txt).join(" or ")}">${g}</svg>`;
+  }).join("");
+}
+
+function buildTopics(){
+  const box = $("topics");
+  TOPICS.forEach(t=>{
+    const b = document.createElement("button");
+    b.className = "chip"; b.textContent = t.label;
+    b.setAttribute("aria-pressed", String(t.key===active));
+    b.onclick = ()=>{
+      active = t.key;
+      [...box.children].forEach(c=>c.setAttribute("aria-pressed","false"));
+      b.setAttribute("aria-pressed","true");
+      seqIdx = 0;                 // a new topic restarts the sequence
+      newQuestion();
+    };
+    box.appendChild(b);
+  });
+  /* the Starred chip: practise only the questions starred on this page */
+  const s = document.createElement("button");
+  s.className = "chip"; s.id = "chipStar";
+  s.setAttribute("aria-pressed", "false");
+  s.onclick = ()=>{
+    active = "starred";
+    [...box.children].forEach(c=>c.setAttribute("aria-pressed","false"));
+    s.setAttribute("aria-pressed","true");
+    seqIdx = 0;
+    newQuestion();
+  };
+  box.appendChild(s);
+  updateStarChip();
+}
+
+const ALL_TEMPLATES = TEMPLATES.concat(CHOICE_TEMPLATES);
+
+/* A template's primary topic is `topic`; it may also list secondary topics in
+   `also`, so one item can appear under several chips. */
+function inTopic(t, key){
+  return t.topic === key || (Array.isArray(t.also) && t.also.includes(key));
+}
+
+/* ---- progress: distinct templates solved without opening the solution ---- */
+const PROG_KEY = "practice-progress:" + document.title;
+let mastered = new Set();
+try { mastered = new Set(JSON.parse(localStorage.getItem(PROG_KEY) || "[]")); }
+catch (e) { mastered = new Set(); }
+
+function saveProgress(){
+  try { localStorage.setItem(PROG_KEY, JSON.stringify([...mastered])); } catch (e) {}
+}
+function markMastered(id){
+  if (!id || mastered.has(id)) return;
+  mastered.add(id);
+  saveProgress();
+}
+
+/* ---- starred questions: kept per template, so a starred question comes back with new
+   numbers. Starred automatically on a wrong answer or on opening the solution before
+   solving; the student can star or unstar any question by hand. ---- */
+const STAR_KEY = "practice-starred:" + document.title;
+let starred = new Set();
+try { starred = new Set(JSON.parse(localStorage.getItem(STAR_KEY) || "[]")); }
+catch (e) { starred = new Set(); }
+starred = new Set([...starred].filter(id => ALL_TEMPLATES.some(t => t.id === id)));
+
+function saveStars(){
+  try { localStorage.setItem(STAR_KEY, JSON.stringify([...starred])); } catch (e) {}
+}
+function updateStarChip(){
+  const c = document.getElementById("chipStar");   // made by buildTopics, not in the markup
+  if (c) c.textContent = "★ Starred (" + starred.size + ")";
+}
+function showStar(){
+  const on = !!(current && starred.has(current.id));
+  $("star").hidden = !current;
+  $("star").setAttribute("aria-pressed", String(on));
+  $("star").textContent = on ? "★ Starred" : "☆ Star";
+}
+function setStar(id, on){
+  if (!id) return;
+  if (on) starred.add(id); else starred.delete(id);
+  saveStars(); updateStarChip(); showStar();
+}
+function autoStar(){ if (current && !starred.has(current.id)) setStar(current.id, true); }
+
+function poolFor(key){
+  if (key === "all") return ALL_TEMPLATES;
+  if (key === "starred") return ALL_TEMPLATES.filter(t => starred.has(t.id));
+  return ALL_TEMPLATES.filter(t => inTopic(t, key));
+}
+
+/* Templates are drawn WITHOUT immediate repeats. Sampling with replacement
+   looks fine on the full bank, but a topic holding only three or four
+   templates repeats roughly one press in three, which reads as the button
+   being broken. Hold the most recent half of the pool out of the draw. */
+let recentIds = [];
+/* Questions seen this session, so the arrow keys can step back and forth through them. */
+let history = [], histIdx = -1;
+let navKey = false;      // true while an arrow key is doing the rendering
+let order = "shuffle";   // "shuffle" | "seq"
+let seqIdx = 0;
+
+function newQuestion(replay){
+  let q;
+  if (replay){ q = replay.q; }
+  else {
+  const pool = poolFor(active);
+  if (!pool.length){
+    current = null;
+    $("qmeta").textContent = "Starred";
+    $("qtext").innerHTML = "No starred questions yet. A question is starred when you answer it " +
+      "wrongly or open its solution before solving it, and you can star any question yourself with " +
+      "<b>☆ Star</b>. Pick another chip to practise.";
+    $("qask").innerHTML = "";
+    $("opts").hidden = true; $("opts").innerHTML = "";
+    $("ans").hidden = true; $("check").hidden = true; $("next").hidden = true;
+    $("fb").innerHTML = ""; $("soldetails").hidden = true; $("seqPos").textContent = "";
+    showStar();
+    return;
+  }
+  let tpl;
+  if (order === "seq"){
+    /* walk the bank in order, wrapping at the end */
+    if (seqIdx >= pool.length) seqIdx = 0;
+    tpl = pool[seqIdx];
+    seqIdx = (seqIdx + 1) % pool.length;
+    $("seqPos").textContent = `${seqIdx === 0 ? pool.length : seqIdx} of ${pool.length}`;
+  } else {
+    const hold = Math.max(1, Math.floor(pool.length / 2));
+    let choices = pool.filter(t => !recentIds.slice(0, hold).includes(t.id));
+    if (!choices.length) choices = pool;        // pool of one, or all held out
+    tpl = pick(choices);
+    recentIds.unshift(tpl.id);
+    if (recentIds.length > 40) recentIds.length = 40;
+    $("seqPos").textContent = "";
+  }
+  q = tpl.gen();
+  q.name = tpl.name;
+  q.id   = tpl.id;
+  q.seqPos = $("seqPos").textContent;   // carried so stepping back shows its own position
+  if (q.mode !== "choice") q.distractors = usable(q.correct, q.cands, q.sep);
+  }
+  current = q;
+  if (replay){
+    tries = replay.tries; peeked = replay.peeked; solved = replay.solved; tallied = replay.tallied;
+  } else {
+    tries = 0; peeked = false; solved = false; tallied = false;
+    history = history.slice(0, histIdx + 1);           // a new draw discards anything ahead
+    history.push({q, tries:0, peeked:false, solved:false, tallied:false, fb:"", ans:""});
+    if (history.length > 50){ history.shift(); }
+    histIdx = history.length - 1;
+  }
+
+  const isChoice = q.mode === "choice";
+  $("qmeta").textContent = q.name;
+  $("qtext").innerHTML   = q.text;
+  $("qfig").innerHTML    = q.fig ? figHTML(q.fig) : "";
+  $("qfig").hidden       = !q.fig;
+  $("qask").innerHTML    = q.ask;
+  /* Hide the input and Check individually, NOT the whole row -- the
+     "New question" button lives in that row and must stay reachable
+     on choice questions. */
+  $("ans").hidden   = isChoice;
+  $("check").hidden = isChoice;
+  $("next").hidden  = false;
+  showStar();
+  $("opts").hidden     = !isChoice;
+  const box = $("opts");
+  box.innerHTML = "";              // always clear, even when the panel is hidden
+  if (isChoice){
+    q.options.forEach((o,k)=>{
+      const btn = document.createElement("button");
+      btn.className = "opt"; btn.innerHTML = o.html;
+      btn.onclick = () => pickOption(k);
+      box.appendChild(btn);
+    });
+  }
+  $("ans").value = "";
+  $("ans").placeholder = q.unit==="money" ? "e.g. 1234.56"
+                     : q.unit==="percent" ? "e.g. 12.34  (percent)"
+                     : "e.g. 18";
+  $("ans").disabled = false;
+  $("check").disabled = false;
+  $("fb").innerHTML = "";
+  $("steps").innerHTML = q.steps.map(s=>`<div>${s}</div>`).join("");
+  const d = $("soldetails"); d.hidden = false; d.open = false;
+  if (replay){
+    /* Put the question back exactly as it was left --- the feedback, what was typed, and
+       whether it had already been answered. The tallied/solved flags come back with it,
+       so revisiting a question never re-counts an attempt or re-awards mastery. */
+    $("fb").innerHTML = replay.fb || "";
+    $("ans").value    = replay.ans || "";
+    $("seqPos").textContent = q.seqPos || "";
+    if (isChoice && q.wrong){
+      [...$("opts").children].forEach((b,j)=>{
+        if (q.wrong.indexOf(j) >= 0){ b.classList.add("wrong"); b.disabled = true; }
+      });
+    }
+    if (solved || q.done){
+      if (isChoice){
+        [...$("opts").children].forEach((b,j)=>{ b.disabled = true;
+          if (q.options[j].correct) b.classList.add("right"); });
+      } else { $("ans").disabled = true; $("check").disabled = true; }
+    }
+    d.open = peeked || solved;
+  }
+  /* Arriving by arrow key must not park the cursor in the answer box: a restored answer
+     sitting there would swallow the next arrow press and strand the student. */
+  if (navKey) $("ans").blur();
+  else if (!isChoice && !$("ans").disabled) $("ans").focus();
+}
+
+function parseInput(raw){
+  const cleaned = raw.replace(/[$,%\s,]/g,"");
+  if (cleaned === "" ) return NaN;
+  return Number(cleaned);
+}
+
+function say(kind, title, body){
+  $("fb").innerHTML = `<div class="fb ${kind}"><strong>${title}</strong>${body}</div>`;
+}
+
+function pickOption(k){
+  const q = current;
+  if (q.done) return;
+  const o    = q.options[k];
+  const btns = [...$("opts").children];
+
+  tries++;
+  if (!tallied){ tallied = true; stats.att++; }
+
+  if (o.correct){
+    q.done = true; solved = true;
+    btns.forEach((b2,j)=>{ b2.disabled = true; if (q.options[j].correct) b2.classList.add("right"); });
+    if (peeked){
+      stats.streak = 0;
+      say("ok","Correct — but you read the solution first.",
+          "It still counts as attempted, just not toward first-try accuracy or your streak. " + o.msg);
+    } else {
+      stats.streak++;
+      if (tries === 1) stats.first++;
+      markMastered(q.id);
+      say("ok", tries===1 ? "Correct — first try." : "Correct.", o.msg);
+    }
+    $("soldetails").open = true;
+  } else {
+    stats.streak = 0;
+    btns[k].classList.add("wrong");
+    btns[k].disabled = true;
+    (q.wrong || (q.wrong = [])).push(k);   // remembered so a revisit keeps it eliminated
+    autoStar();
+    say("no","Not that one.", o.msg);
+  }
+  render();
+}
+
+function check(){
+  const raw = $("ans").value;
+  const parsed = parseInput(raw);
+  if (!Number.isFinite(parsed)){
+    say("hint","Enter a number","Type your answer as a number — you can include $ , or % and it will be ignored.");
+    return;
+  }
+  const q = current;
+  const val = q.unit==="percent" ? parsed/100 : parsed;
+  const TOL = q.tol || REL_MATCH;
+
+  /* Unit slips are formatting mistakes, not wrong answers, so they cost
+     neither an attempt nor first-try credit. Guarded so a genuinely
+     correct entry can never be mistaken for one. */
+  if (!near(val, q.correct, TOL)){
+    if (q.unit==="percent" && near(parsed, q.correct, TOL)){
+      say("hint","Right number, wrong units.",
+          `You entered <code>${raw}</code> as a decimal. This box wants a percent — enter <code>${(q.correct*100).toFixed(4).replace(/\.?0+$/,"")}</code> instead.`);
+      return;
+    }
+    if (near(val*100, q.correct, TOL) || near(val/100, q.correct, TOL)){
+      say("hint","Check your units.","Your figure is off by a factor of 100. Re-read what the box is asking for.");
+      return;
+    }
+  }
+
+  tries++;
+  if (!tallied){ tallied = true; stats.att++; }   // count each question once, right or wrong
+
+  if (near(val, q.correct, TOL)){
+    solved = true;
+    if (peeked){
+      stats.streak = 0;
+      say("ok","Correct — but you read the solution first.",
+          "That is a perfectly good way to learn, and it still counts as attempted. It does " +
+          "not count toward first-try accuracy or your streak, so those numbers stay honest. " +
+          "Try the next one before opening the solution.");
+    } else {
+      stats.streak++;
+      if (tries === 1) stats.first++;
+      markMastered(q.id);
+      say("ok","Correct.", tries===1 ? "First try — well done." : "Got there.");
+    }
+    $("check").disabled = true; $("ans").disabled = true;
+    $("soldetails").open = true;
+    render(); return;
+  }
+
+  stats.streak = 0;
+  autoStar();
+  const hit = q.distractors.find(d => near(val, d.val, TOL));
+  say("no", hit ? "Not quite — and I can see why." : "Not quite.",
+      hit ? hit.msg
+          : "That does not match any of the usual slips, so it may be an arithmetic error. Try again, or open the worked solution below.");
+  render();
+}
+
+function render(){
+  $("sAtt").textContent    = stats.att;
+  $("sFirst").textContent  = stats.first;
+  $("sAcc").textContent    = stats.att ? Math.round(stats.first/stats.att*100)+"%" : "—";
+  $("sStreak").textContent = stats.streak;
+  $("sPeek").textContent   = stats.peek;
+  const total = ALL_TEMPLATES.length;
+  $("pTotal").textContent  = total;
+  $("pDone").textContent   = mastered.size;
+  $("progfill").style.width = (total ? 100*mastered.size/total : 0).toFixed(1) + "%";
+}
+
+$("check").onclick = () => { if (current) check(); };
+$("star").onclick  = () => { if (current) setStar(current.id, !starred.has(current.id)); };
+$("next").onclick  = () => newQuestion();   // arrow fn: never pass the click Event as `replay`
+
+/* ---- arrow keys: right for the next question, left for the previous one -------------
+   Ignored while the answer box is being typed in, where the arrows move the caret, and
+   ignored with a modifier held so the browser's own shortcuts still work.            */
+function snapshotQuestion(){
+  const h = history[histIdx];
+  if (!h) return;
+  h.tries = tries; h.peeked = peeked; h.solved = solved; h.tallied = tallied;
+  h.fb = $("fb").innerHTML; h.ans = $("ans").value;
+}
+function goBack(){
+  if (histIdx <= 0) return;
+  snapshotQuestion(); histIdx--;
+  navKey = true; newQuestion(history[histIdx]); navKey = false;
+}
+function goForward(){
+  snapshotQuestion();
+  navKey = true;
+  if (histIdx < history.length - 1){ histIdx++; newQuestion(history[histIdx]); }
+  else newQuestion();
+  navKey = false;
+}
+document.addEventListener("keydown", e => {
+  if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+  if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
+  const t = e.target;
+  if (t && (t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+  /* Inside the answer box the arrows belong to the caret --- but only while it still has
+     somewhere to go. Once it sits at the end you are pressing toward, the press is free,
+     so a half-typed answer never traps a student in the field. */
+  if (t && t.tagName === "INPUT" && !t.disabled){
+    const at = t.selectionStart, to = t.selectionEnd, n = String(t.value).length;
+    if (at === null || at !== to) return;                       // a selection: leave it alone
+    if (e.key === "ArrowRight" ? at < n : at > 0) return;
+  }
+  e.preventDefault();
+  if (e.key === "ArrowRight") goForward(); else goBack();
+});
+$("ans").addEventListener("keydown", e=>{ if(e.key==="Enter" && !$("check").disabled) check(); });
+$("soldetails").addEventListener("toggle", ()=>{
+  if ($("soldetails").open && !solved && !peeked){
+    peeked = true;
+    stats.peek++;
+    autoStar();
+    if (!tallied){ tallied = true; stats.att++; }  // opening it counts as engaging with the question
+    render();
+  }
+});
+
+function setOrder(o){
+  order = o; seqIdx = 0;
+  $("mShuffle").setAttribute("aria-pressed", String(o === "shuffle"));
+  $("mSeq").setAttribute("aria-pressed",     String(o === "seq"));
+  newQuestion();
+}
+$("mShuffle").onclick = () => setOrder("shuffle");
+$("mSeq").onclick     = () => setOrder("seq");
+
+$("pReset").onclick = () => {
+  if (!mastered.size) return;
+  mastered.clear(); saveProgress(); render();
+};
+
+buildTopics();
+newQuestion();
+render();
+</script>
+</body>
+</html>

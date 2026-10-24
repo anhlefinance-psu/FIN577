@@ -1,0 +1,1392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Note 19 — Treasury Bond Futures: practice</title>
+<style>
+  :root{
+    --bg:#ffffff; --fg:#1a1a1a; --muted:#5f6672; --line:#e2e5ea;
+    --card:#f7f8fa; --accent:#00205b; --accent-fg:#ffffff;
+    --ok-bg:#e8f5ec; --ok-line:#2e7d47; --ok-fg:#17532c;
+    --no-bg:#fdeceb; --no-line:#c0392b; --no-fg:#8e2b20;
+    --hint-bg:#fff8e6; --hint-line:#b8860b; --hint-fg:#6b4e00;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#14161a; --fg:#e8eaed; --muted:#9aa3af; --line:#2b2f36;
+      --card:#1b1e24; --accent:#7f9cd4; --accent-fg:#0d1015;
+      --ok-bg:#132a1c; --ok-line:#4caf70; --ok-fg:#9fdcb4;
+      --no-bg:#2c1614; --no-line:#e06c5d; --no-fg:#f0a99f;
+      --hint-bg:#2a2313; --hint-line:#d4a017; --hint-fg:#e5c976;
+    }
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:0; background:var(--bg); color:var(--fg);
+    font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  .wrap{max-width:760px; margin:0 auto; padding:24px 18px 64px}
+  header{border-bottom:1px solid var(--line); padding-bottom:14px; margin-bottom:20px}
+  h1{font-size:1.35rem; margin:0 0 4px}
+  .sub{color:var(--muted); font-size:.9rem}
+  .topics{display:flex; flex-wrap:wrap; gap:7px; margin:18px 0}
+  .chip{
+    border:1px solid var(--line); background:var(--card); color:var(--fg);
+    padding:6px 12px; border-radius:999px; cursor:pointer; font-size:.85rem;
+    font-family:inherit;
+  }
+  .chip[aria-pressed="true"]{background:var(--accent); color:var(--accent-fg); border-color:var(--accent)}
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:10px;
+    padding:20px; margin-bottom:16px;
+  }
+  .qmeta{font-size:.75rem; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin-bottom:10px}
+  .qtext{font-size:1.05rem; margin-bottom:6px}
+  .qtext b{font-variant-numeric:tabular-nums}
+  .qfig{display:flex; flex-wrap:wrap; gap:6px 26px; margin:10px 0 2px}
+  .qfig svg{max-width:100%; height:auto; overflow:visible}
+  .qfig text{fill:var(--fg); font-family:inherit; font-variant-numeric:tabular-nums}
+  .qfig .tl{font-weight:600}
+  .qfig .tp{fill:var(--muted); font-size:13px}
+  .qfig line, .qfig polygon{stroke:var(--accent); fill:var(--accent)}
+  .qfig circle{fill:var(--accent)}
+  .qfig line.off{stroke:var(--muted); opacity:.35}
+  .qfig circle.off{fill:var(--muted); opacity:.45}
+  .ask{margin-top:14px; font-weight:600}
+  .row{display:flex; gap:9px; margin-top:14px; flex-wrap:wrap}
+  input[type=text]{
+    flex:1 1 190px; min-width:0; padding:11px 13px; font-size:1rem; font-family:inherit;
+    border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--fg);
+  }
+  input[type=text]:focus{outline:2px solid var(--accent); outline-offset:1px}
+  button{
+    padding:11px 17px; font-size:.95rem; font-family:inherit; border-radius:8px;
+    border:1px solid var(--accent); background:var(--accent); color:var(--accent-fg);
+    cursor:pointer; font-weight:600;
+  }
+  button.ghost{background:transparent; color:var(--fg); border-color:var(--line); font-weight:500}
+  button:disabled{opacity:.45; cursor:default}
+  .fb{border-radius:8px; padding:13px 15px; margin-top:15px; border-left:4px solid; font-size:.95rem}
+  .fb.ok{background:var(--ok-bg); border-color:var(--ok-line); color:var(--ok-fg)}
+  .fb.no{background:var(--no-bg); border-color:var(--no-line); color:var(--no-fg)}
+  .fb.hint{background:var(--hint-bg); border-color:var(--hint-line); color:var(--hint-fg)}
+  .fb strong{display:block; margin-bottom:3px}
+  details{margin-top:15px; border-top:1px solid var(--line); padding-top:13px}
+  summary{cursor:pointer; font-size:.9rem; color:var(--muted); font-weight:600}
+  .steps{margin-top:11px; font-size:.92rem}
+  .steps div{padding:5px 0; border-bottom:1px dashed var(--line)}
+  .steps div:last-child{border-bottom:none; font-weight:600}
+  .steps table.eqs{border-collapse:collapse; margin:2px 0}
+  .steps table.eqs td{padding:0; vertical-align:top}
+  .steps table.eqs td:first-child{text-align:right; padding-right:.3em}
+  .steps table.cf{border-collapse:collapse; margin:6px 0}
+  .steps table.cf td,.steps table.cf th{padding:2px 12px 2px 0; text-align:center}
+  .steps table.cf td:first-child,.steps table.cf th:first-child{text-align:left}
+  .steps table.cf th{border-bottom:1px solid var(--line)}
+  code{
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.88em;
+    background:var(--bg); padding:1px 5px; border-radius:4px; border:1px solid var(--line);
+  }
+  .opts{display:flex; flex-direction:column; gap:8px; margin-top:14px}
+  .opt{
+    text-align:left; padding:11px 14px; border:1px solid var(--line); background:var(--bg);
+    color:var(--fg); border-radius:8px; cursor:pointer; font-family:inherit;
+    font-size:.95rem; font-weight:400; line-height:1.55;
+  }
+  .opt:hover:not(:disabled){border-color:var(--accent)}
+  .opt.right{background:var(--ok-bg); border-color:var(--ok-line); border-width:2px}
+  .opt.wrong{background:var(--no-bg); border-color:var(--no-line)}
+  .opt:disabled{cursor:default}
+  .opt sup{font-size:.75em}
+  .stats{display:flex; gap:22px; font-size:.86rem; color:var(--muted); margin-top:22px;
+         border-top:1px solid var(--line); padding-top:14px; flex-wrap:wrap}
+  .stats b{color:var(--fg); font-variant-numeric:tabular-nums}
+  footer{margin-top:26px; font-size:.78rem; color:var(--muted); text-align:center}
+  /* The hidden attribute's UA rule is only [hidden]{display:none}, which loses
+     to author rules like .opts{display:flex} and .row{display:flex}. Without
+     this, hiding those panels silently does nothing. */
+  .modes{display:flex; gap:8px; align-items:center; margin-top:10px;
+         font-size:.84rem; color:var(--muted); flex-wrap:wrap}
+  .modes .chip{font-size:.84rem; padding:5px 12px}
+  .prog{margin-top:18px}
+  .progtop{display:flex; justify-content:space-between; align-items:baseline;
+           font-size:.86rem; color:var(--muted); margin-bottom:6px}
+  .progtop b{color:var(--fg); font-variant-numeric:tabular-nums}
+  .progbar{height:9px; border-radius:999px; background:var(--line); overflow:hidden}
+  .progfill{height:100%; width:0%; border-radius:999px; background:var(--accent);
+            transition:width .35s ease}
+  .progreset{background:none; border:none; color:var(--muted); font-size:.8rem;
+             padding:0; cursor:pointer; text-decoration:underline; font-weight:400}
+  .progreset:hover{color:var(--fg)}
+  .qhead{display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:10px}
+  .qhead .qmeta{margin-bottom:0}
+  .star{background:transparent; color:var(--muted); border:1px solid var(--line); border-radius:999px;
+        padding:3px 11px; font-size:.8rem; font-weight:500; white-space:nowrap; flex:none}
+  .star[aria-pressed="true"]{color:var(--hint-fg); background:var(--hint-bg); border-color:var(--hint-line)}
+  .star:hover{border-color:var(--accent)}
+  [hidden]{display:none !important}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>Note 19 — Treasury Bond Futures: practice</h1>
+  <div class="sub">Conversion factors price the bond at a 6% yield on a $1 face. Answers are matched within 0.25%.</div>
+</header>
+
+<div class="topics" id="topics" role="group" aria-label="Choose topics"></div>
+
+<div class="modes" id="modes" role="group" aria-label="Question order">
+  <span>Order</span>
+  <button class="chip" id="mShuffle" type="button" aria-pressed="true">Shuffle</button>
+  <button class="chip" id="mSeq" type="button" aria-pressed="false">In order</button>
+  <span id="seqPos"></span>
+</div>
+
+<div class="card" id="card">
+  <div class="qhead">
+    <div class="qmeta" id="qmeta">—</div>
+    <button class="star" id="star" type="button" aria-pressed="false"
+            title="Star this question to practise it again under the Starred chip">☆ Star</button>
+  </div>
+  <div class="qtext" id="qtext">Loading…</div>
+  <div class="qfig" id="qfig" hidden></div>
+  <div class="ask" id="qask"></div>
+  <div class="opts" id="opts" hidden></div>
+  <div class="row" id="inputrow">
+    <input type="text" id="ans" autocomplete="off" inputmode="decimal"
+           placeholder="Your answer" aria-label="Your answer">
+    <button id="check">Check</button>
+    <button id="next" class="ghost">New question</button>
+  </div>
+  <div id="fb"></div>
+  <details id="soldetails" hidden>
+    <summary>Show the worked solution</summary>
+    <div class="steps" id="steps"></div>
+  </details>
+</div>
+
+<div class="prog">
+  <div class="progtop">
+    <span>Templates solved unaided <b id="pDone">0</b> of <b id="pTotal">0</b></span>
+    <button class="progreset" id="pReset" type="button">reset</button>
+  </div>
+  <div class="progbar"><div class="progfill" id="progfill"></div></div>
+</div>
+
+<div class="stats">
+  <span>Attempted <b id="sAtt">0</b></span>
+  <span>Correct first try <b id="sFirst">0</b></span>
+  <span>Accuracy <b id="sAcc">—</b></span>
+  <span>Streak <b id="sStreak">0</b></span>
+  <span>Solutions opened <b id="sPeek">0</b></span>
+</div>
+
+<footer>Numbers are randomised, so every attempt is different. Nothing you type leaves this page.<br>Use the &rarr; and &larr; arrow keys to move between questions.</footer>
+
+</div>
+
+<script>
+"use strict";
+
+/* ------------------------------------------------------------------ utils */
+const pick = a => a[Math.floor(Math.random()*a.length)];
+/* stepped range, e.g. range(0.04,0.24,0.0025) -> 81 rates instead of a list of 6 */
+const range = (lo,hi,step) => {
+  const out=[]; for(let v=lo; v<=hi+1e-9; v+=step) out.push(Number(v.toFixed(8)));
+  return out;
+};
+const ORD = n => n + (["th","st","nd","rd"][(n%100-n%10!=10)*(n%10<4)*(n%10)]||"th");
+const money = v => "$" + v.toLocaleString("en-US",{minimumFractionDigits:2, maximumFractionDigits:2});
+const pct   = (v,d=4) => (v*100).toFixed(d).replace(/\.?0+$/,"") + "%";
+const pctS  = (v,d=2) => (v*100).toFixed(d) + "%";
+const REL_SEP  = 0.01;    // distractors must sit >1% from everything else
+const REL_MATCH= 0.0025;  // student answer counts as a match within 0.25%
+
+const near = (a,b,tol) =>
+  Number.isFinite(a) && Number.isFinite(b) &&
+  Math.abs(a-b) / Math.max(Math.abs(a), Math.abs(b), 1e-12) < tol;
+
+/* Drop distractors too close to the answer (or to each other) to diagnose.
+   Templates about small effects (perpetuity timing) pass a tighter `sep`. */
+function usable(correct, cands, sep){
+  const s = sep || REL_SEP;
+  const kept = [];
+  for (const c of cands){
+    if (!Number.isFinite(c.val)) continue;
+    if (near(c.val, correct, s)) continue;
+    if (kept.some(k => near(k.val, c.val, s))) continue;
+    kept.push(c);
+  }
+  return kept;
+}
+
+/* ------------------------------------------------------------- templates */
+/* ---------------------------------------------------------------- Note 19 ---
+   Treasury bond futures: conversion factors (priced at a 6% yield on a $1 face),
+   the invoice amount, and the cheapest-to-deliver decision.                   */
+const convFactor = (cpn,T) => {              // face normalised to $1, ytm fixed at 6%
+  const n=Math.round(2*T), c=cpn/2; let v=0;
+  for(let k=1;k<=n;k++) v += (c + (k===n?1:0))/Math.pow(1.03,k);
+  return v;
+};
+const farFrom = (correct,cands,sep) => cands.every(c=>Number.isFinite(c.val) && !near(c.val,correct,sep));   // as in n11_num.js
+const smoney = v => (v < 0 ? "&minus;" : "") + money(Math.abs(v));   // −$4.38, not $-4.38 (22 Sep 2026)
+/* Trees drawn from each draw (Anh, 22 Oct 2026: "if a diagram helps with illustrating a question, put that in").
+   lat[k] lists the nodes at date k from the top; a node is a string or an array of lines. See _tools/README.md. */
+const lat = (label, cols, times) => times ? {label, lat:cols, times} : {label, lat:cols};
+
+const TEMPLATES = [{ id:"c1", topic:"cf", name:"Compute a conversion factor", gen(){
+    const cpn=pick([.02,.03,.04,.05,.07,.08,.09,.10]);
+    const T=pick([1,1.5,2,2.5]);   // 3 years dropped 24 Oct 2026: the worked solution writes every term out, and the cap is five
+    const correct=convFactor(cpn,T);
+    const n=Math.round(2*T), d=k=>`(1 + 6%/2)${k>1?`<sup>${k}</sup>`:""}`;
+    const terms=[...Array(n)].map((_,k)=>k<n-1?`${(cpn/2).toFixed(4)}/${d(k+1)}`:`${(1+cpn/2).toFixed(4)}/${d(n)}`).join(" + ");   // formula first, every term written out as in the note (Anh, 24 Oct 2026)
+    return {
+      unit:"number",
+      // "1 year", not "1 years" (8 of 40 draws), 22 Sep 2026
+      text:`On the futures expiry date a deliverable Treasury has <b>${T} year${T===1?"":"s"}</b> left to run
+            and pays a semiannual coupon at <b>${pctS(cpn,0)} p.a.</b>`,
+      ask:"What is its conversion factor? (Four decimals.)",
+      correct,
+      cands:[
+        {val:convFactor(cpn,T)*100, msg:`That is the same figure on a \$100 face. The conversion factor normalises the face value to <b>\$1</b>, so it lands near 1, not near 100.`},
+        {val:cpn/.06, msg:`That is the coupon relative to the 6% standard, which is not how the factor is built. You have to actually price the bond.`},
+        {val:convFactor(cpn,T)===1?0.5:1, msg:`A factor of exactly 1 belongs to a 6% coupon bond, where coupon and yield coincide. This one pays ${pctS(cpn,0)}.`}
+      ],
+      steps:[
+        `The conversion factor is the bond's price at a yield of <b>6%</b> p.a. (semiannual compounding), with the face normalised to <b>\$1</b>. With a coupon of c p.a. and n half-years to maturity:<br>conversion factor = (c/2)/(1 + 6%/2) + (c/2)/(1 + 6%/2)<sup>2</sup> + &hellip; + (1 + c/2)/(1 + 6%/2)<sup>n</sup>`,
+        `Here c/2 = ${(cpn/2).toFixed(4)} and n = ${n}:<br>conversion factor = ${terms} = <b>${correct.toFixed(4)}</b>`
+      ]};
+  }},
+
+{ id:"c2", topic:"cf", name:"The invoice amount", gen(){
+    // Coupons near the 6% standard give a factor near 1, at which point the invoice and
+    // the unadjusted futures price collide. Stay clear of 6% and keep the term long
+    // enough for the factor to move.
+    const cpn=pick([.02,.03,.04,.08,.09,.10]);
+    const T=pick([1.5,2,2.5,3]);
+    const cf=+convFactor(cpn,T).toFixed(4);
+    const fut=pick(range(95,108,.5));
+    const correct=fut*cf;
+    return {
+      unit:"money",
+      text:`The futures settle at <b>${money(fut)}</b>. You deliver a bond whose conversion
+            factor is <b>${cf.toFixed(4)}</b>.`,
+      ask:"What does the buyer pay you, per \$100 of face?",
+      correct,
+      cands:[
+        {val:fut, msg:`That is the raw futures price. It is adjusted by the conversion factor to reflect that this bond is not the 6% standard.`},
+        {val:fut/cf, msg:`Divided instead of multiplied. The invoice is futures price &times; conversion factor.`},
+        {val:fut+cf, msg:`The factor scales the price; it is not added to it.`}
+      ],
+      steps:[
+        `Invoice = futures price &times; conversion factor`,
+        `= ${money(fut)} &times; ${cf.toFixed(4)} = <b>${money(correct)}</b>`   // closing remark dropped (Anh, 24 Oct 2026)
+      ]};
+  }},
+
+{ id:"d1", topic:"ctd", name:"The cost of delivering one bond", gen(){
+    const cpn=pick([.03,.04,.07,.08]);
+    const T=pick([1,1.5,2]);
+    const cf=+convFactor(cpn,T).toFixed(4);
+    const fut=pick(range(96,106,.5));
+    const mkt=+(fut*cf + pick([0.15,0.4,0.75,1.25,2])).toFixed(2);   // positive only: a delivery at a net gain would be a free profit (review 11 Oct 2026)
+    const correct=mkt-fut*cf;
+    /* The key is a dollar or two (-$1.5048), so an answer to the cent can miss the default
+       0.25% match (gridall 19 SHOWN: 502 of 1260 draws). Accept anything within half a cent
+       and a bit; sep stays at least tol. 22 Sep 2026.                                     */
+    const tol=Math.max(0.0025, 0.0051/Math.abs(correct));
+    return {
+      unit:"money",
+      text:`A deliverable bond trades at <b>${money(mkt)}</b> in the market. Its conversion
+            factor is <b>${cf.toFixed(4)}</b> and the futures price is <b>${money(fut)}</b>.`,
+      ask:"What is the net cost of delivering it?",
+      correct, tol, sep:Math.max(REL_SEP, tol),
+      cands:[
+        {val:mkt-fut, msg:`You compared the market price with the raw futures price. What you actually receive is the futures price <em>times the conversion factor</em>, ${money(fut*cf)}.`},
+        {val:fut*cf-mkt, msg:`Sign reversed. Net cost is what you pay for the bond less what you are paid for it.`},
+        {val:mkt/(fut*cf), msg:`That is a ratio. The cost is a dollar difference.`}
+      ],
+      steps:[
+        `Net cost = what you pay for the bond &minus; what the buyer pays you for it = market price &minus; futures price &times; conversion factor`,
+        `You buy the bond for ${money(mkt)}, and the buyer pays you ${money(fut)} &times; ${cf.toFixed(4)} = ${money(fut*cf)}`,
+        `Net cost = ${money(mkt)} &minus; ${money(fut*cf)} = <b>${smoney(correct)}</b>`,   // spelled out (Anh, 24 Oct 2026); −$1.50, not $-1.50 (22 Sep 2026)   // closing remark dropped (24 Oct 2026)
+
+      ]};
+  }},
+
+{ id:"d2", topic:"ctd", name:"Which bond is cheapest to deliver?", gen(){
+    // Futures prices above about 103 would push the 8% bond's implied yield below zero (review 11 Oct 2026).
+    const fut=pick(range(97,102.5,.5));
+    const specs=[[.03,1.5],[.05,2],[.08,1]];
+    /* Net costs all positive: a negative one would mean F > min P/c, a free profit (blind sitting 10 Oct 2026).
+       The cheapest bond is the lowest-coupon one only one draw in five, so the naive rule rarely scores
+       (review 11 Oct 2026).                                                                            */
+    const ctd=pick([0,1,1,2,2]);
+    const dear=shuffle([0.6,0.8,1.05,1.3,1.6]).slice(0,2);
+    const nets=[0,1,2].map(i=>i===ctd?pick([0.15,0.25,0.35]):dear.shift());
+    const bonds=specs.map(([cpn,T],i)=>{
+      const cf=+convFactor(cpn,T).toFixed(4);
+      const net=nets[i];
+      return {cpn,T,cf,mkt:+(fut*cf+net).toFixed(2),net};
+    });
+    const best=bonds.reduce((a,b)=>a.net<b.net?a:b);
+    const correct=best.mkt-fut*best.cf;
+    /* The key is a sub-dollar amount (-$0.8972), so an answer to the cent can miss the
+       default 0.25% match (gridall 19 SHOWN: 1453 of 2125 draws). Accept anything within
+       half a cent and a bit; sep stays at least tol. 22 Sep 2026.                       */
+    const tol=Math.max(0.0025, 0.0051/Math.abs(correct));
+    const rows=bonds.map((b,i)=>`Bond ${i+1}: ${pctS(b.cpn,0)} coupon, factor ${b.cf.toFixed(4)}, market price ${money(b.mkt)}`).join(" &nbsp;|&nbsp; ");
+    return {
+      unit:"money",
+      text:`Before expiry, the futures price is <b>${money(fut)}</b>. Three bonds are deliverable; today's prices are: ${rows}`,
+      ask:"Using today's prices, what is the net delivery cost of the cheapest-to-deliver bond? (Two decimals.)",
+      correct, tol, sep:Math.max(REL_SEP, tol),
+      cands:[
+        {val:Math.max(...bonds.map(b=>b.mkt-fut*b.cf)), msg:`That is the <em>dearest</em> to deliver. The seller picks the bond that costs least.`},
+        {val:best===bonds[0]?NaN:bonds[0].mkt-fut*bonds[0].cf, msg:`That is the net cost of the lowest-coupon bond. Without conversion factors it would always be cheapest; with them, it is only one candidate, and here another bond costs less to deliver.`},   // 10 Oct 2026: replaces min(price) - F, which always equalled the next distractor (fixedshape DEAD)
+        {val:Math.min(...bonds.map(b=>b.mkt-fut)), msg:`You left the conversion factors out of the invoice.`}
+      ].filter(c=>Number.isFinite(c.val)),
+      steps:[
+        `Cost of delivery = the cost of obtaining the bond, offset by the payment from the futures contract = market price &minus; futures price &times; conversion factor`,
+        // negatives print as −$0.90, not $-0.90 (22 Sep 2026)
+        bonds.map((b,i)=>`Bond ${i+1}: ${money(b.mkt)} &minus; ${money(fut*b.cf)} = ${smoney(b.mkt-fut*b.cf)}`).join(" &nbsp;|&nbsp; "),
+        `Cheapest is the smallest of those: <b>${smoney(correct)}</b>`,
+        best===bonds[0]
+          ? `Here the cheapest happens to be the lowest-coupon bond, but not because its coupon is low: its price is low relative to its conversion factor.`
+          : `Note that it is not the lowest-coupon bond${best.mkt>Math.min(...bonds.map(x=>x.mkt))?", nor is it the bond with the lowest valuation":""}.`   // 24 Oct 2026 (Anh): lowest-valuation clause; closing expiry remark dropped
+      ]};
+  }},
+
+{ id:"f1", topic:"pricing", name:"One-period futures price", gen(){
+    /* 10 Oct 2026: the stem now states the 6-month rate. The note gives the rate in its own
+       examples and stresses that it drops out ("0 discounted at whatever rate would be just zero"),
+       so it is printed on purpose, as the trap the note warns about (rules 12 and 22).          */
+    const vu=pick(range(96,101,.25));
+    const vd=vu+pick([2.5,3,4,5]);
+    const r=pick([4,5,6]);
+    const correct=0.5*(vu+vd);
+    return {
+      unit:"money",
+      text:`A one-period futures contract expires next period, when the underlying bond will be
+            worth <b>${money(vu)}</b> in the up state or <b>${money(vd)}</b> in the down state.
+            Risk-neutral probabilities are 0.5 each, and the 6-month interest rate is <b>${r}%</b> p.a.,
+            compounded semiannually.`,
+      fig:[lat("Underlying bond", [[[`r = ${r}%`, "futures ?"]], [[money(vu)], [money(vd)]]], ["today", "expiry"])],
+      ask:"What is the futures price?",
+      correct,
+      cands:[
+        {val:0.5*(vu+vd)/(1+r/200), msg:`You discounted. No discounting is needed: a futures contract is marked to market and settled in cash each period, so its price is the risk-neutral <em>expected</em> value, undiscounted.`},
+        {val:vd, msg:`That is the down-state value alone.`},
+        {val:vu, msg:`That is the up-state value alone.`}
+      ],
+      steps:[
+        `Futures price = risk-neutral expected value at expiry, with no discounting`,
+        `= 0.5 &times; (${money(vu)} + ${money(vd)}) = <b>${money(correct)}</b>`   // forward-price remark dropped (Anh, 24 Oct 2026)
+      ]};
+  }},
+
+{ id:"f2", topic:"pricing", name:"Two-period futures price", gen(){
+    /* Note 19, Section 3 (two-period pricing): the futures contract is worth zero at every node,
+       so each futures price is the simple average of the two one-period-ahead futures prices.
+       Bond values at time 1.0 drawn so the middle value is not the midpoint of the outer two.  */
+    let uu, ud, dd, correct, cands;
+    do {
+      uu=pick(range(94,98,0.25)); const a=pick([1.0,1.25,1.5]), b=pick([3.0,3.5,4.0]); if(pick([true,false])){ud=uu+a; dd=ud+b;} else {ud=uu+b; dd=ud+a;}
+      correct=0.25*uu+0.5*ud+0.25*dd;
+      cands=[
+        {val:(uu+ud+dd)/3, msg:`A plain average of the three values weights them equally. The middle value can be reached two ways, so it carries a weight of 0.5 and the outer ones 0.25 each: average the two time-0.5 futures prices.`},
+        {val:0.5*(uu+ud), msg:`That is the futures price at the upper node at time 0.5. Today's futures price averages it with the lower node's, ${money(0.5*(ud+dd))}.`},
+        {val:0.5*(ud+dd), msg:`That is the futures price at the lower node at time 0.5. Today's futures price averages it with the upper node's, ${money(0.5*(uu+ud))}.`},
+        {val:0.5*(uu+dd), msg:`That averages the two extreme values and ignores the middle one, which is the likeliest.`}
+      ];
+      /* The equal-weight average sits (uu + dd - 2ud)/12 from the key, about 0.13%-0.25% here, so the
+         tree is skewed (one step of 1.00-1.50, the other 3.00-4.00) and the key is matched within 0.03%
+         (two decimals always pass); separation 0.1%.                                              */
+    // Each time-0.5 futures price and today's must be whole cents, or $99.125 prints as $99.12 in one place and $99.13 in another (review 11 Oct 2026).
+    } while (!farFrom(correct,cands,0.001) || ![0.5*(uu+ud),0.5*(ud+dd),correct].every(v=>Math.abs(v*100-Math.round(v*100))<1e-6));
+    return {
+      unit:"money", tol:0.0003, sep:0.001,
+      text:`A futures contract on a Treasury bond expires at time 1.0. Marking to market happens every six months, and
+            the risk-neutral probability of each branch of the interest rate tree is 0.5. At time 1.0 the bond will be
+            worth <b>${money(uu)}</b> at the highest node, <b>${money(ud)}</b> at the middle node and
+            <b>${money(dd)}</b> at the lowest node.`,
+      fig:[lat("Futures prices; the bond at expiry", [["futures ?"], ["?", "?"], [money(uu), money(ud), money(dd)]], ["today", "time 0.5", "time 1.0 (expiry)"])],
+      ask:"What is the futures price today? (Two decimals.)",
+      correct,
+      cands,
+      steps:[
+        `At expiry the futures price equals the bond's value at each node`,
+        `At time 0.5 each futures price is the average of the two below it: upper ${money(0.5*(uu+ud))}, lower ${money(0.5*(ud+dd))}`,
+        `Today: 0.5 &times; (${money(0.5*(uu+ud))} + ${money(0.5*(ud+dd))}) = <b>${money(correct)}</b>. No discounting: the contract is worth zero at every node`
+      ]};
+  }},
+
+{ id:"f3", topic:"pricing", name:"A forward price from zero yields", gen(){
+    /* Note 19, Section 3 (forward pricing again): a forward to buy, at time 1.0, a bond whose only
+       remaining cash flow is 100 + c/2 at time 1.5 is an exchange of F at 1.0 for that cash flow,
+       so F = (100 + c/2) x (1 + y1/2)^2 / (1 + y1.5/2)^3. The note's numbers: 103, 5.244%, 5.485%. */
+    let c, y1, y15, correct, cands;
+    do {
+      c=pick([4.0,5.0,6.0,7.0]); y1=pick(range(3.8,5.6,0.2)); y15=+(y1+pick([0.2,0.4])).toFixed(2);
+      const cfl=100+c/2, d1=Math.pow(1+y1/200,-2), d15=Math.pow(1+y15/200,-3);
+      correct=cfl*d15/d1;
+      cands=[
+        {val:cfl*d15, msg:`That is the value today of the time-1.5 cash flow. The forward price is paid at time 1.0, so carry that value forward to 1.0: divide by the 1-year discount factor.`},
+        {val:cfl*d15*d1, msg:`You discounted once more instead of compounding forward. The forward price is the time-1.0 value: divide by the 1-year discount factor.`},
+        {val:cfl, msg:`That is the cash flow itself. Paid at time 1.0 for a cash flow at time 1.5, the forward price is below it: discount from 1.5 back to 1.0.`},
+        {val:c/2+cfl*d15/d1, msg:`The coupon paid at time 1.0 goes to the seller before delivery; only the time-1.5 cash flow is bought.`}
+      ];
+    } while (Math.abs(correct-100)<0.5 || !farFrom(correct,cands,REL_SEP));   // not at par: a guess of 100 must not score (blind sitting 10 Oct 2026)
+    return {
+      unit:"money",
+      text:`A 1-year forward contract lets you buy a Treasury bond at time 1.0. The bond pays a ${c.toFixed(2)}% p.a.
+            semiannual coupon on \$100 face and matures at time 1.5, so after delivery its only cash flow is
+            <b>${money(100+c/2)}</b> at time 1.5. The zero yields (p.a., semiannual compounding) are <b>${y1.toFixed(2)}%</b>
+            for 1 year and <b>${y15.toFixed(2)}%</b> for 1.5 years.`,
+      ask:"What is the forward price? (Two decimals.)",
+      correct, tol:0.0005,
+      cands,
+      steps:[
+        `The forward exchanges F paid at time 1.0 for ${money(100+c/2)} received at time 1.5; its value today is zero`,
+        `${money(100+c/2)}/(1 + ${y15.toFixed(2)}%/2)<sup>3</sup> &minus; F/(1 + ${y1.toFixed(2)}%/2)<sup>2</sup> = 0`,
+        `F = ${money(100+c/2)} &times; (1 + ${y1.toFixed(2)}%/2)<sup>2</sup> / (1 + ${y15.toFixed(2)}%/2)<sup>3</sup> = <b>${money(correct)}</b>`
+      ]};
+  }},
+
+{ id:"f4", topic:"pricing", name:"A forward contract's value at a time-0.5 node", gen(){
+    /* Note 19, Section 3 (two-period pricing): the forward contract can be worth something other than
+       zero at the interim nodes; its value there is the risk-neutral expected payoff at time 1.0,
+       discounted one period at that node's rate. Idea from the ChatGPT review, 23 Oct 2026.
+       The whole tree is shown on purpose (as in f1), so a student can use today's rate or the other
+       node's rate by mistake; the other node's rate and bond value are the trap, not filler.
+       The forward price is drawn on either side of the node's expected value, so the key's sign varies. */
+    let r0, ru, rd, uu, ud, dd, up, F, correct, cands;
+    do {
+      r0=pick(range(5.5,7,0.25)); ru=r0+pick([2.5,3]); rd=r0-pick([2.5,3]);
+      uu=pick(range(95,98.5,0.25)); ud=uu+pick([1.25,1.5,1.75,2]); dd=ud+pick([1.25,1.5,1.75,2]);
+      up=pick([true,false]);
+      const va=up?uu:ud, vb=up?ud:dd, m=0.5*(va+vb);
+      F=Math.round((m+pick([1,-1])*pick(range(2,4,0.25)))*100)/100;
+      const rn=up?ru:rd, ro=up?rd:ru, e=0.5*(va-F)+0.5*(vb-F);
+      correct=e/(1+rn/200);
+      cands=[
+        {val:e, msg:`You did not discount. The forward contract settles at time 1.0, six months after this node, so its expected payoff must be discounted one period at this node's rate.`},
+        {val:e/(1+ro/200), msg:`You discounted at the ${up?"lower":"upper"} node's rate. At the ${up?"upper":"lower"} node, the six-month rate is ${pctS(rn/100,2)}.`},
+        {val:e/(1+r0/200), msg:`You discounted at today's rate. Six months from now, at the ${up?"upper":"lower"} node, the rate for the next six months is ${pctS(rn/100,2)}.`},
+        {val:(up?0.5*(ud-F)+0.5*(dd-F):0.5*(uu-F)+0.5*(ud-F))/(1+rn/200), msg:`You used the wrong pair of time-1.0 nodes. From the ${up?"upper":"lower"} node the rate can only move to the ${up?"highest or middle":"middle or lowest"} node, so the bond is worth ${up?money(uu)+" or "+money(ud):money(ud)+" or "+money(dd)}.`},
+        {val:-correct, msg:`Sign reversed. You agreed to <em>buy</em> at ${money(F)}, so each payoff is the bond's value minus ${money(F)}.`}
+      ];
+    /* Blind sitting 23 Oct 2026: values near $1 put the key a cent from the no-discounting and today's-rate
+       answers. Now |value| >= $2, the node rate >= 3%, each time-0.5 rate 2.5-3 points from today's, and
+       every wrong answer at least 1% and 2 cents from the key.                                           */
+    } while (Math.abs(correct)<2 || Math.min(ru,rd)<3 || !farFrom(correct,cands,Math.max(REL_SEP,0.02/Math.abs(correct))));
+    const node=up?"upper":"lower", rn=up?ru:rd, va=up?uu:ud, vb=up?ud:dd;
+    const p2=v=>pctS(v/100,2);
+    return {
+      unit:"money", tol:Math.max(0.0025,0.0051/Math.abs(correct)), sep:Math.max(REL_SEP,0.02/Math.abs(correct)),
+      text:`You hold a forward contract to buy a Treasury bond at time 1.0 for <b>${money(F)}</b>. You entered it some time ago,
+            so it need not be worth zero now. The six-month rate
+            (p.a., compounded semiannually) is <b>${p2(r0)}</b> today, and at time 0.5 it will be <b>${p2(ru)}</b> at the
+            upper node or <b>${p2(rd)}</b> at the lower node. Each branch has a risk-neutral probability of 0.5. At time 1.0
+            the bond will be worth <b>${money(uu)}</b> at the highest node, <b>${money(ud)}</b> at the middle node and
+            <b>${money(dd)}</b> at the lowest node.`,
+      fig:[lat("Six-month rates; the bond at time 1.0", [[`r = ${p2(r0)}`], [`r = ${p2(ru)}`, `r = ${p2(rd)}`], [money(uu), money(ud), money(dd)]], ["today", "time 0.5", "time 1.0"])],
+      ask:`What is the forward contract worth at the ${node} node at time 0.5? (Two decimals; enter a negative number if it is worth less than zero to you.)`,
+      correct,
+      cands,
+      steps:[
+        `At time 1.0 the forward contract pays the bond's value minus the forward price: ${money(va)} &minus; ${money(F)} = ${smoney(va-F)} or ${money(vb)} &minus; ${money(F)} = ${smoney(vb-F)} from the ${node} node`,
+        `The risk-neutral pricing equation says that the value of any security must be its risk-neutral expected payoff, discounted at the risk-free rate`,
+        `Applying this to the forward contract at the ${node} node, where the six-month rate for the next six months is ${p2(rn)}: value = 0.5 &times; (payoff 1 + payoff 2)/(1 + ${p2(rn)}/2)`,
+        `= 0.5 &times; (${va-F<0?`(${smoney(va-F)})`:smoney(va-F)} + ${vb-F<0?`(${smoney(vb-F)})`:smoney(vb-F)})/(1 + ${p2(rn)}/2) = <b>${smoney(correct)}</b>`
+      ]};
+  }},
+
+{ id:"m1", topic:"pricing", name:"Closing out a futures position", gen(){
+    /* Note 19, Section 2: a futures position is closed by entering the opposite contract; the
+       exchange nets the two, so nothing settles after that. Idea from the outside review, 11 Oct 2026. */
+    let F0, F1, F2, F3, correct, cands;
+    const mv=[-0.9,-0.7,-0.5,-0.3,0.3,0.5,0.7,0.9,1.1];
+    do {
+      F0=pick(range(97,103,0.1)); F1=+(F0+pick(mv)).toFixed(2); F2=+(F1+pick(mv)).toFixed(2); F3=+(F2+pick(mv)).toFixed(2);
+      correct=F2-F0;
+      cands=[
+        {val:F3-F0, msg:`You kept the long position open through day 3. Selling a contract at the day-2 close offsets it: the exchange nets the two, so day 3 settles nothing for you.`},
+        {val:(F2-F0)-(F3-F2), msg:`You settled day 3 on the new short contract but not on the long. The two positions cancel, so day 3's move is zero on net.`},
+        {val:F1-F0, msg:`That is day 1's settlement alone. Day 2 settles too, before you close out.`},
+        {val:F0-F2, msg:`Sign reversed. You are long until the close-out: a rise in the futures price is paid <em>to</em> you.`}
+      ];
+    } while (Math.abs(correct)<0.25 || Math.abs(F3-F2)<0.25 || !farFrom(correct,cands,0.03));
+    return {
+      unit:"money",
+      text:`On day 0 you go long one Treasury futures contract at <b>${F0.toFixed(2)}</b> (per \$100 face). The futures price
+            settles at <b>${F1.toFixed(2)}</b> on day 1 and <b>${F2.toFixed(2)}</b> on day 2. At the day-2 close you sell one
+            contract at <b>${F2.toFixed(2)}</b>. On day 3 the futures price settles at <b>${F3.toFixed(2)}</b>.`,
+      ask:"What is your total mark-to-market over days 1 to 3, per $100 face? (Enter a negative number if you paid in total.)",
+      correct, tol:Math.max(0.0025,0.0051/Math.abs(correct)), sep:Math.max(REL_SEP,0.0051/Math.abs(correct)),
+      cands,
+      steps:[
+        `Day 1: ${F1.toFixed(2)} &minus; ${F0.toFixed(2)} = ${smoney(F1-F0)}; day 2: ${F2.toFixed(2)} &minus; ${F1.toFixed(2)} = ${smoney(F2-F1)}`,
+        `Selling at ${F2.toFixed(2)} offsets the long contract, so day 3's move (${smoney(F3-F2)}) is paid on one and received on the other: zero on net`,
+        `Total = ${F2.toFixed(2)} &minus; ${F0.toFixed(2)} = <b>${smoney(correct)}</b>`
+      ]};
+  }},
+
+{ id:"x1", topic:"ctd", also:["cf"], name:"The futures price at expiry", gen(){
+    /* Note 19, Section 5: at expiry P = F x c for the cheapest-to-deliver bond, so F = P/c, and the
+       cheapest-to-deliver is the bond with the smallest P/c. The note's example: 103/1.0191,
+       101/1, 98/0.9434 -> 101. Factors are the note's own (6% yield, $1 face).                  */
+    const specs=[[.08,1],[.03,1.5],[.02,1.5],[.04,2],[.09,1.5]];   // no 6% bond: with c = 1, P x c = P/c and a slip scores
+    let bonds, ratios, correct, cands;
+    do {
+      const pickd=shuffle(specs.slice()).slice(0,3);
+      const base=pick(range(97,104,0.5));
+      bonds=pickd.map(([cpn,T])=>{ const cf=+convFactor(cpn,T).toFixed(4); return {cpn,T,cf,mkt:+(base*cf+pick([0,0.4,0.8,1.2,1.6])).toFixed(2)}; });
+      ratios=bonds.map(b=>b.mkt/b.cf);
+      correct=Math.min(...ratios);
+      const lo=bonds[ratios.indexOf(correct)];
+      cands=[
+        {val:Math.max(...ratios), msg:`That is the price/factor ratio of the <em>dearest</em> bond. The seller delivers the cheapest, the one with the smallest ratio, and the futures price tracks it.`},
+        {val:Math.min(...bonds.map(b=>b.mkt)), msg:`That is the lowest market price. At expiry the futures price satisfies P = F &times; c for the cheapest bond, so F = P/c, not P.`},
+        {val:lo.mkt*lo.cf, msg:`Multiplied instead of divided. From P = F &times; c, the futures price is F = P/c.`},
+        {val:ratios.reduce((a,b)=>a+b,0)/3, msg:`An average of the three ratios. Only the cheapest-to-deliver bond pins the futures price.`}
+      ];
+    } while (new Set(ratios.map(x=>x.toFixed(2))).size<3 || !farFrom(correct,cands,0.004) || Math.abs(ratios.slice().sort((a,b)=>a-b)[1]-correct)<0.3);
+    const rows=bonds.map((b,i)=>`Bond ${i+1}: ${pctS(b.cpn,0)} coupon, factor ${b.cf.toFixed(4)}, market price ${money(b.mkt)}`).join(" &nbsp;|&nbsp; ");
+    return {
+      unit:"money", tol:0.0005, sep:0.004,
+      text:`It is the expiry date of a Treasury futures contract. Three bonds are deliverable. ${rows}`,
+      ask:"What must the futures price be at expiry? (Two decimals.)",
+      correct,
+      cands,
+      steps:[
+        // reordered (Anh, 24 Oct 2026): identify the cheapest to deliver first, then convergence gives F
+        `First identify the cheapest-to-deliver bond. The seller wants a bond that costs little to obtain but brings a large payment from the futures contract. Cost = market price of the bond; payment from the futures contract = F &times; conversion factor. As in the note, one way to do both at once is to choose the bond with the smallest ratio of cost to payment, market price/(F &times; conversion factor). F is the same for all three bonds, so this is the bond with the smallest ratio of market price to conversion factor.`,
+        bonds.map((b,i)=>`Bond ${i+1}: ${money(b.mkt)}/${b.cf.toFixed(4)} = ${(b.mkt/b.cf).toFixed(4)}`).join(" &nbsp;|&nbsp; ")
+          + `<br>Bond ${ratios.indexOf(correct)+1} has the smallest ratio, so it is the cheapest to deliver.`,
+        `At expiry, by convergence, the payment from the futures contract must equal the value of the bond delivered: market price of the cheapest-to-deliver bond = F &times; its conversion factor. So F = market price/conversion factor = ${money(bonds[ratios.indexOf(correct)].mkt)}/${bonds[ratios.indexOf(correct)].cf.toFixed(4)} = <b>${money(correct)}</b>`
+      ]};
+  }}
+
+];
+
+/* ======================= CHOICE-MODE ITEMS ==============================
+   Auto-graded by which option is clicked, not by a typed number.
+     topic "error"   — a worked solution with one planted mistake
+     topic "concept" — reason about the direction of an effect, no arithmetic
+   Directional items shuffle their own options so position carries no
+   information; spot-the-error items must stay in step order.            */
+
+function shuffle(a){
+  const out = a.slice();
+  for (let i=out.length-1; i>0; i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [out[i],out[j]] = [out[j],out[i]];
+  }
+  return out;
+}
+
+const CHOICE_TEMPLATES = [{ id:"k1", topic:"concept", also:["cf"], name:"Why conversion factors exist", gen(){
+    const opts=shuffle([
+      {html:`To stop the lowest-coupon bond from always being the cheapest to deliver`, correct:true,
+       msg:`Right. Without an adjustment the contract would track only a sliver of the market. The factor scales the invoice up for high-coupon bonds and down for low-coupon ones, so which bond is cheapest becomes a genuine question.`},
+      {html:`To pay more for longer-maturity bonds, which are riskier to hold`, correct:false,
+       msg:`The factor is not a risk premium. It is the bond's price at a 6% yield, so it scales the invoice for the bond's coupon and maturity, and the low-coupon bond is no longer automatically the cheapest.`},
+      {html:`To make every deliverable bond exactly as cheap to deliver`, correct:false,
+       msg:`The factors narrow the gaps but do not close them: one bond is still the cheapest to deliver, and which one depends on where yields are relative to 6%.`},
+      {html:`To make the futures price equal the cheapest bond's market price`, correct:false,
+       msg:`At expiry the futures price is the cheapest bond's price <em>divided by</em> its conversion factor, not its price. The factor exists to keep the choice of bond open.`}
+    ]);
+    return {mode:"choice",
+      text:`Several Treasury bonds with similar maturities are deliverable into the same futures contract, with coupons
+            ranging from 2% to 8% p.a.`,
+      ask:"Why does the exchange assign each one a conversion factor?",
+      options:opts,
+      steps:[
+        `The seller picks which bond to deliver and will pick the cheapest.`,
+        `Without adjustment that is always the lowest-coupon bond.`,
+        `The factor raises the invoice for high-coupon bonds and lowers it for low-coupon ones.`
+      ]};
+  }},
+
+{ id:"k2", topic:"concept", also:["cf"], name:"The 6% standard", gen(){
+    const opts=shuffle([
+      {html:`A bond paying exactly 6% has a conversion factor of 1, because at a 6% yield it prices at par`, correct:true,
+       msg:`Right, and that is the anchor of the whole scheme: deliver the 6% bond and the invoice is the futures price unadjusted.`},
+      {html:`6% is the current market yield on Treasuries`, correct:false,
+       msg:`It is a fixed convention, not a live rate. It stays 6% whatever the market does.`},
+      {html:`6% is the coupon of the bond that is always cheapest to deliver`, correct:false,
+       msg:`Deliverable coupons range widely and change over time; the 6% is fixed by the contract.`},
+      {html:`6% is the yield at which every deliverable bond trades on the expiry date`, correct:false,
+       msg:`On the expiry date each bond trades at its market yield, whatever that is. The 6% is only used to compute the factor; when market yields differ from 6%, the factors stop equalising the bonds.`}
+    ]);
+    return {mode:"choice",
+      // The factor discounts at 3% per half-year, so say the 6% compounds semiannually
+      // (gridall 19 CONV, 22 Sep 2026).
+      text:`Conversion factors are computed by pricing each deliverable bond at a yield of 6% p.a.,
+            compounded semiannually, with its face normalised to \$1.`,
+      ask:"What is the significance of the 6%?",
+      options:opts,
+      steps:[
+        `Price a 6% coupon bond at a 6% yield and you get par.`,
+        `Normalised to \$1 face, par is 1.`,
+        `So the 6% bond delivers at the futures price exactly, and every other bond is scaled around it.`
+      ]};
+  }},
+
+{ id:"k3", topic:"concept", also:["ctd"], name:"How the seller chooses", gen(){
+    const opts=shuffle([
+      {html:`Minimise market price minus futures price times conversion factor`, correct:true,
+       msg:`Right. Buying the bond is the cost; the invoice is the offset. The cheapest-to-deliver is whichever bond makes that difference smallest.`},
+      {html:`Deliver the bond with the lowest market price`, correct:false,
+       msg:`A cheap bond also carries a small conversion factor, so it brings a smaller invoice. Both sides move together.`},
+      {html:`Deliver the bond with the highest conversion factor`, correct:false,
+       msg:`A high factor means a bigger invoice but also a more expensive bond to buy.`},
+      {html:`Deliver the bond with the longest maturity`, correct:false,
+       msg:`Maturity enters through the factor and the price, but it is not the criterion itself.`}
+    ]);
+    return {mode:"choice",
+      text:`The seller of a Treasury futures contract may deliver any qualifying bond.`,
+      ask:"On what basis is the choice made?",
+      options:opts,
+      steps:[
+        `Cost of delivery = market price of the bond.`,
+        `Proceeds = futures price &times; conversion factor.`,
+        `Choose the bond minimising the difference.`
+      ]};
+  }},
+
+{ id:"k4", topic:"concept", also:["pricing"], name:"Futures against forwards", gen(){
+    /* Rewritten 11 Oct 2026 (outside review): the old key spoke of reinvesting "at rates that move with the
+       bond", which is not the note's argument, and one option was ruled out by the stem. The direction of
+       the wedge is k6's question; this item asks only why a second period matters.                        */
+    const opts=shuffle([
+      {html:`The futures also pays out its price change at time 0.5`, correct:true,   // "when the rate differs by state" dropped (Anh, 24 Oct 2026)
+       msg:`Right. Over one period both contracts settle once, at expiry, so they agree. With two periods the futures also has a marked-to-market payment at time 0.5, while the forward still settles once, at expiry, so the two prices part.`},
+      {html:`On a two-period tree the forward is also marked to market at time 0.5`, correct:false,
+       msg:`A forward settles once, at expiry, however many periods there are. Marking to market is what makes the <em>futures</em> different.`},
+      {html:`The forward price is discounted over two periods and the futures price over one`, correct:false,
+       msg:`Neither price is discounted: both are prices agreed today for expiry. What gets discounted is the contract's payoff, and the futures has an extra payment at time 0.5.`},
+      {html:`The risk-neutral probabilities are no longer 0.5 once there are two periods`, correct:false,
+       msg:`They are 0.5 at every node in the note's trees. Nothing about the probabilities changes; the timing of the futures' payments does.`}
+    ]);
+    return {mode:"choice",
+      text:`A futures contract and a forward contract on the same Treasury bond are priced on a tree whose periods are six
+            months long. If they expire in one period (at time 0.5, six months from today), the futures price and the forward
+            price come out identical. If they expire in two periods (at time 1.0, with a node at time 0.5 in between), they do not.`,   // time grid spelled out (Anh, 24 Oct 2026)
+      ask:"Why?",
+      options:opts,
+      steps:[
+        // rewritten around marked-to-market payments (Anh, 24 Oct 2026)
+        `The difference between futures and forward prices comes from the futures contract's marked-to-market payments.`,
+        `With one period left, a futures contract has only one marked-to-market payment, at expiry. Its cash flows are then identical to a forward contract's, so the two prices agree.`,
+        `On a multi-period tree, a futures contract is settled through several marked-to-market payments (here at time 0.5 and at expiry), while a forward contract is still settled by one lump-sum payment at expiry. This difference in how the two contracts are settled explains why the tree gives them different prices.`
+      ]};
+  }},
+
+{ id:"k5", topic:"concept", also:["ctd"], name:"Which bonds are cheapest to deliver when yields move", gen(){
+    /* Note 19, Section 5 ("from a bird's eye level"): minimising P(y)/P(6%) - 1 ~ -Duration x (y - 6%).
+       Source: UG final 2025 (commented-out question on low- vs high-duration bonds).              */
+    const hi=pick([true,false]);
+    const y=hi?pick([7.0,7.5,8.0]):pick([4.0,4.5,5.0]);
+    const key=hi?`Long-duration bonds, such as the longest maturities`:`Short-duration bonds, such as the shortest maturities`;
+    const opts=shuffle([
+      {html:key, correct:true,
+       msg:`Right. P(y)/P(6%) &minus; 1 &asymp; &minus;Duration &times; (y &minus; 6%). With y ${hi?"above":"below"} 6%, the term (y &minus; 6%) is ${hi?"positive":"negative"}, so the ratio is smallest for the ${hi?"longest":"shortest"} duration.`},
+      {html:hi?`Short-duration bonds, such as the shortest maturities`:`Long-duration bonds, such as the longest maturities`, correct:false,
+       msg:`Check the sign of (y &minus; 6%). With yields ${hi?"above":"below"} 6%, a ${hi?"longer":"shorter"} duration makes &minus;Duration &times; (y &minus; 6%) more negative, i.e. the bond cheaper relative to its factor.`},
+      {html:`The bond with the lowest coupon, since it has the lowest price`, correct:false,
+       msg:`That would be true without conversion factors. With them, the answer turns on duration and on whether yields are above or below 6%.`},
+      {html:`It makes no difference: the conversion factors make all bonds equally cheap`, correct:false,
+       msg:`The factors equalise the bonds only when yields are exactly 6%. Away from 6%, duration decides which bond is cheapest.`}
+    ]);
+    return {mode:"choice",
+      text:`All deliverable bonds for a Treasury futures contract trade at yields of about ${y.toFixed(2)}% p.a.,
+            compounded semiannually, while conversion factors are computed at 6%.`,
+      ask:"Which bonds tend to be cheapest to deliver?",
+      options:opts,
+      steps:[
+        `The cheapest bond minimises P(y)/P(6%), its price divided by its conversion factor.`,
+        `P(y)/P(6%) &minus; 1 &asymp; &minus;Duration &times; (y &minus; 6%).`,
+        `With y ${hi?"above":"below"} 6%, the ${hi?"longest":"shortest"}-duration bonds make this smallest.`
+      ]};
+  }},
+
+{ id:"k6", topic:"concept", also:["pricing"], name:"Why the futures price is below the forward price", gen(){
+    /* Note 19, Section 4, and MF final 2025 ("Explain intuitively why Treasury bond futures prices are
+       lower than forward prices"): bond prices fall when rates rise, and marking to market makes the
+       buyer pay losses when rates are high and collect gains when rates are low.
+       24 Oct 2026 (Anh): key, feedback and steps use the reinvest-low / finance-high intuition.    */
+    const opts=shuffle([
+      {html:`The futures buyer is paid when rates are low and must pay when rates are high`, correct:true,
+       msg:`Right. A futures buyer receives a marked-to-market payment when the bond's price rises, which is when rates are low, and can reinvest it only at those low rates. The buyer pays when the bond's price falls, which is when rates are high, and must finance that payment at those high rates. At equal prices investors would prefer the forward, so the futures price must be lower to make up for this.`},
+      {html:`Futures carry more default risk than forwards, so buyers insist on a lower price`, correct:false,
+       msg:`It is the other way round: marking to market and the clearing house standing between the parties make futures the safer contract. The wedge comes from the timing of the cash flows, not from default.`},
+      {html:`The exchange's fees are deducted from the futures price before it is quoted`, correct:false,
+       msg:`Fees are paid separately; they are not built into the futures price. The wedge would exist even with no fees.`},
+      {html:`The futures price is discounted back to today, while the forward price is not`, correct:false,
+       msg:`Neither price is discounted: both are prices agreed today for the expiry date. The difference comes from when the gains and losses are settled.`}
+    ]);
+    return {mode:"choice",
+      text:`A Treasury bond futures contract and a forward contract have the same underlying bond and the same expiry
+            date, more than one period away.`,
+      ask:"Why is the futures price lower than the forward price?",
+      options:opts,
+      steps:[
+        // Anh's intuition (24 Oct 2026), replacing the discounting argument
+        `An investor who buys bond futures gets a positive marked-to-market payment when the underlying bond's price goes up, which is when rates are low.`,
+        `On the flip side, the investor makes a payment when the bond's price goes down, which is when rates are high.`,
+        `So, on average, the investor receives payments that can only be reinvested at low rates, and makes payments that must be financed at high rates.`,
+        `This asymmetry would make investors prefer a forward contract if the forward and futures prices were the same. For the market to be in equilibrium, the futures contract must offer something to balance it out: the futures price must be lower than the forward price.`
+      ]};
+  }},
+
+{ id:"k7", topic:"concept", name:"How marking to market limits default", gen(){
+    /* Note 19, Section 2: the telescoping sum (S - 100) = (S - F254) + ... + (F1 - 100), and the
+       MF final 2025 question on why futures markets are liquid.                                  */
+    const n=pick([50000,100000,200000]), drop=pick([40,50,60]);
+    const loss=(n*drop/1e6).toFixed(1);
+    const opts=shuffle([
+      {html:`The same total loss is settled in many small daily payments instead of one large one at expiry`, correct:true,
+       msg:`Right. The daily settlements add up to exactly the forward's single settlement, but each one is small. Nobody faces a \$${loss} million bill at expiry that is worth running away from.`},
+      {html:`Marking to market makes the total loss on a futures contract smaller than on a forward`, correct:false,
+       msg:`The total is the same: the daily settlements add up to (S &minus; F), exactly what the forward settles at expiry. Only the timing changes.`},
+      {html:`The clearing house guarantees every trader a profit`, correct:false,
+       msg:`The clearing house stands between buyer and seller and collects losses daily; it does not guarantee profits.`},
+      {html:`Futures prices cannot move by more than a dollar a day`, correct:false,
+       msg:`Nothing in the note limits how far futures prices move. The protection comes from settling each day's move as it happens.`}
+    ]);
+    return {mode:"choice",
+      text:`An investor holds ${n.toLocaleString("en-US")} one-year contracts to buy a share at \$100. Over the year the share falls to
+            \$${100-drop}, a total loss of \$${loss} million.`,
+      ask:"Why is a futures position much less likely to end in default than the same forward position?",
+      options:opts,
+      steps:[
+        `With a forward, the whole \$${loss} million is settled at expiry.`,
+        `With futures, the same total is settled day by day as the futures price moves.`,
+        `Each daily payment is small, so there is little incentive to default.`
+      ]};
+  }},
+
+/* k11 (offsetting forwards when one bank defaults) dropped 24 Oct 2026 (Anh). Backup n19_ch.js.bak24oct-k11. */
+
+{ id:"k12", topic:"concept", name:"What risk does the clearing house bear?", gen(){
+    /* New 23 Oct 2026 (claude.ai review, idea 4): Note 19, section 2 -- the clearing house is the buyer to every
+       seller and the seller to every buyer, so a price move nets to zero for it; what it bears is counterparty
+       (default) risk, covered by margin and its members' guarantee fund. The note now says "All the counterparty
+       risks are borne by just one party".                                                                     */
+    const d=pick([0.5,1,1.5,2]);
+    const opts=shuffle([
+      {html:`Nothing from the price; it bears the risk that a trader defaults`, correct:true,
+       msg:`Right. It pays the buyers exactly what it collects from the sellers, so the price move nets to zero for it. What it bears is the chance that a trader cannot pay a loss, which margin and its members' guarantee fund cover.`},
+      {html:`Nothing from the price, and it bears no risk, since positions match`, correct:false,
+       msg:`Matched positions remove price risk, but a trader may fail to pay a loss. That counterparty risk is what the clearing house bears, and why it collects margin and a guarantee fund.`},
+      {html:`It loses \$${d.toFixed(2)} per \$100 face as seller to every buyer, and bears that price risk`, correct:false,
+       msg:`It is also the buyer to every seller. It pays the buyers \$${d.toFixed(2)} per \$100 face and collects the same from the sellers, so it bears no price risk.`},
+      {html:`It gains \$${d.toFixed(2)} per \$100 face as buyer to every seller, and bears that price risk`, correct:false,
+       msg:`It is also the seller to every buyer. What it collects from the sellers it pays to the buyers, so it bears no price risk.`}
+    ]);
+    return {mode:"choice",
+      text:`The clearing house stands between every buyer and every seller of a Treasury bond futures contract. Today the futures price
+            rises by \$${d.toFixed(2)} per \$100 face value.`,
+      ask:"How does the price rise affect the clearing house, and what risk, if any, does it bear?",
+      options:opts,
+      steps:[
+        `The clearing house is the seller to every buyer and the buyer to every seller.`,
+        `So it pays the buyers what it collects from the sellers: the price move nets to zero for it.`,
+        `What it bears is counterparty risk, the chance that a trader defaults on a loss; margin and the guarantee fund cover it.`
+      ]};
+  }},
+
+{ id:"k9", topic:"concept", also:["ctd"], name:"The arbitrage at expiry", gen(){
+    /* Note 19, Section 5: at expiry the futures price must equal P/c, "otherwise there will be
+       arbitrage profits". This asks for the arbitrage itself. One deliverable bond, so the profit
+       does not depend on which bond the seller would pick. Outside review, 11 Oct 2026.           */
+    const c=pick([0.9434,0.9576,0.9814,1.0191]);   // the note's and d2's factors; none is 1, so P/c and P differ
+    const F=pick(range(97,104,0.25));
+    const hi=pick([true,false]);                    // hi: the invoice F x c exceeds the bond's price
+    const P=+(F*c+(hi?-1:1)*pick([0.35,0.55,0.75,0.95])).toFixed(2);
+    const gain=Math.abs(F*c-P), ratioGap=Math.abs(F-P/c);
+    const sell=`Sell futures, buy the bond and deliver it`, buy=`Buy futures, take delivery and sell the bond`;
+    const amt=v=>`, for ${money(v)} per \$100 face of the bond`;
+    const opts=shuffle([
+      {html:(hi?sell:buy)+amt(gain), correct:true,
+       msg:`Right. ${hi?`Delivering brings in ${money(F)} &times; ${c.toFixed(4)} = ${money(F*c)} for a bond that costs ${money(P)}.`:`Taking delivery costs ${money(F)} &times; ${c.toFixed(4)} = ${money(F*c)} for a bond you can sell for ${money(P)}.`} The futures price must move to P/c = ${(P/c).toFixed(4)} to remove the profit.`},
+      {html:(hi?buy:sell)+amt(gain), correct:false,
+       msg:`Right amount, wrong side. The invoice, ${money(F*c)}, is ${hi?"above":"below"} the bond's price, ${money(P)}, so you want to be the one ${hi?"delivering":"taking delivery"}.`},
+      {html:(hi?sell:buy)+amt(ratioGap), correct:false,
+       msg:`That is the gap between F and P/c, which is in futures-price units. In dollars, the profit is the gap between the invoice F &times; c and the bond's price P.`},
+      {html:`No trade: at expiry the futures price need not equal the bond's price`, correct:false,
+       msg:`True, it need not equal P: it must equal P/c = ${(P/c).toFixed(4)}. Here it does not, and the gap is a riskless profit.`}
+    ]);
+    return {mode:"choice",
+      text:`It is the expiry date of a Treasury futures contract, and the futures price is <b>${money(F)}</b>. Treat one bond as the
+            only deliverable bond: its conversion factor is <b>${c.toFixed(4)}</b> and it trades at <b>${money(P)}</b>.`,
+      ask:"Which trade earns a riskless profit, and how much?",
+      options:opts,
+      steps:[
+        `The invoice is F &times; c = ${money(F)} &times; ${c.toFixed(4)} = ${money(F*c)}`,
+        `It is ${hi?"above":"below"} the bond's price of ${money(P)}, so ${hi?"deliver: sell futures and buy the bond":"take delivery: buy futures and sell the bond"}`,
+        `Profit = ${money(gain)} per \$100 face. No arbitrage requires F = P/c = ${(P/c).toFixed(4)}`
+      ]};
+  }},
+
+/* k8 (what if one rate in the tree changes?) dropped 24 Oct 2026 (Anh): it read as a forward price changing after it was agreed. Backup n19_ch.js.bak24oct-k8. */
+
+{ id:"x2", topic:"ctd", also:["cf"], name:"The cheapest to deliver switches", gen(){
+    /* Note 19, Section 5: compute P/c for two bonds at a yield below 6% and at one above 6%. The short,
+       low-coupon bond is cheapest below 6% and the long one above, on every draw (checked here).
+       Outside review, 11 Oct 2026; sample numbers verified against convFactor.                      */
+    const P=(c,T,y)=>{ let v=0; const n=Math.round(2*T); for(let k=1;k<=n;k++) v+=(c*50+(k===n?100:0))/Math.pow(1+y/2,k); return v; };
+    let S, L, yl, yh, rows, ok;
+    do {
+      S=pick([[.02,1.5],[.03,1.5],[.03,1]]); L=pick([[.08,4],[.07,4],[.09,3.5]]);
+      yl=pick([.045,.05,.055]); yh=pick([.065,.07,.075]);
+      const cs=+convFactor(...S).toFixed(4), cl=+convFactor(...L).toFixed(4);
+      const ps=[yl,yh].map(y=>+P(S[0],S[1],y).toFixed(2)), pl=[yl,yh].map(y=>+P(L[0],L[1],y).toFixed(2));
+      rows={cs,cl,ps,pl};
+      ok = ps[0]/cs < pl[0]/cl - 0.3 && pl[1]/cl < ps[1]/cs - 0.3;
+    } while(!ok);
+    const {cs,cl,ps,pl}=rows;
+    const opts=shuffle([
+      {html:`Bond S at ${pctS(yl,2)}; Bond L at ${pctS(yh,2)}`, correct:true,
+       msg:`Right. At ${pctS(yl,2)}: S ${(ps[0]/cs).toFixed(2)} against L ${(pl[0]/cl).toFixed(2)}. At ${pctS(yh,2)}: S ${(ps[1]/cs).toFixed(2)} against L ${(pl[1]/cl).toFixed(2)}. Below 6% the short bond is cheapest; above 6% the long one.`},
+      {html:`Bond S at ${pctS(yl,2)}; Bond S at ${pctS(yh,2)}`, correct:false,
+       msg:`That picks the lower market price both times. Compare price divided by conversion factor: at ${pctS(yh,2)}, L's ratio is ${(pl[1]/cl).toFixed(2)} against S's ${(ps[1]/cs).toFixed(2)}.`},
+      {html:`Bond L at ${pctS(yl,2)}; Bond S at ${pctS(yh,2)}`, correct:false,
+       msg:`Reversed. P(y)/P(6%) &minus; 1 &asymp; &minus;Duration &times; (y &minus; 6%): with y below 6% the short-duration bond has the smaller ratio, and above 6% the long-duration one.`},
+      {html:`Bond L at ${pctS(yl,2)}; Bond L at ${pctS(yh,2)}`, correct:false,
+       msg:`That picks the higher conversion factor both times. The factor raises the invoice, but the bond also costs more: compare P/c. At ${pctS(yl,2)}, S's ratio is ${(ps[0]/cs).toFixed(2)} against L's ${(pl[0]/cl).toFixed(2)}.`}
+    ]);
+    return {mode:"choice",
+      text:`Two bonds are deliverable into a Treasury futures contract. Bond S pays ${pctS(S[0],0)} p.a. semiannually with ${S[1]} year${S[1]===1?"":"s"}
+            left (conversion factor <b>${cs.toFixed(4)}</b>); Bond L pays ${pctS(L[0],0)} p.a. semiannually with ${L[1]} year${L[1]===1?"":"s"} left (factor
+            <b>${cl.toFixed(4)}</b>). If all yields are ${pctS(yl,2)} p.a., they trade at <b>${money(ps[0])}</b> and <b>${money(pl[0])}</b>;
+            if all yields are ${pctS(yh,2)} p.a., at <b>${money(ps[1])}</b> and <b>${money(pl[1])}</b>.`,
+      ask:"Which bond is cheapest to deliver in each case?",
+      options:opts,
+      steps:[
+        `Cheapest to deliver = the smallest price / conversion factor`,
+        `At ${pctS(yl,2)}: S ${money(ps[0])}/${cs.toFixed(4)} = ${(ps[0]/cs).toFixed(2)}; L ${money(pl[0])}/${cl.toFixed(4)} = ${(pl[0]/cl).toFixed(2)}`,
+        `At ${pctS(yh,2)}: S ${(ps[1]/cs).toFixed(2)}; L ${(pl[1]/cl).toFixed(2)}. Short bond below 6%, long bond above.`
+      ]};
+  }},
+
+{ id:"e1", topic:"error", also:["ctd"], name:"Find the mistake — choosing the delivery", gen(){
+    const fut=pick([98,100,102]);
+    const cf=pick([0.9434,1.0191,0.9700]);
+    const mkt=+(fut*cf+pick([0.4,0.9,1.4])).toFixed(2);
+    const fault=pick(["noFactor","factorOnBond","signFlip"]);
+    /* Every step works from the cents printed before it: Step 4 used to subtract unrounded
+       products and miss the printed figures by a cent ("$88.07 − $92.45 = $-4.39", 5 of 81
+       draws). Negatives print as −$4.38 (smoney). 22 Sep 2026.                             */
+    const inv = +(fut*cf).toFixed(2);                   // the invoice, as printed
+    const proceeds = fault==="noFactor" ? fut : inv;
+    const cost = fault==="factorOnBond" ? +(mkt*cf).toFixed(2) : mkt;
+    const net = fault==="signFlip" ? proceeds-cost : cost-proceeds;
+    const st=[
+      `<b>Step 1.</b> The futures price is ${money(fut)}, the bond's conversion factor is ${cf.toFixed(4)}, and the bond costs ${money(mkt)} in the market`,
+      fault==="noFactor"
+        ? `<b>Step 2.</b> Delivering the bond brings in the futures price, ${money(proceeds)}`
+        : `<b>Step 2.</b> Delivering the bond brings in ${money(fut)} &times; ${cf.toFixed(4)} = ${money(proceeds)}`,
+      fault==="factorOnBond"
+        ? `<b>Step 3.</b> Buying the bond costs ${money(mkt)} &times; ${cf.toFixed(4)} = ${money(cost)}`
+        : `<b>Step 3.</b> Buying the bond costs ${money(cost)}`,
+      fault==="signFlip"
+        ? `<b>Step 4.</b> Net cost = ${money(proceeds)} &minus; ${money(cost)} = ${smoney(net)}`
+        : `<b>Step 4.</b> Net cost = ${money(cost)} &minus; ${money(proceeds)} = ${smoney(net)}`
+    ];
+    const fine=[
+      `Step 1 is fine &mdash; those are the inputs.`,
+      `Step 2 is fine &mdash; the invoice is the futures price scaled by the conversion factor.`,
+      `Step 3 is fine &mdash; you pay the market price for the bond, unadjusted.`,
+      `Step 4 is fine &mdash; net cost is what you pay less what you receive.`
+    ];
+    let at,why;
+    if(fault==="noFactor"){
+      at=1; why=`The invoice is scaled by the conversion factor: ${money(fut)} &times; ${cf.toFixed(4)} = ${money(fut*cf)}. Leaving it out is what the factor exists to prevent.`;
+    } else if(fault==="factorOnBond"){
+      at=2; why=`The conversion factor applies to the <em>invoice</em>, not to what you pay in the open market. You buy the bond at its market price of ${money(mkt)}, plain.`;
+    } else {
+      at=3; why=`The subtraction is the wrong way round. Net <em>cost</em> is what you pay for the bond less what the buyer pays you, i.e. ${money(cost)} &minus; ${money(proceeds)}.`;
+    }
+    return {mode:"choice",
+      text:`Before expiry, a futures seller works out the cost of delivering a particular bond at today's prices. Here is their
+            work:`,
+      ask:"Which step introduces the mistake?",
+      options:st.map((html,q)=>({html, correct:q===at, msg:q===at?why:fine[q]})),
+      // Formula first, then the numbers (README rule, 22 Sep 2026)
+      steps:[
+        `Invoice = futures price &times; conversion factor = ${money(fut)} &times; ${cf.toFixed(4)} = ${money(inv)}`,
+        `Cost = the bond's market price, unadjusted = ${money(mkt)}`,
+        `Net cost = cost &minus; invoice = ${money(mkt)} &minus; ${money(inv)} = <b>${smoney(mkt-inv)}</b>`
+      ]};
+  }}
+];
+
+const TOPICS = [
+  {key:"all", label:"Mixed"},
+  {key:"cf", label:"Conversion factors"},
+  {key:"ctd", label:"Cheapest to deliver"},
+  {key:"pricing", label:"Futures pricing"},
+  {key:"concept", label:"Reason it out"},
+  {key:"error", label:"Find the mistake"}
+];
+
+/* ----------------------------------------------------------------- state */
+let active = "all", current = null, tries = 0;
+let peeked = false, solved = false, tallied = false;  // tallied = already counted in `attempted`
+const stats = {att:0, first:0, streak:0, peek:0};
+
+const $ = id => document.getElementById(id);
+
+/* One-period trees for templates that return q.fig = [{label, now, outs:[...], probs:[...]?}, ...]
+   (added 22 Oct 2026 for Note 13, at Anh's request). Values come from the same draw as the text. */
+function figHTML(fig){
+  const txt = s => String(s).replace(/<[^>]+>/g, "");
+  const len = s => txt(s).replace(/&[a-z]+;/g, "x").length;
+  /* A multi-period recombining tree (Notes 16 and 19, 22 Oct 2026): t.lat[k] lists the nodes at
+     date k from the top; a node is a string or an array of lines; t.times labels the dates.      */
+  const latSVG = t => {
+    const L = t.lat.length, lines = v => (Array.isArray(v) ? v : [v]).map(txt);
+    const colW = t.lat.map(col => Math.max(24, ...col.map(v => Math.max(...lines(v).map(len))*8.2)));
+    const nl = Math.max(...t.lat.flat().map(v => lines(v).length)), lh = 17, h = nl > 1 ? 30 : 17, top = 30;
+    const cx = []; let x = 4;
+    colW.forEach((w, k) => { cx.push(x + w/2); x += w + 44; });
+    const W = Math.max(x - 44 + 4, 8.5*len(t.label) + 10);
+    const yOf = (k, i) => top + h*(2*i + (L-1-k)) + (nl-1)*lh/2;
+    const H = top + h*2*(L-1) + nl*lh + (t.times ? 26 : 6);
+    /* t.on (23 Oct 2026, Anh): the nodes the question works at, as "k,i". The rest of the tree is drawn
+       in grey, with a dot for a node that carries no figure, so students see where in the tree they are. */
+    const on = t.on ? new Set(t.on) : null, isOn = (k, i) => !on || on.has(k + "," + i);
+    const half = (k, i) => lines(t.lat[k][i]).join("") ? colW[k]/2 + 4 : 6;
+    let g = `<text class="tl" x="${W/2}" y="14" text-anchor="middle">${txt(t.label)}</text>`;
+    t.lat.forEach((col, k) => col.forEach((v, i) => {
+      const y = yOf(k, i), ls = lines(v);
+      if (ls.join("")) ls.forEach((s, j) => g += `<text x="${cx[k]}" y="${y + 5 + (j - (ls.length-1)/2)*lh}" text-anchor="middle">${s}</text>`);
+      else g += `<circle cx="${cx[k]}" cy="${y}" r="3.2"${isOn(k, i) ? "" : ` class="off"`}/>`;
+      if (k < L-1) [i, i+1].forEach(c => {
+        const y2 = yOf(k+1, c);
+        g += `<line x1="${cx[k] + half(k, i)}" y1="${y}" x2="${cx[k+1] - half(k+1, c)}" y2="${y2}" stroke-width="1.6"${isOn(k, i) && isOn(k+1, c) ? "" : ` class="off"`}/>`;
+      });
+    }));
+    if (t.times) t.times.forEach((s, k) => g += `<text class="tp" x="${cx[k]}" y="${H - 6}" text-anchor="middle">${txt(s)}</text>`);
+    return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${txt(t.label)}: ${t.lat.map(c => c.map(v => lines(v).join(" ")).join(" / ")).join("; then ")}">${g}</svg>`;
+  };
+  return fig.map(t => {
+    if (t.lat) return latSVG(t);
+    const n = t.outs.length, gap = n > 2 ? 30 : 46, top = 34;
+    const x1 = Math.max(40, 12 + 8.5*len(t.now)), x2 = x1 + 56;
+    const wide = Math.max(...t.outs.map((v, i) => 8.4*len(v) + (t.probs ? 6.6*(len(t.probs[i]) + 2) + 6 : 0)));
+    const W = Math.max(x2 + 10 + wide, 8.5*len(t.label) + 10), H = top + gap*(n-1) + 14, mid = top + gap*(n-1)/2;
+    let g = `<text class="tl" x="${(x1 + x2)/2}" y="14" text-anchor="middle">${txt(t.label)}</text>`;
+    g += `<text x="${x1-8}" y="${mid+5}" text-anchor="end">${txt(t.now)}</text>`;
+    t.outs.forEach((v, i) => {
+      const y = top + gap*i, dx = x2-x1, dy = y-mid, L = Math.hypot(dx, dy), ux = dx/L, uy = dy/L;
+      const ex = x2 - 2*ux, ey = y - 2*uy, bx = ex - 9*ux, by = ey - 9*uy;
+      g += `<line x1="${x1}" y1="${mid}" x2="${bx}" y2="${by}" stroke-width="1.8"/>`;
+      g += `<polygon points="${ex},${ey} ${bx-4*uy},${by+4*ux} ${bx+4*uy},${by-4*ux}" stroke-width="0"/>`;
+      g += `<text x="${x2+6}" y="${y+5}">${txt(v)}${t.probs ? `<tspan class="tp" dx="6">(${txt(t.probs[i])})</tspan>` : ""}</text>`;
+    });
+    return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${txt(t.label)}: ${txt(t.now) || "today"}, then ${t.outs.map(txt).join(" or ")}">${g}</svg>`;
+  }).join("");
+}
+
+function buildTopics(){
+  const box = $("topics");
+  TOPICS.forEach(t=>{
+    const b = document.createElement("button");
+    b.className = "chip"; b.textContent = t.label;
+    b.setAttribute("aria-pressed", String(t.key===active));
+    b.onclick = ()=>{
+      active = t.key;
+      [...box.children].forEach(c=>c.setAttribute("aria-pressed","false"));
+      b.setAttribute("aria-pressed","true");
+      seqIdx = 0;                 // a new topic restarts the sequence
+      newQuestion();
+    };
+    box.appendChild(b);
+  });
+  /* the Starred chip: practise only the questions starred on this page */
+  const s = document.createElement("button");
+  s.className = "chip"; s.id = "chipStar";
+  s.setAttribute("aria-pressed", "false");
+  s.onclick = ()=>{
+    active = "starred";
+    [...box.children].forEach(c=>c.setAttribute("aria-pressed","false"));
+    s.setAttribute("aria-pressed","true");
+    seqIdx = 0;
+    newQuestion();
+  };
+  box.appendChild(s);
+  updateStarChip();
+}
+
+const ALL_TEMPLATES = TEMPLATES.concat(CHOICE_TEMPLATES);
+
+/* A template's primary topic is `topic`; it may also list secondary topics in
+   `also`, so one item can appear under several chips. */
+function inTopic(t, key){
+  return t.topic === key || (Array.isArray(t.also) && t.also.includes(key));
+}
+
+/* ---- progress: distinct templates solved without opening the solution ---- */
+const PROG_KEY = "practice-progress:" + document.title;
+let mastered = new Set();
+try { mastered = new Set(JSON.parse(localStorage.getItem(PROG_KEY) || "[]")); }
+catch (e) { mastered = new Set(); }
+
+function saveProgress(){
+  try { localStorage.setItem(PROG_KEY, JSON.stringify([...mastered])); } catch (e) {}
+}
+function markMastered(id){
+  if (!id || mastered.has(id)) return;
+  mastered.add(id);
+  saveProgress();
+}
+
+/* ---- starred questions: kept per template, so a starred question comes back with new
+   numbers. Starred automatically on a wrong answer or on opening the solution before
+   solving; the student can star or unstar any question by hand. ---- */
+const STAR_KEY = "practice-starred:" + document.title;
+let starred = new Set();
+try { starred = new Set(JSON.parse(localStorage.getItem(STAR_KEY) || "[]")); }
+catch (e) { starred = new Set(); }
+starred = new Set([...starred].filter(id => ALL_TEMPLATES.some(t => t.id === id)));
+
+function saveStars(){
+  try { localStorage.setItem(STAR_KEY, JSON.stringify([...starred])); } catch (e) {}
+}
+function updateStarChip(){
+  const c = document.getElementById("chipStar");   // made by buildTopics, not in the markup
+  if (c) c.textContent = "★ Starred (" + starred.size + ")";
+}
+function showStar(){
+  const on = !!(current && starred.has(current.id));
+  $("star").hidden = !current;
+  $("star").setAttribute("aria-pressed", String(on));
+  $("star").textContent = on ? "★ Starred" : "☆ Star";
+}
+function setStar(id, on){
+  if (!id) return;
+  if (on) starred.add(id); else starred.delete(id);
+  saveStars(); updateStarChip(); showStar();
+}
+function autoStar(){ if (current && !starred.has(current.id)) setStar(current.id, true); }
+
+function poolFor(key){
+  if (key === "all") return ALL_TEMPLATES;
+  if (key === "starred") return ALL_TEMPLATES.filter(t => starred.has(t.id));
+  return ALL_TEMPLATES.filter(t => inTopic(t, key));
+}
+
+/* Templates are drawn WITHOUT immediate repeats. Sampling with replacement
+   looks fine on the full bank, but a topic holding only three or four
+   templates repeats roughly one press in three, which reads as the button
+   being broken. Hold the most recent half of the pool out of the draw. */
+let recentIds = [];
+/* Questions seen this session, so the arrow keys can step back and forth through them. */
+let history = [], histIdx = -1;
+let navKey = false;      // true while an arrow key is doing the rendering
+let order = "shuffle";   // "shuffle" | "seq"
+let seqIdx = 0;
+
+function newQuestion(replay){
+  let q;
+  if (replay){ q = replay.q; }
+  else {
+  const pool = poolFor(active);
+  if (!pool.length){
+    current = null;
+    $("qmeta").textContent = "Starred";
+    $("qtext").innerHTML = "No starred questions yet. A question is starred when you answer it " +
+      "wrongly or open its solution before solving it, and you can star any question yourself with " +
+      "<b>☆ Star</b>. Pick another chip to practise.";
+    $("qask").innerHTML = "";
+    $("opts").hidden = true; $("opts").innerHTML = "";
+    $("ans").hidden = true; $("check").hidden = true; $("next").hidden = true;
+    $("fb").innerHTML = ""; $("soldetails").hidden = true; $("seqPos").textContent = "";
+    showStar();
+    return;
+  }
+  let tpl;
+  if (order === "seq"){
+    /* walk the bank in order, wrapping at the end */
+    if (seqIdx >= pool.length) seqIdx = 0;
+    tpl = pool[seqIdx];
+    seqIdx = (seqIdx + 1) % pool.length;
+    $("seqPos").textContent = `${seqIdx === 0 ? pool.length : seqIdx} of ${pool.length}`;
+  } else {
+    const hold = Math.max(1, Math.floor(pool.length / 2));
+    let choices = pool.filter(t => !recentIds.slice(0, hold).includes(t.id));
+    if (!choices.length) choices = pool;        // pool of one, or all held out
+    tpl = pick(choices);
+    recentIds.unshift(tpl.id);
+    if (recentIds.length > 40) recentIds.length = 40;
+    $("seqPos").textContent = "";
+  }
+  q = tpl.gen();
+  q.name = tpl.name;
+  q.id   = tpl.id;
+  q.seqPos = $("seqPos").textContent;   // carried so stepping back shows its own position
+  if (q.mode !== "choice") q.distractors = usable(q.correct, q.cands, q.sep);
+  }
+  current = q;
+  if (replay){
+    tries = replay.tries; peeked = replay.peeked; solved = replay.solved; tallied = replay.tallied;
+  } else {
+    tries = 0; peeked = false; solved = false; tallied = false;
+    history = history.slice(0, histIdx + 1);           // a new draw discards anything ahead
+    history.push({q, tries:0, peeked:false, solved:false, tallied:false, fb:"", ans:""});
+    if (history.length > 50){ history.shift(); }
+    histIdx = history.length - 1;
+  }
+
+  const isChoice = q.mode === "choice";
+  $("qmeta").textContent = q.name;
+  $("qtext").innerHTML   = q.text;
+  $("qfig").innerHTML    = q.fig ? figHTML(q.fig) : "";
+  $("qfig").hidden       = !q.fig;
+  $("qask").innerHTML    = q.ask;
+  /* Hide the input and Check individually, NOT the whole row -- the
+     "New question" button lives in that row and must stay reachable
+     on choice questions. */
+  $("ans").hidden   = isChoice;
+  $("check").hidden = isChoice;
+  $("next").hidden  = false;
+  showStar();
+  $("opts").hidden     = !isChoice;
+  const box = $("opts");
+  box.innerHTML = "";              // always clear, even when the panel is hidden
+  if (isChoice){
+    q.options.forEach((o,k)=>{
+      const btn = document.createElement("button");
+      btn.className = "opt"; btn.innerHTML = o.html;
+      btn.onclick = () => pickOption(k);
+      box.appendChild(btn);
+    });
+  }
+  $("ans").value = "";
+  $("ans").placeholder = q.unit==="money" ? "e.g. 1234.56"
+                     : q.unit==="percent" ? "e.g. 12.34  (percent)"
+                     : "e.g. 18";
+  $("ans").disabled = false;
+  $("check").disabled = false;
+  $("fb").innerHTML = "";
+  $("steps").innerHTML = q.steps.map(s=>`<div>${s}</div>`).join("");
+  const d = $("soldetails"); d.hidden = false; d.open = false;
+  if (replay){
+    /* Put the question back exactly as it was left --- the feedback, what was typed, and
+       whether it had already been answered. The tallied/solved flags come back with it,
+       so revisiting a question never re-counts an attempt or re-awards mastery. */
+    $("fb").innerHTML = replay.fb || "";
+    $("ans").value    = replay.ans || "";
+    $("seqPos").textContent = q.seqPos || "";
+    if (isChoice && q.wrong){
+      [...$("opts").children].forEach((b,j)=>{
+        if (q.wrong.indexOf(j) >= 0){ b.classList.add("wrong"); b.disabled = true; }
+      });
+    }
+    if (solved || q.done){
+      if (isChoice){
+        [...$("opts").children].forEach((b,j)=>{ b.disabled = true;
+          if (q.options[j].correct) b.classList.add("right"); });
+      } else { $("ans").disabled = true; $("check").disabled = true; }
+    }
+    d.open = peeked || solved;
+  }
+  /* Arriving by arrow key must not park the cursor in the answer box: a restored answer
+     sitting there would swallow the next arrow press and strand the student. */
+  if (navKey) $("ans").blur();
+  else if (!isChoice && !$("ans").disabled) $("ans").focus();
+}
+
+function parseInput(raw){
+  const cleaned = raw.replace(/[$,%\s,]/g,"");
+  if (cleaned === "" ) return NaN;
+  return Number(cleaned);
+}
+
+function say(kind, title, body){
+  $("fb").innerHTML = `<div class="fb ${kind}"><strong>${title}</strong>${body}</div>`;
+}
+
+function pickOption(k){
+  const q = current;
+  if (q.done) return;
+  const o    = q.options[k];
+  const btns = [...$("opts").children];
+
+  tries++;
+  if (!tallied){ tallied = true; stats.att++; }
+
+  if (o.correct){
+    q.done = true; solved = true;
+    btns.forEach((b2,j)=>{ b2.disabled = true; if (q.options[j].correct) b2.classList.add("right"); });
+    if (peeked){
+      stats.streak = 0;
+      say("ok","Correct — but you read the solution first.",
+          "It still counts as attempted, just not toward first-try accuracy or your streak. " + o.msg);
+    } else {
+      stats.streak++;
+      if (tries === 1) stats.first++;
+      markMastered(q.id);
+      say("ok", tries===1 ? "Correct — first try." : "Correct.", o.msg);
+    }
+    $("soldetails").open = true;
+  } else {
+    stats.streak = 0;
+    btns[k].classList.add("wrong");
+    btns[k].disabled = true;
+    (q.wrong || (q.wrong = [])).push(k);   // remembered so a revisit keeps it eliminated
+    autoStar();
+    say("no","Not that one.", o.msg);
+  }
+  render();
+}
+
+function check(){
+  const raw = $("ans").value;
+  const parsed = parseInput(raw);
+  if (!Number.isFinite(parsed)){
+    say("hint","Enter a number","Type your answer as a number — you can include $ , or % and it will be ignored.");
+    return;
+  }
+  const q = current;
+  const val = q.unit==="percent" ? parsed/100 : parsed;
+  const TOL = q.tol || REL_MATCH;
+
+  /* Unit slips are formatting mistakes, not wrong answers, so they cost
+     neither an attempt nor first-try credit. Guarded so a genuinely
+     correct entry can never be mistaken for one. */
+  if (!near(val, q.correct, TOL)){
+    if (q.unit==="percent" && near(parsed, q.correct, TOL)){
+      say("hint","Right number, wrong units.",
+          `You entered <code>${raw}</code> as a decimal. This box wants a percent — enter <code>${(q.correct*100).toFixed(4).replace(/\.?0+$/,"")}</code> instead.`);
+      return;
+    }
+    if (near(val*100, q.correct, TOL) || near(val/100, q.correct, TOL)){
+      say("hint","Check your units.","Your figure is off by a factor of 100. Re-read what the box is asking for.");
+      return;
+    }
+  }
+
+  tries++;
+  if (!tallied){ tallied = true; stats.att++; }   // count each question once, right or wrong
+
+  if (near(val, q.correct, TOL)){
+    solved = true;
+    if (peeked){
+      stats.streak = 0;
+      say("ok","Correct — but you read the solution first.",
+          "That is a perfectly good way to learn, and it still counts as attempted. It does " +
+          "not count toward first-try accuracy or your streak, so those numbers stay honest. " +
+          "Try the next one before opening the solution.");
+    } else {
+      stats.streak++;
+      if (tries === 1) stats.first++;
+      markMastered(q.id);
+      say("ok","Correct.", tries===1 ? "First try — well done." : "Got there.");
+    }
+    $("check").disabled = true; $("ans").disabled = true;
+    $("soldetails").open = true;
+    render(); return;
+  }
+
+  stats.streak = 0;
+  autoStar();
+  const hit = q.distractors.find(d => near(val, d.val, TOL));
+  say("no", hit ? "Not quite — and I can see why." : "Not quite.",
+      hit ? hit.msg
+          : "That does not match any of the usual slips, so it may be an arithmetic error. Try again, or open the worked solution below.");
+  render();
+}
+
+function render(){
+  $("sAtt").textContent    = stats.att;
+  $("sFirst").textContent  = stats.first;
+  $("sAcc").textContent    = stats.att ? Math.round(stats.first/stats.att*100)+"%" : "—";
+  $("sStreak").textContent = stats.streak;
+  $("sPeek").textContent   = stats.peek;
+  const total = ALL_TEMPLATES.length;
+  $("pTotal").textContent  = total;
+  $("pDone").textContent   = mastered.size;
+  $("progfill").style.width = (total ? 100*mastered.size/total : 0).toFixed(1) + "%";
+}
+
+$("check").onclick = () => { if (current) check(); };
+$("star").onclick  = () => { if (current) setStar(current.id, !starred.has(current.id)); };
+$("next").onclick  = () => newQuestion();   // arrow fn: never pass the click Event as `replay`
+
+/* ---- arrow keys: right for the next question, left for the previous one -------------
+   Ignored while the answer box is being typed in, where the arrows move the caret, and
+   ignored with a modifier held so the browser's own shortcuts still work.            */
+function snapshotQuestion(){
+  const h = history[histIdx];
+  if (!h) return;
+  h.tries = tries; h.peeked = peeked; h.solved = solved; h.tallied = tallied;
+  h.fb = $("fb").innerHTML; h.ans = $("ans").value;
+}
+function goBack(){
+  if (histIdx <= 0) return;
+  snapshotQuestion(); histIdx--;
+  navKey = true; newQuestion(history[histIdx]); navKey = false;
+}
+function goForward(){
+  snapshotQuestion();
+  navKey = true;
+  if (histIdx < history.length - 1){ histIdx++; newQuestion(history[histIdx]); }
+  else newQuestion();
+  navKey = false;
+}
+document.addEventListener("keydown", e => {
+  if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+  if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
+  const t = e.target;
+  if (t && (t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+  /* Inside the answer box the arrows belong to the caret --- but only while it still has
+     somewhere to go. Once it sits at the end you are pressing toward, the press is free,
+     so a half-typed answer never traps a student in the field. */
+  if (t && t.tagName === "INPUT" && !t.disabled){
+    const at = t.selectionStart, to = t.selectionEnd, n = String(t.value).length;
+    if (at === null || at !== to) return;                       // a selection: leave it alone
+    if (e.key === "ArrowRight" ? at < n : at > 0) return;
+  }
+  e.preventDefault();
+  if (e.key === "ArrowRight") goForward(); else goBack();
+});
+$("ans").addEventListener("keydown", e=>{ if(e.key==="Enter" && !$("check").disabled) check(); });
+$("soldetails").addEventListener("toggle", ()=>{
+  if ($("soldetails").open && !solved && !peeked){
+    peeked = true;
+    stats.peek++;
+    autoStar();
+    if (!tallied){ tallied = true; stats.att++; }  // opening it counts as engaging with the question
+    render();
+  }
+});
+
+function setOrder(o){
+  order = o; seqIdx = 0;
+  $("mShuffle").setAttribute("aria-pressed", String(o === "shuffle"));
+  $("mSeq").setAttribute("aria-pressed",     String(o === "seq"));
+  newQuestion();
+}
+$("mShuffle").onclick = () => setOrder("shuffle");
+$("mSeq").onclick     = () => setOrder("seq");
+
+$("pReset").onclick = () => {
+  if (!mastered.size) return;
+  mastered.clear(); saveProgress(); render();
+};
+
+buildTopics();
+newQuestion();
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,1625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Note 16 — Callable Bonds: practice</title>
+<style>
+  :root{
+    --bg:#ffffff; --fg:#1a1a1a; --muted:#5f6672; --line:#e2e5ea;
+    --card:#f7f8fa; --accent:#00205b; --accent-fg:#ffffff;
+    --ok-bg:#e8f5ec; --ok-line:#2e7d47; --ok-fg:#17532c;
+    --no-bg:#fdeceb; --no-line:#c0392b; --no-fg:#8e2b20;
+    --hint-bg:#fff8e6; --hint-line:#b8860b; --hint-fg:#6b4e00;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#14161a; --fg:#e8eaed; --muted:#9aa3af; --line:#2b2f36;
+      --card:#1b1e24; --accent:#7f9cd4; --accent-fg:#0d1015;
+      --ok-bg:#132a1c; --ok-line:#4caf70; --ok-fg:#9fdcb4;
+      --no-bg:#2c1614; --no-line:#e06c5d; --no-fg:#f0a99f;
+      --hint-bg:#2a2313; --hint-line:#d4a017; --hint-fg:#e5c976;
+    }
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:0; background:var(--bg); color:var(--fg);
+    font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  .wrap{max-width:760px; margin:0 auto; padding:24px 18px 64px}
+  header{border-bottom:1px solid var(--line); padding-bottom:14px; margin-bottom:20px}
+  h1{font-size:1.35rem; margin:0 0 4px}
+  .sub{color:var(--muted); font-size:.9rem}
+  .topics{display:flex; flex-wrap:wrap; gap:7px; margin:18px 0}
+  .chip{
+    border:1px solid var(--line); background:var(--card); color:var(--fg);
+    padding:6px 12px; border-radius:999px; cursor:pointer; font-size:.85rem;
+    font-family:inherit;
+  }
+  .chip[aria-pressed="true"]{background:var(--accent); color:var(--accent-fg); border-color:var(--accent)}
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:10px;
+    padding:20px; margin-bottom:16px;
+  }
+  .qmeta{font-size:.75rem; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin-bottom:10px}
+  .qtext{font-size:1.05rem; margin-bottom:6px}
+  .qtext b{font-variant-numeric:tabular-nums}
+  .qfig{display:flex; flex-wrap:wrap; gap:6px 26px; margin:10px 0 2px}
+  .qfig svg{max-width:100%; height:auto; overflow:visible}
+  .qfig text{fill:var(--fg); font-family:inherit; font-variant-numeric:tabular-nums}
+  .qfig .tl{font-weight:600}
+  .qfig .tp{fill:var(--muted); font-size:13px}
+  .qfig line, .qfig polygon{stroke:var(--accent); fill:var(--accent)}
+  .qfig circle{fill:var(--accent)}
+  .qfig line.off{stroke:var(--muted); opacity:.35}
+  .qfig circle.off{fill:var(--muted); opacity:.45}
+  .ask{margin-top:14px; font-weight:600}
+  .row{display:flex; gap:9px; margin-top:14px; flex-wrap:wrap}
+  input[type=text]{
+    flex:1 1 190px; min-width:0; padding:11px 13px; font-size:1rem; font-family:inherit;
+    border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--fg);
+  }
+  input[type=text]:focus{outline:2px solid var(--accent); outline-offset:1px}
+  button{
+    padding:11px 17px; font-size:.95rem; font-family:inherit; border-radius:8px;
+    border:1px solid var(--accent); background:var(--accent); color:var(--accent-fg);
+    cursor:pointer; font-weight:600;
+  }
+  button.ghost{background:transparent; color:var(--fg); border-color:var(--line); font-weight:500}
+  button:disabled{opacity:.45; cursor:default}
+  .fb{border-radius:8px; padding:13px 15px; margin-top:15px; border-left:4px solid; font-size:.95rem}
+  .fb.ok{background:var(--ok-bg); border-color:var(--ok-line); color:var(--ok-fg)}
+  .fb.no{background:var(--no-bg); border-color:var(--no-line); color:var(--no-fg)}
+  .fb.hint{background:var(--hint-bg); border-color:var(--hint-line); color:var(--hint-fg)}
+  .fb strong{display:block; margin-bottom:3px}
+  details{margin-top:15px; border-top:1px solid var(--line); padding-top:13px}
+  summary{cursor:pointer; font-size:.9rem; color:var(--muted); font-weight:600}
+  .steps{margin-top:11px; font-size:.92rem}
+  .steps div{padding:5px 0; border-bottom:1px dashed var(--line)}
+  .steps div:last-child{border-bottom:none; font-weight:600}
+  .steps table.eqs{border-collapse:collapse; margin:2px 0}
+  .steps table.eqs td{padding:0; vertical-align:top}
+  .steps table.eqs td:first-child{text-align:right; padding-right:.3em}
+  .steps table.cf{border-collapse:collapse; margin:6px 0}
+  .steps table.cf td,.steps table.cf th{padding:2px 12px 2px 0; text-align:center}
+  .steps table.cf td:first-child,.steps table.cf th:first-child{text-align:left}
+  .steps table.cf th{border-bottom:1px solid var(--line)}
+  code{
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.88em;
+    background:var(--bg); padding:1px 5px; border-radius:4px; border:1px solid var(--line);
+  }
+  .opts{display:flex; flex-direction:column; gap:8px; margin-top:14px}
+  .opt{
+    text-align:left; padding:11px 14px; border:1px solid var(--line); background:var(--bg);
+    color:var(--fg); border-radius:8px; cursor:pointer; font-family:inherit;
+    font-size:.95rem; font-weight:400; line-height:1.55;
+  }
+  .opt:hover:not(:disabled){border-color:var(--accent)}
+  .opt.right{background:var(--ok-bg); border-color:var(--ok-line); border-width:2px}
+  .opt.wrong{background:var(--no-bg); border-color:var(--no-line)}
+  .opt:disabled{cursor:default}
+  .opt sup{font-size:.75em}
+  .stats{display:flex; gap:22px; font-size:.86rem; color:var(--muted); margin-top:22px;
+         border-top:1px solid var(--line); padding-top:14px; flex-wrap:wrap}
+  .stats b{color:var(--fg); font-variant-numeric:tabular-nums}
+  footer{margin-top:26px; font-size:.78rem; color:var(--muted); text-align:center}
+  /* The hidden attribute's UA rule is only [hidden]{display:none}, which loses
+     to author rules like .opts{display:flex} and .row{display:flex}. Without
+     this, hiding those panels silently does nothing. */
+  .modes{display:flex; gap:8px; align-items:center; margin-top:10px;
+         font-size:.84rem; color:var(--muted); flex-wrap:wrap}
+  .modes .chip{font-size:.84rem; padding:5px 12px}
+  .prog{margin-top:18px}
+  .progtop{display:flex; justify-content:space-between; align-items:baseline;
+           font-size:.86rem; color:var(--muted); margin-bottom:6px}
+  .progtop b{color:var(--fg); font-variant-numeric:tabular-nums}
+  .progbar{height:9px; border-radius:999px; background:var(--line); overflow:hidden}
+  .progfill{height:100%; width:0%; border-radius:999px; background:var(--accent);
+            transition:width .35s ease}
+  .progreset{background:none; border:none; color:var(--muted); font-size:.8rem;
+             padding:0; cursor:pointer; text-decoration:underline; font-weight:400}
+  .progreset:hover{color:var(--fg)}
+  .qhead{display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:10px}
+  .qhead .qmeta{margin-bottom:0}
+  .star{background:transparent; color:var(--muted); border:1px solid var(--line); border-radius:999px;
+        padding:3px 11px; font-size:.8rem; font-weight:500; white-space:nowrap; flex:none}
+  .star[aria-pressed="true"]{color:var(--hint-fg); background:var(--hint-bg); border-color:var(--hint-line)}
+  .star:hover{border-color:var(--accent)}
+  [hidden]{display:none !important}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>Note 16 — Callable Bonds: practice</h1>
+  <div class="sub">Semi-annual compounding. Risk-neutral probabilities are 0.5 at every node. Answers are matched within 0.25%.</div>
+</header>
+
+<div class="topics" id="topics" role="group" aria-label="Choose topics"></div>
+
+<div class="modes" id="modes" role="group" aria-label="Question order">
+  <span>Order</span>
+  <button class="chip" id="mShuffle" type="button" aria-pressed="true">Shuffle</button>
+  <button class="chip" id="mSeq" type="button" aria-pressed="false">In order</button>
+  <span id="seqPos"></span>
+</div>
+
+<div class="card" id="card">
+  <div class="qhead">
+    <div class="qmeta" id="qmeta">—</div>
+    <button class="star" id="star" type="button" aria-pressed="false"
+            title="Star this question to practise it again under the Starred chip">☆ Star</button>
+  </div>
+  <div class="qtext" id="qtext">Loading…</div>
+  <div class="qfig" id="qfig" hidden></div>
+  <div class="ask" id="qask"></div>
+  <div class="opts" id="opts" hidden></div>
+  <div class="row" id="inputrow">
+    <input type="text" id="ans" autocomplete="off" inputmode="decimal"
+           placeholder="Your answer" aria-label="Your answer">
+    <button id="check">Check</button>
+    <button id="next" class="ghost">New question</button>
+  </div>
+  <div id="fb"></div>
+  <details id="soldetails" hidden>
+    <summary>Show the worked solution</summary>
+    <div class="steps" id="steps"></div>
+  </details>
+</div>
+
+<div class="prog">
+  <div class="progtop">
+    <span>Templates solved unaided <b id="pDone">0</b> of <b id="pTotal">0</b></span>
+    <button class="progreset" id="pReset" type="button">reset</button>
+  </div>
+  <div class="progbar"><div class="progfill" id="progfill"></div></div>
+</div>
+
+<div class="stats">
+  <span>Attempted <b id="sAtt">0</b></span>
+  <span>Correct first try <b id="sFirst">0</b></span>
+  <span>Accuracy <b id="sAcc">—</b></span>
+  <span>Streak <b id="sStreak">0</b></span>
+  <span>Solutions opened <b id="sPeek">0</b></span>
+</div>
+
+<footer>Numbers are randomised, so every attempt is different. Nothing you type leaves this page.<br>Use the &rarr; and &larr; arrow keys to move between questions.</footer>
+
+</div>
+
+<script>
+"use strict";
+
+/* ------------------------------------------------------------------ utils */
+const pick = a => a[Math.floor(Math.random()*a.length)];
+/* stepped range, e.g. range(0.04,0.24,0.0025) -> 81 rates instead of a list of 6 */
+const range = (lo,hi,step) => {
+  const out=[]; for(let v=lo; v<=hi+1e-9; v+=step) out.push(Number(v.toFixed(8)));
+  return out;
+};
+const ORD = n => n + (["th","st","nd","rd"][(n%100-n%10!=10)*(n%10<4)*(n%10)]||"th");
+const money = v => "$" + v.toLocaleString("en-US",{minimumFractionDigits:2, maximumFractionDigits:2});
+const pct   = (v,d=4) => (v*100).toFixed(d).replace(/\.?0+$/,"") + "%";
+const pctS  = (v,d=2) => (v*100).toFixed(d) + "%";
+const REL_SEP  = 0.01;    // distractors must sit >1% from everything else
+const REL_MATCH= 0.0025;  // student answer counts as a match within 0.25%
+
+const near = (a,b,tol) =>
+  Number.isFinite(a) && Number.isFinite(b) &&
+  Math.abs(a-b) / Math.max(Math.abs(a), Math.abs(b), 1e-12) < tol;
+
+/* Drop distractors too close to the answer (or to each other) to diagnose.
+   Templates about small effects (perpetuity timing) pass a tighter `sep`. */
+function usable(correct, cands, sep){
+  const s = sep || REL_SEP;
+  const kept = [];
+  for (const c of cands){
+    if (!Number.isFinite(c.val)) continue;
+    if (near(c.val, correct, s)) continue;
+    if (kept.some(k => near(k.val, c.val, s))) continue;
+    kept.push(c);
+  }
+  return kept;
+}
+
+/* ------------------------------------------------------------- templates */
+/* ---------------------------------------------------------------- Note 16 ---
+   Callable bonds: yields to call and worst, backward induction on a binomial
+   rate tree with risk-neutral probability 0.5, and the OAS decomposition.    */
+const farFrom = (correct,cands,sep) => cands.every(c=>Number.isFinite(c.val) && !near(c.val,correct,sep));
+/* Trees drawn from each draw (Anh, 22 Oct 2026: "if a diagram helps with illustrating a question, put that in").
+   lat[k] lists the nodes at date k from the top; a node is a string or an array of lines. See _tools/README.md. */
+const lat = (label, cols, times) => times ? {label, lat:cols, times} : {label, lat:cols};
+/* 23 Oct 2026 (Anh): name every node by its time and its place, and draw the whole tree with the nodes the
+   question does not use in grey. vals maps "k,i" (date k, node i from the top) to what that node shows.   */
+const NODE = [["today's"], ["upper", "lower"], ["highest", "middle", "lowest"], ["highest", "second-highest", "second-lowest", "lowest"]];
+const nodeAt = (k, i) => `the ${NODE[k][i]} node at time ${(k/2).toFixed(1)}`;
+const latOn = (label, L, vals, times) => ({label, lat:[...Array(L)].map((_, k) => [...Array(k+1)].map((_, i) => vals[k + "," + i] ?? "")), times, on:Object.keys(vals)});
+const backStep = (vals,rates,C) =>
+  rates.map((r,i)=>(0.5*(vals[i]+vals[i+1])+C)/(1+r/2));
+/* Rules for worked solutions (Anh, 22 Oct 2026, from Note 13): before a step uses risk-neutral pricing, state it in
+   words (RN16 below), then "Applying this to <the bond at this node>: ...". Formula first, then the numbers. */
+const RN16 = `The risk-neutral pricing equation says that the value of any security must be its risk-neutral expected payoff, discounted at the risk-free rate`;
+const m4 = v => "$" + v.toFixed(4);                                               // a dollar value to four decimals
+const sn16 = (v,d) => (v < 0 ? "&minus;" : "") + Math.abs(v).toFixed(d);          // a true minus sign, not a hyphen
+
+const TEMPLATES = [{ id:"y4", topic:"yields", also:["call"], name:"Yield to worst", gen(){
+    /* Replaces y3 (11 Oct 2026, outside review): the student computes the yield to call from a single
+       cash flow and compares it with the yield to maturity. Call in six months at $100, just after
+       that coupon.
+       23 Oct 2026 (blind sitting): below-par draws are gone, since there the key was the yield to maturity
+       printed in the stem. The yield to maturity is now drawn on a quarter-point grid below the coupon and the
+       price computed from it. The left-out-coupon slip (a negative yield, ruled out on sight) is replaced by
+       the coupon rate.                                                                                  */
+    const priceOf=(y,c,T)=>{ let v=0; for(let i=1;i<=2*T;i++) v+=(c*50+(i===2*T?100:0))/Math.pow(1+y/2,i); return v; };
+    let c, T, P, ytm, ytc, correct, cands;
+    do {
+      c=pick(range(0.05,0.08,0.005)); T=pick([3,4,5]);
+      ytm=+(c-pick([0.0025,0.005,0.0075,0.01])).toFixed(4);
+      P=+priceOf(ytm,c,T).toFixed(2); ytc=2*((100+c*50)/P-1);
+      correct=Math.min(ytm,ytc);
+      cands=[
+        {val:ytm, msg:`That is the yield to maturity. Above the call price, being called early at \$100 is the worse outcome for you, and its yield is lower.`},
+        {val:ytc/2, msg:`That is the six-month return. Quoted p.a. with semiannual compounding, the yield is twice it.`},
+        {val:c, msg:`That is the coupon rate. A yield depends on the price you pay: here you pay ${money(P)} and get back only ${money(100+c*50)} if the bond is called.`}
+      ];
+    } while (!(P>=100.5 && P<=102) || !(ytc<ytm) || !farFrom(correct,cands,0.02));
+    return {
+      unit:"percent", tol:Math.max(0.002,0.000051/correct), sep:0.02,   // two decimals of a percent always score (23 Oct 2026)
+      text:`A ${T}-year bond pays a coupon of <b>${pctS(c,2)} p.a.</b> semiannually and trades at <b>${money(P)}</b>. Its yield to
+            maturity is <b>${pctS(ytm,2)} p.a.</b> (semiannual compounding). In six months, just after it pays its first coupon,
+            the issuer can call it at <b>\$100</b>.`,
+      ask:"What is its yield to worst, p.a. with semiannual compounding? (Two decimals.)",
+      correct, cands,
+      steps:[
+        `If called, you pay ${money(P)} today and receive the call price plus the coupon, ${money(100+c*50)}, in six months`,
+        `Price = (call price + coupon) / (1 + yield to call/2), so yield to call = 2 &times; [(call price + coupon)/price &minus; 1]`,
+        `Yield to call = 2 &times; (${money(100+c*50)}/${money(P)} &minus; 1) = ${pctS(ytc,2)}`,
+        `Yield to worst = min(yield to maturity, yield to call) = min(${pctS(ytm,2)}, ${pctS(ytc,2)}) = <b>${pctS(correct,2)}</b>`
+      ]};
+  }},
+
+{ id:"t2", topic:"tree", also:["call"], name:"Does the issuer call?", gen(){
+    const call=pick([100,101,102]);
+    // Keep the value alive clearly away from the call price: on top of it the key, the
+    // "max" distractor and the midpoint all become one number.
+    let gap, alive, C;
+    /* 11 Oct 2026 (outside review): the coupon paid at this date is now part of the node value, so the
+       key is no longer simply the smaller of two printed numbers. 23 Oct 2026: when not called, value alive
+       + coupon must exceed the call price, or the capped-with-coupon slip lands on the key.            */
+    do { gap=pick([2.5,3,3.5,4]); alive=+(call + pick([-1,1])*gap).toFixed(2); C=pick([3,3.5,4]); }
+    while (alive<call && alive+C<call+0.75);
+    const correct=Math.min(alive,call)+C;
+    return {
+      unit:"money",
+      text:`A bond pays a coupon of <b>${money(C)}</b> at a call date. At one node on that date, the bond would be worth
+            <b>${money(alive)}</b> if left alive (after the coupon). The call price is <b>${money(call)}</b>.`,
+      ask:"What is the bond worth at this node, including the coupon paid there?",
+      correct,
+      cands:[
+        {val:Math.max(alive,call)+C, msg:alive>call
+           ? `That is the value left alive. The <em>issuer</em> holds the option and calls here, since paying ${money(call)} is cheaper than leaving a bond worth ${money(alive)} outstanding.`
+           : `That uses the call price, but the issuer would not call: paying ${money(call)} for a bond worth only ${money(alive)} alive costs the issuer more. The value is the smaller of the two.`},
+        {val:Math.min(alive,call), msg:`You left out the ${money(C)} coupon. It is paid at this date whether or not the bond is called.`},
+        {val:Math.min(alive+C,call), msg:`The call price buys the bond back <em>after</em> the coupon is paid, so compare the value alive (without the coupon) with the call price, then add the ${money(C)} coupon.`}   // replaces "no averaging" (blind sitting 23 Oct 2026)
+      ],
+      steps:[
+        `The issuer calls when the bond alive is worth more than the call price`,
+        alive>call ? `${money(alive)} &gt; ${money(call)}, so the issuer calls and the holder receives ${money(call)}`
+                   : `${money(alive)} &le; ${money(call)}, so calling would cost the issuer more than leaving it alone`,
+        `Value at a call date = min(value alive, call price) + coupon = min(${money(alive)}, ${money(call)}) + ${money(C)} = <b>${money(correct)}</b>`
+      ]};
+  }},
+
+{ id:"c1", topic:"call", also:["tree"], name:"What is the call option worth on the tree?", gen(){
+    /* Replaces t3 (straight - callable, one subtraction) after the 23 Oct 2026 blind sitting: the student values
+       the issuer's call option itself, one period before its only call date. The option pays
+       max(value alive - call price, 0) at the call date; its value is the risk-neutral expected payoff,
+       discounted one period (Note 16, section 4, with the risk-neutral pricing equation).               */
+    let r, Au, Ad, payD, correct, cands, tol;
+    do {
+      r=pick(range(4,8,0.25)); Au=pick(range(98.5,99.75,0.25)); Ad=pick(range(100.75,102.5,0.25));
+      payD=Ad-100;
+      correct=0.5*payD/(1+r/200);
+      cands=[
+        {val:0.5*payD, msg:`That is the risk-neutral expected payoff at the call date. It still has to be discounted six months, at ${r.toFixed(2)}%/2.`},
+        {val:payD/(1+r/200), msg:`You left out the probability. The option pays only in the state where rates fall, which has risk-neutral probability 0.5.`},
+        {val:0.5*((Au-100)+payD)/(1+r/200), msg:`An option never pays a negative amount. If rates rise the bond is worth ${money(Au)}, below the call price, so the issuer simply does not call: the payoff is \$0, not ${sn16(Au-100,2)}.`}
+      ];   // 23 Oct 2026 (blind sitting): replaces the annual-rate slip, which sat just below the key as "undiscounted" sat just above
+      tol=Math.max(0.0025,0.0051/correct);
+    } while (Au+Ad-200<0.25 || !farFrom(correct,cands,Math.max(REL_SEP,tol)));
+    return {
+      unit:"money", tol, sep:Math.max(REL_SEP,tol),
+      text:`A callable bond can be called at <b>\$100</b> in six months, just after that date's coupon, and on no other date. At that
+            date the bond left alive will be worth <b>${money(Au)}</b> if rates rise and <b>${money(Ad)}</b> if they fall (after the coupon).
+            The six-month rate today is <b>${r.toFixed(2)}% p.a.</b>, compounded semiannually, and each branch has risk-neutral
+            probability 0.5.`,
+      fig:[lat("The bond left alive at the call date (after the coupon); call price $100", [[[`r = ${r.toFixed(2)}%`, "option ?"]],
+             [[money(Au), "if rates rise"], [money(Ad), "if rates fall"]]], ["today", "call date"])],
+      ask:"What is the issuer's call option worth today? (Two decimals.)",
+      correct, cands,
+      steps:[
+        `At the call date the issuer calls only if the bond alive is worth more than the call price, so the option pays max(value alive &minus; call price, 0)`,
+        `If rates rise: max(${money(Au)} &minus; \$100, 0) = \$0.00. If rates fall: max(${money(Ad)} &minus; \$100, 0) = ${money(payD)}`,
+        `${RN16}.`,
+        `Applying this to the call option: value = [0.5 &times; (payoff if rates rise) + 0.5 &times; (payoff if rates fall)] / (1 + r/2)`,
+        `= [0.5 &times; \$0.00 + 0.5 &times; ${money(payD)}] / (1 + ${r.toFixed(2)}%/2) = <b>${money(correct)}</b>`
+      ]};
+  }},
+
+{ id:"s2", topic:"spread", name:"Comparing two callable bonds", gen(){
+    let oasA,oasB,optA,optB,statA,statB;
+    const bp = x => Math.round(x*10000);            // compare spreads in whole basis points
+    /* A's static spread must be strictly the larger: the last step says "A's raw spread
+       looked bigger" and the static-spread slip says "A looks better" (false on 90 of 1620
+       draws). Nor may a slip equal the key: the static-spread difference did on 144 draws
+       and the optionality difference on 54 (gridall 16 SCORES). Re-drawn, 22 Sep 2026.   */
+    do {
+      oasA=pick(range(.006,.014,.001));
+      oasB=oasA+pick([.002,.003,.004,.005]);     // B is genuinely wider, never equal
+      optA=pick(range(.008,.016,.001));
+      optB=pick(range(.001,.005,.001));          // and its option costs less
+      statA=oasA+optA; statB=oasB+optB;
+    } while (bp(statA) <= bp(statB) ||
+             [bp(statA-statB), bp(optA-optB), bp(statB-oasA)].includes(bp(oasB-oasA)) ||
+             new Set([bp(statA-statB), bp(optA-optB), bp(statB-oasA)]).size < 3);   // three distinct wrong answers (rule 19)
+    const correct=100*(oasB-oasA)*100;   // in basis points
+    return {
+      unit:"number",
+      text:`Bond A has a static spread of <b>${pctS(statA,2)} p.a.</b> with <b>${pctS(optA,2)}</b> of
+            it due to optionality. Bond B has a static spread of <b>${pctS(statB,2)} p.a.</b> with
+            <b>${pctS(optB,2)}</b> due to optionality.`,
+      ask:"By how many basis points does B's option-adjusted spread exceed A's?",
+      correct,
+      cands:[
+        {val:100*(statA-statB)*100, msg:`You compared the static spreads, which still contain the optionality. Take the spread due to optionality out of each first.`},
+        {val:100*(optA-optB)*100, msg:`That is the difference in the spreads due to optionality, which pay for the call options. The question asks about what is left once they are taken out: the option-adjusted spreads.`},
+        {val:100*(statB-oasA)*100, msg:`You took the optionality out of A's spread but not out of B's. Compare like with like: B's option-adjusted spread is ${pctS(statB,2)} &minus; ${pctS(optB,2)}.`}   // replaces "Sign reversed" (negative, ruled out on sight; claude.ai, 22 Oct 2026)
+      ],
+      steps:[
+        `Static spread = option-adjusted spread + spread due to optionality, so option-adjusted spread = static spread &minus; spread due to optionality`,
+        `OAS<sub>A</sub> = ${pctS(statA,2)} &minus; ${pctS(optA,2)} = ${pctS(oasA,2)}; OAS<sub>B</sub> = ${pctS(statB,2)} &minus; ${pctS(optB,2)} = ${pctS(oasB,2)}`,
+        `Difference = ${pctS(oasB,2)} &minus; ${pctS(oasA,2)} = ${pctS(oasB-oasA,2)} = <b>${correct.toFixed(2)} basis points</b> in B's favour`,
+        `B has the wider option-adjusted spread, even though A's static spread is bigger.`
+      ]};
+  }},
+
+
+{ id:"t4", topic:"tree", also:["call"], name:"Pricing a callable bond on a two-step tree", gen(){
+    /* Section 4 in miniature, and the April 2024 in-class exercise (UG_Lecture_20, "Inclass
+       Exercises"): walk back through the tree, capping the value at the call price where the
+       issuer calls. A 1-year bond callable at time 0.5 at $100, after that date's coupon.
+       23 Oct 2026: rates on a quarter-point grid; the risk-neutral pricing equation stated first.   */
+    let K, C, r0, ru, rd, Au, Ad, correct, cands;
+    do {
+      K=pick([6,7,8]); C=K/2;
+      r0=pick(range(3.0,6.0,0.25)); ru=+(r0+pick([1.0,1.5,2.0])).toFixed(2); rd=+(r0-pick([1.0,1.5,2.0])).toFixed(2);
+      Au=(100+C)/(1+ru/200); Ad=(100+C)/(1+rd/200);
+      const cu=Math.min(Au,100), cd=Math.min(Ad,100), g=1+r0/200;
+      correct=(0.5*(cu+cd)+C)/g;
+      cands=[
+        {val:(0.5*(Au+Ad)+C)/g, msg:`That is the straight (non-callable) bond. At time 0.5 the issuer calls wherever the bond alive is worth more than \$100, so cap those nodes at \$100 first.`},
+        {val:(0.5*(Math.min(Au+C,100)+Math.min(Ad+C,100)))/g, msg:`The call price buys back the bond <em>after</em> the time-0.5 coupon is paid. Cap the bond's value (without the coupon) at \$100, then add the \$${C.toFixed(2)} coupon.`},
+        {val:(0.5*(cu+cd)+C)/(1+r0/100), msg:`Six months at ${r0.toFixed(2)}% p.a. with semiannual compounding means dividing by 1 + ${r0.toFixed(2)}%/2, not 1 + ${r0.toFixed(2)}%.`},
+        {val:0.5*(cu+cd)+C, msg:`That is the value at time 0.5. Discount it back six months at today's rate.`}
+      ];
+      /* The call moves a 1-year bond's price by well under 1%, so no draw separates the straight-bond
+         slip at the house 1% (measured 10 Oct 2026: 0 of 50,000). Separation here is 0.5% and the key is
+         matched within 0.1%, so the stem asks for two decimals.                                   */
+    } while (!(rd>0 && Ad>100.05 && Au<99.95) || !farFrom(correct,cands,0.005) || usable(correct,cands,0.005).length<3);
+    return {
+      unit:"money", tol:0.001, sep:0.005,
+      text:`A 1-year bond, face \$100, pays a coupon of <b>${K.toFixed(2)}%</b> p.a. semi-annually (\$${C.toFixed(2)} every six
+            months). The issuer can call it at time 0.5, just after the first coupon is paid, for <b>\$100</b>. The six-month
+            rate (p.a., semi-annual compounding) is <b>${r0.toFixed(2)}%</b> today; at time 0.5 it will be either
+            <b>${ru.toFixed(2)}%</b> or <b>${rd.toFixed(2)}%</b>, each with risk-neutral probability 0.5.`,
+      fig:[lat("Six-month rates and the bond's cash flows", [[[`r = ${r0.toFixed(2)}%`, "price ?"]],
+             [[`r = ${ru.toFixed(2)}%`, `coupon \$${C.toFixed(2)}`], [`r = ${rd.toFixed(2)}%`, `coupon \$${C.toFixed(2)}`]],
+             [[money(100+C)], [money(100+C)], [money(100+C)]]], ["today", "time 0.5 (call date)", "time 1.0"])],
+      ask:"What is the callable bond worth today? (Two decimals.)",
+      correct,
+      cands,
+      steps:[
+        `${RN16}.`,
+        `Applying this to the bond at time 0.5 (after the coupon): its only remaining payoff, face + coupon, is certain, so value alive = (face + coupon) / (1 + r/2)`,
+        `If we end up at the high-rate node at time 0.5: ${money(100+C)}/(1 + ${ru.toFixed(2)}%/2) = ${m4(Au)}. If we end up at the low-rate node at time 0.5: ${money(100+C)}/(1 + ${rd.toFixed(2)}%/2) = ${m4(Ad)}`,
+        `At the call date the value is min(value alive, call price): the low-rate node is called and becomes \$100.0000; the high-rate node stays ${m4(Au)}`,
+        `Applying the risk-neutral pricing equation to the bond today: value = [0.5 &times; (V<sub>high</sub> + V<sub>low</sub>) + coupon] / (1 + r/2)`,
+        `= [0.5 &times; (${m4(Au)} + \$100.0000) + ${money(C)}] / (1 + ${r0.toFixed(2)}%/2) = <b>${m4(correct)}</b>`
+      ]};
+  }},
+
+{ id:"t6", topic:"tree", also:["call"], name:"Rate volatility and the call option's value", gen(){
+    /* Anh, 23 Oct 2026: two trees for the same callable bond, identical except for how far apart the time-0.5
+       rates are (same midpoint), to show that more volatile rates make the issuer's call option worth more.
+       Replaces the first t6 (the option on one two-step tree), which repeated c1's method. Which tree is the
+       wider one is drawn, and the ask is always B minus A, so the key's sign varies (rule 39).             */
+    let K, C, r0, m, dn, dw, wideB, A, B, correct, cands;
+    const opt = (ru, rd) => { const Au=(100+C)/(1+ru/200), Ad=(100+C)/(1+rd/200);
+      return {ru, rd, Au, Ad, payU:Math.max(Au-100,0), payD:Math.max(Ad-100,0)}; };
+    do {
+      K=pick([6,7,8]); C=K/2; r0=pick(range(3.0,6.0,0.25)); m=r0+pick([0,0.25,0.5]);
+      dn=pick([1,1.25,1.5]); dw=dn+pick([0.5,0.75,1]); wideB=pick([true,false]);
+      const N=opt(m+dn,m-dn), W=opt(m+dw,m-dw); A=wideB?N:W; B=wideB?W:N;
+      const g=1+r0/200, val=t=>+(0.5*(t.payU+t.payD)/g).toFixed(4);   // as printed in the steps
+      correct=+(val(B)-val(A)).toFixed(4);
+      cands=[
+        {val:0.5*(B.payD-A.payD), msg:`You did not discount. The option pays at time 0.5, so both values must be discounted six months at today's rate, ${r0.toFixed(2)}%/2.`},
+        {val:(B.payD-A.payD)/g, msg:`You left out the probability. On each tree the option pays only at the low-rate node at time 0.5, which has risk-neutral probability 0.5.`},
+        {val:-correct, msg:`Sign reversed. The tree with the more spread-out rates has the lower rate at its low-rate node, so the bond there is worth more and the call pays more: the option is worth more on the wider tree.`},
+        // cb(B)-cb(A) dropped: the straight bond barely moves, so it sits next to -key (proof sheet 23 Oct 2026)
+        {val:0.5*((B.Au-100)+(B.Ad-100)-(A.Au-100)-(A.Ad-100))/g, msg:`An option never pays a negative amount. At the high-rate node at time 0.5 the bond alive is below \$100 on both trees, so the issuer does not call and the payoff is \$0.`}
+      ].filter(c=>!near(c.val,correct,REL_SEP));
+    } while (!(m-dw>0 && [A,B].every(t=>t.Au<99.95 && t.Ad>100.05)) || cands.length<3);
+    const p2=v=>v.toFixed(2), tree=(nm,t)=>lat(`Tree ${nm}`, [[[`r = ${p2(r0)}%`, "option ?"]],
+             [[`r = ${p2(t.ru)}%`], [`r = ${p2(t.rd)}%`]], [[money(100+C)], [money(100+C)], [money(100+C)]]], ["today", "time 0.5 (call date)", "time 1.0"]);
+    const g=1+r0/200, vA=+(0.5*A.payD/g).toFixed(4), vB=+(0.5*B.payD/g).toFixed(4);
+    return {
+      unit:"money", tol:Math.max(0.001,0.00015/Math.abs(correct)), sep:REL_SEP,   // a key from unrounded steps still scores
+      text:`A 1-year bond, face \$100, pays a coupon of <b>${K.toFixed(2)}%</b> p.a. semi-annually (\$${C.toFixed(2)} every six
+            months). The issuer can call it at time 0.5, just after the first coupon is paid, for <b>\$100</b>. Two analysts value
+            the issuer's call option on two trees that are the same except for the rates at time 0.5. On both, the six-month rate
+            (p.a., semi-annual compounding) is <b>${p2(r0)}%</b> today and each branch has risk-neutral probability 0.5. On tree A,
+            the rate at time 0.5 will be <b>${p2(A.ru)}%</b> at the high-rate node or <b>${p2(A.rd)}%</b> at the low-rate node; on
+            tree B, <b>${p2(B.ru)}%</b> or <b>${p2(B.rd)}%</b>.`,
+      fig:[tree("A",A), tree("B",B)],
+      ask:"What is the call option's value today on tree B minus its value on tree A? (Four decimals; enter a negative number if it is worth less on tree B.)",
+      correct, cands,
+      steps:[
+        `At time 0.5 (after the coupon) the bond's only remaining payoff, face + coupon = ${money(100+C)}, is certain, so value alive = ${money(100+C)} / (1 + r/2)`,
+        `The issuer calls only if the bond alive is worth more than the call price, so the option pays max(value alive &minus; \$100, 0)`,
+        `Tree A. If we end up at the high-rate node at time 0.5: ${money(100+C)}/(1 + ${p2(A.ru)}%/2) = ${m4(A.Au)}, so the option pays \$0. If we end up at the low-rate node at time 0.5: ${money(100+C)}/(1 + ${p2(A.rd)}%/2) = ${m4(A.Ad)}, so it pays ${m4(A.payD)}`,
+        `Tree B. If we end up at the high-rate node at time 0.5: ${money(100+C)}/(1 + ${p2(B.ru)}%/2) = ${m4(B.Au)}, so the option pays \$0. If we end up at the low-rate node at time 0.5: ${money(100+C)}/(1 + ${p2(B.rd)}%/2) = ${m4(B.Ad)}, so it pays ${m4(B.payD)}`,
+        `${RN16}.`,
+        `Applying this to the call option today: value = [0.5 &times; (payoff at the high-rate node) + 0.5 &times; (payoff at the low-rate node)] / (1 + r/2). Tree A: 0.5 &times; ${m4(A.payD)}/(1 + ${p2(r0)}%/2) = ${m4(vA)}. Tree B: 0.5 &times; ${m4(B.payD)}/(1 + ${p2(r0)}%/2) = ${m4(vB)}`,
+        `B &minus; A = ${m4(vB)} &minus; ${m4(vA)} = <b>${sn16(correct,4)}</b>. On the tree with the more spread-out rates the low-rate node is lower, the bond there is worth more, and the call pays more, while at the high-rate node it pays nothing on either tree: more volatile rates make the call option worth more.`
+      ]};
+  }},
+
+{ id:"t5", topic:"tree", also:["call"], name:"Two call dates: the later call first", gen(){
+    /* Note 16, Section 4 (two call dates): cap the time-1.5 nodes at the call price first, re-value the
+       time-1.0 node from the capped values, and only then check the call at 1.0. Both calls at $100.
+       Outside review, 11 Oct 2026. 22 Oct 2026 (claude.ai review): only draws where the adjusted value is
+       below $100 and the unadjusted value above it, so skipping the time-1.5 check always gives a wrong
+       answer. 23 Oct 2026: rates on a quarter-point grid; the risk-neutral pricing equation stated first. */
+    let C, r, vu, vd, U, A, correct, cands;
+    const j=pick([0,1,2]), here=nodeAt(2,j), hi=nodeAt(3,j), lo=nodeAt(3,j+1);   // which time-1.0 node (23 Oct 2026)
+    do {
+      C=pick([3,3.5,4]); r=pick(range(5,8,0.25));
+      vu=pick(range(97.5,99.75,0.25)); vd=pick(range(100.25,101.5,0.25));
+      U=(0.5*(vu+vd)+C)/(1+r/200); A=(0.5*(vu+100)+C)/(1+r/200);
+      correct=A;
+      cands=[
+        {val:100, msg:`You checked the time-1.0 call against the unadjusted value, ${money(U)}. At ${lo} the bond is called first, which lowers this node to ${money(A)}: below \$100, so it is not called at 1.0.`},
+        {val:U, msg:`That ignores the call at time 1.5. At ${lo} the bond, worth ${money(vd)} alive, is called at \$100.`},
+        {val:0.5*(vu+100)/(1+r/200), msg:`You left out the ${money(C)} coupon paid at time 1.5. It is paid whichever way rates go, so it belongs in the numerator.`},
+        {val:(0.5*(vu+100)+C)/(1+r/100), msg:`You discounted at the full annual rate. Six months at ${r.toFixed(2)}% p.a. means dividing by (1 + ${r.toFixed(2)}%/2).`}
+      ];
+    } while (!(A<99.9 && U>100.1) || !farFrom(correct,cands,REL_SEP*0.3));
+    return {
+      unit:"money", tol:0.0003, sep:0.003,
+      text:`A bond pays a coupon of <b>${money(C)}</b> every six months and is callable at <b>\$100</b> at time 1.0 and again at time 1.5,
+            each time just after the coupon is paid. At ${here} the six-month rate is <b>${r.toFixed(2)}% p.a.</b>, compounded
+            semiannually. From there, the bond would be worth <b>${money(vu)}</b> at ${hi} and <b>${money(vd)}</b>
+            at ${lo} if not called at time 1.5 (both after that date's coupon). Each branch has risk-neutral probability 0.5.`,
+      fig:[latOn("The tree (time-1.5 values if not called, after the coupon)", 4,
+             {[`2,${j}`]:[`r = ${r.toFixed(2)}%`, "value ?"], [`3,${j}`]:[money(vu), `+ ${money(C)} coupon`], [`3,${j+1}`]:[money(vd), `+ ${money(C)} coupon`]},
+             ["today", "time 0.5", "time 1.0 (call date)", "time 1.5 (call date)"])],
+      ask:`What value goes into the callable bond's tree at ${here}, excluding the coupon paid at time 1.0? (Two decimals.)`,
+      correct, cands,
+      steps:[
+        `Time 1.5 first. At a call date the value is min(value alive, call price). If we end up at ${lo}: min(${money(vd)}, \$100) = \$100. If we end up at ${hi}: min(${money(vu)}, \$100) = ${money(vu)}`,
+        `${RN16}.`,
+        `Applying this to the bond at ${here}: value = [0.5 &times; (value at ${hi} + value at ${lo}) + coupon] / (1 + r/2)`,
+        `= [0.5 &times; (${money(vu)} + \$100) + ${money(C)}] / (1 + ${r.toFixed(2)}%/2) = ${money(A)}`,
+        `Now the call at time 1.0: min(${money(A)}, \$100) = <b>${money(correct)}</b>. ${money(A)} &lt; \$100, so the issuer does not call at ${here}. (Unadjusted, the node would be worth ${money(U)} and look callable.)`
+      ]};
+  }},
+
+{ id:"g1", topic:"call", also:["spread"], name:"How a wider option-adjusted spread changes the callable's value", gen(){
+    /* Note 16, the defaultable callable: the issuer's own spread lowers the value left alive, so a bond the
+       default-free issuer would call may no longer be called. Outside review, 11 Oct 2026.
+       23 Oct 2026 (Anh: "kind of lame" as the gain from calling): an analyst values the bond at the lowest node at
+       time 1.0 with two spreads, so students see the spread's effect on the value directly. With the smaller spread
+       the bond is called (worth $100); with the larger it is not, so the call absorbs part of the fall.          */
+    let C, r, a, b, X, Va, Vb, correct, cands;
+    do {
+      C=pick([3,3.5,4,4.5]); r=pick(range(4,8,0.25)); a=pick(range(0.25,1,0.25)); b=a+pick([1,1.25,1.5,1.75,2]);
+      X=100+C; Va=X/(1+(r+a)/200); Vb=X/(1+(r+b)/200); correct=100-Vb;
+      const sep=Math.max(REL_SEP,0.02/correct);
+      cands=[
+        {val:Va-Vb, msg:`You ignored the call. With an option-adjusted spread of ${a.toFixed(2)}% the bond left alive is worth ${money(Va)}, above \$100, so the issuer calls and the bond is worth \$100 at this node, not ${money(Va)}.`},
+        {val:Va-100, msg:`That is the issuer's gain from calling with the ${a.toFixed(2)}% spread. The question asks how much the bond's value falls when the spread widens to ${b.toFixed(2)}%.`},
+        {val:Math.min(X/(1+(r+a)/100),100)-Math.min(X/(1+(r+b)/100),100), msg:`You discounted at the full annual rate. Six months at a rate of y p.a. means dividing by (1 + y/2).`},
+        {val:Math.min(100/(1+(r+a)/200),100)-Math.min(100/(1+(r+b)/200),100), msg:`You left out the coupon. At time 1.5 the bond pays its face value plus the last coupon, ${money(X)}.`}
+      ].filter(c=>!near(c.val,correct,sep));
+    } while (Va<100.1 || Vb>99.8 || cands.length<3);
+    const tol=Math.max(0.0025,0.0051/correct);
+    return {
+      unit:"money", tol, sep:Math.max(REL_SEP,0.02/correct),
+      text:`A callable bond pays a coupon of <b>${money(C)}</b> every six months and matures at time 1.5. It can be called at
+            <b>\$100</b> at time 1.0, just after that date's coupon is paid. At the lowest node at time 1.0 the six-month risk-free rate
+            is <b>${r.toFixed(2)}% p.a.</b>, compounded semiannually. An analyst values the bond at that node twice: once with an
+            option-adjusted spread of <b>${a.toFixed(2)}% p.a.</b> added to every rate in the tree, and once with <b>${b.toFixed(2)}% p.a.</b>`,
+      fig:[latOn("The tree (the bond from the lowest node at time 1.0)", 4,
+             {"2,2":[`r = ${r.toFixed(2)}%`, "call at $100?"], "3,2":[money(X), "face + coupon"], "3,3":[money(X), "face + coupon"]},
+             ["today", "time 0.5", "time 1.0 (call date)", "time 1.5 (maturity)"])],
+      ask:`By how much is the callable bond worth less at the lowest node at time 1.0 with the ${b.toFixed(2)}% spread than with the ${a.toFixed(2)}% spread? (Two decimals.)`,
+      correct, cands,
+      steps:[
+        `The bond is discounted at the risk-free rate plus the option-adjusted spread. From the lowest node at time 1.0 it pays face + coupon = ${money(X)} at time 1.5 whichever way rates move, so value alive = ${money(X)} / (1 + (r + spread)/2)`,
+        `At a call date the value is min(value alive, call price)`,
+        `Spread ${a.toFixed(2)}%: value alive = ${money(X)} / (1 + ${(r+a).toFixed(2)}%/2) = ${m4(Va)}, above \$100, so the issuer calls: value = \$100.0000`,
+        `Spread ${b.toFixed(2)}%: value alive = ${money(X)} / (1 + ${(r+b).toFixed(2)}%/2) = ${m4(Vb)}, below \$100, so the issuer does not call: value = ${m4(Vb)}`,
+        `Difference = \$100.0000 &minus; ${m4(Vb)} = <b>${money(correct)}</b>. A straight bond would fall by ${m4(Va)} &minus; ${m4(Vb)} = ${money(Va-Vb)}: the call caps the value at \$100, so the wider spread lowers the callable by less.`
+      ]};
+  }},
+
+{ id:"d1", topic:"dur", name:"A percentage price change from effective duration", gen(){
+    /* Section 10's recipe, and the 2025 UG final (parts e-f: a duration backed out of a model
+       repricing). Reprice at +/- 0.10% to get the slope (V+ - V-)/(2 dy); the effective dollar
+       duration is minus the slope (Anh, 11 Oct 2026).
+       23 Oct 2026 (blind sitting): asked as a PERCENTAGE price change, so today's price V0 is used
+       (effective duration = dollar duration / V0, step 6 of the recipe) and d1 no longer repeats d2's
+       dollar step. V0 stays at least $1.50 from $100 so dividing by face separates from the key.
+       23 Oct 2026 (Anh): two worked approaches - subtract the two duration-and-convexity equations
+       (no formula to remember), then the note's formula; the word "slope" is not used.            */
+    let V0, Vp, Vm, x, DD, D, correct, cands, tol;
+    do {
+      V0=pick(range(96,104,0.5)); const d=pick(range(200,800,20)), cvx=pick([-12000,-16000,-20000]);   // negative convexity, as for a callable (23 Oct 2026)
+      Vp=+(V0-d*0.001+0.5*cvx*1e-6).toFixed(2); Vm=+(V0+d*0.001+0.5*cvx*1e-6).toFixed(2);
+      x=pick([0.25,0.50,0.75])*pick([1,-1]);
+      DD=(Vm-Vp)/(2*0.001); D=DD/V0;
+      correct=-D*x/100;
+      cands=[
+        {val:-2*D*x/100, msg:`The two repricings are 2 &times; 0.10% apart, so divide the price gap by 2 &times; 0.0010, not 0.0010.`},
+        {val:D*x/100, msg:`Check the sign: when rates ${x>0?"rise":"fall"}, the price ${x>0?"falls":"rises"}.`},
+        {val:-DD/100*x/100, msg:`Duration is dollar duration divided by today's price, ${money(V0)}, not by the \$100 face value.`}
+      ];
+      D=+D.toFixed(4); correct=-D*x/100;                                       // the key works from the printed duration
+      tol=Math.max(0.0025, 0.000051/Math.abs(correct));                         // a two-decimal percentage must score
+    } while (Math.abs(Vm-Vp)<0.3 || Math.abs(V0-100)<1.5 || Math.abs(correct)<0.004
+             || Math.abs((Math.abs(correct)*1e4)%1-0.5)<0.02 || !farFrom(correct,cands,Math.max(REL_SEP,tol)));
+    return {
+      unit:"percent", tol, sep:Math.max(REL_SEP,tol),
+      text:`A callable bond's current value on the rate tree is V<sub>0</sub> = <b>\$${V0.toFixed(2)}</b>. If we reprice it when every rate in the
+            tree goes up by 0.10%, i.e. &Delta;y = 0.0010, the revised value is V<sub>+</sub> = <b>\$${Vp.toFixed(2)}</b>. If we reprice it when
+            every rate in the tree goes down by the same 0.10% (&Delta;y = 0.0010), the revised value is V<sub>&minus;</sub> = <b>\$${Vm.toFixed(2)}</b>.`,
+      ask:`Using the bond's effective duration (ignore convexity), by what percentage would its price change if every rate ${x>0?"rose":"fell"} by ${Math.abs(x).toFixed(2)}%? (Enter a negative number if the price falls; two decimals.)`,
+      correct,
+      cands,
+      steps:[
+        `<b>Approach 1: from the duration-and-convexity equation</b>`,
+        `The duration-and-convexity equation says that the change in price is &Delta;P &asymp; &minus;\$D &times; &Delta;y + 0.5 &times; \$C &times; (&Delta;y)<sup>2</sup>, where \$D is the dollar duration and \$C the dollar convexity. Apply it to each repricing:`,
+        `Rates up by 0.10%: V<sub>+</sub> &minus; V<sub>0</sub> = &minus;\$D &times; 0.0010 + 0.5 &times; \$C &times; (0.0010)<sup>2</sup>`,
+        `Rates down by 0.10%:<table class="eqs"><tr><td>V<sub>&minus;</sub> &minus; V<sub>0</sub></td><td>= &minus;\$D &times; (&minus;0.0010) + 0.5 &times; \$C &times; (&minus;0.0010)<sup>2</sup></td></tr><tr><td></td><td>= \$D &times; 0.0010 + 0.5 &times; \$C &times; (0.0010)<sup>2</sup></td></tr></table>`,
+        `Subtract the second equation from the first. The \$C terms cancel, so we do not need to know \$C: V<sub>+</sub> &minus; V<sub>&minus;</sub> = &minus;\$D &times; 0.0020`,
+        `So \$D = &minus;(V<sub>+</sub> &minus; V<sub>&minus;</sub>)/0.0020 = &minus;(${Vp.toFixed(2)} &minus; ${Vm.toFixed(2)})/0.0020 = ${DD.toFixed(2)}`,
+        `Effective duration D = \$D/V<sub>0</sub> = ${DD.toFixed(2)}/${V0.toFixed(2)} = ${D.toFixed(4)}`,
+        `% change in price &asymp; &minus;D &times; (change in rates) = &minus;${D.toFixed(4)} &times; ${x>0?"":"(&minus;"}${(Math.abs(x)/100).toFixed(4)}${x>0?"":")"} = <b>${sn16(correct*100,2)}%</b>`,
+        `<b>Approach 2: the note's formulas</b>`,
+        `Effective dollar duration \$D = &minus;(V<sub>+</sub> &minus; V<sub>&minus;</sub>)/(2 &times; &Delta;y) = &minus;(${Vp.toFixed(2)} &minus; ${Vm.toFixed(2)})/(2 &times; 0.0010) = ${DD.toFixed(2)}`,
+        `Effective duration D = \$D/V<sub>0</sub> = ${DD.toFixed(2)}/${V0.toFixed(2)} = ${D.toFixed(4)}`,
+        `% change in price &asymp; &minus;D &times; (change in rates) = &minus;${D.toFixed(4)} &times; ${x>0?"":"(&minus;"}${(Math.abs(x)/100).toFixed(4)}${x>0?"":")"} = <b>${sn16(correct*100,2)}%</b>`,
+        `The two approaches agree exactly: the note's formula for \$D is what you get by subtracting the two equations in Approach 1.`
+      ]};
+  }},
+
+{ id:"d2", topic:"dur", name:"Duration and convexity together", gen(){
+    /* Section 10's effective dollar duration and dollar convexity (Anh, 11 Oct 2026). Repriced at
+       +/- 0.50%, not the note's 0.10%, so two-decimal prices still pin down the convexity (option (b)).
+       Slope = (V+ - V-)/(2 dy), $D = -slope, $C = (V+ + V- - 2 V0)/dy^2, then
+       price change = -$D x + 0.5 $C x^2. Negative convexity: the callable's case in the note.
+       23 Oct 2026: the duration-and-convexity equation is written before the numbers, on one line; true minus sign.
+       23 Oct 2026 (Anh): d1/d2 stems say current value, then each repricing with its Delta y, naming V0, V+, V-.
+       23 Oct 2026 (Anh): two worked approaches - subtract/add the two duration-and-convexity equations
+       to get $D and $C (then D = $D/V0, C = $C/V0), then the note's formulas; no "slope". */
+    let V0, Vp, Vm, x, DD, DC, correct, cands;
+    do {
+      V0=pick(range(96,104,0.5)); const d=pick(range(150,600,10)), cvx=pick(range(-12000,-2000,400));
+      Vp=+(V0-d*0.005+0.5*cvx*25e-6).toFixed(2); Vm=+(V0+d*0.005+0.5*cvx*25e-6).toFixed(2);
+      x=pick([1.00,1.50,2.00])*pick([1,-1]);
+      DD=(Vm-Vp)/(2*0.005); DC=(Vp+Vm-2*V0)/25e-6;
+      const xd=x/100;
+      correct=-DD*xd+0.5*DC*xd*xd;
+      cands=[
+        {val:-DD*xd, msg:`That is the duration part only. The question asks you to add the convexity adjustment, 0.5 &times; dollar convexity &times; (change in yields)<sup>2</sup>.`},
+        {val:-DD*xd+0.25*DC*xd*xd, msg:`Dollar convexity is (V<sub>+</sub> + V<sub>&minus;</sub> &minus; 2V<sub>0</sub>)/(&Delta;y)<sup>2</sup>, with no 2 in the denominator. Dividing by 2(&Delta;y)<sup>2</sup> halves the convexity adjustment.`},
+        {val:-DD*xd+DC*xd*xd, msg:`The convexity adjustment is 0.5 &times; dollar convexity &times; (change in yields)<sup>2</sup>. You left out the 0.5.`},
+        {val:-DD*xd-0.5*DC*xd*xd, msg:`The dollar convexity here is negative, as it is for a callable bond in the note's example, so the adjustment ${x>0?"adds to the fall":"takes away from the gain"}. You made it ${x>0?"cushion the fall":"add to the gain"}.`},
+        {val:-5*DD*xd+0.5*25*DC*xd*xd, msg:`The repricings here are at &plusmn;0.50%, so &Delta;y = 0.0050, not the 0.0010 used in the note's example.`}
+      ];
+    } while (Math.abs(DC)<1500 || !farFrom(correct,cands,REL_SEP));
+    const dc=(DC<0?"&minus;":"")+Math.abs(DC).toFixed(0);
+    return {
+      unit:"money",
+      text:`A callable bond's current value on the rate tree is V<sub>0</sub> = <b>\$${V0.toFixed(2)}</b>. If we reprice it when every rate in the
+            tree goes up by 0.50%, i.e. &Delta;y = 0.0050, the revised value is V<sub>+</sub> = <b>\$${Vp.toFixed(2)}</b>. If we reprice it when
+            every rate in the tree goes down by the same 0.50% (&Delta;y = 0.0050), the revised value is V<sub>&minus;</sub> = <b>\$${Vm.toFixed(2)}</b>.`,
+      ask:`Using the bond's effective dollar duration and dollar convexity, by how much would its price change if every rate ${x>0?"rose":"fell"} by ${Math.abs(x).toFixed(2)}%? (Give the change in the price; enter a negative number if the price falls.)`,
+      correct,
+      cands,
+      steps:[
+        `<b>Approach 1: from the duration-and-convexity equation</b>`,
+        `The duration-and-convexity equation says that the change in price is &Delta;P &asymp; &minus;\$D &times; &Delta;y + 0.5 &times; \$C &times; (&Delta;y)<sup>2</sup>, where \$D is the dollar duration and \$C the dollar convexity. Apply it to each repricing:`,
+        `Rates up by 0.50%: V<sub>+</sub> &minus; V<sub>0</sub> = &minus;\$D &times; 0.0050 + 0.5 &times; \$C &times; (0.0050)<sup>2</sup>`,
+        `Rates down by 0.50%:<table class="eqs"><tr><td>V<sub>&minus;</sub> &minus; V<sub>0</sub></td><td>= &minus;\$D &times; (&minus;0.0050) + 0.5 &times; \$C &times; (&minus;0.0050)<sup>2</sup></td></tr><tr><td></td><td>= \$D &times; 0.0050 + 0.5 &times; \$C &times; (0.0050)<sup>2</sup></td></tr></table>`,
+        `Subtract the second equation from the first. The \$C terms cancel: V<sub>+</sub> &minus; V<sub>&minus;</sub> = &minus;\$D &times; 0.0100, so \$D = &minus;(${Vp.toFixed(2)} &minus; ${Vm.toFixed(2)})/0.0100 = ${DD.toFixed(2)}`,
+        `Add the two equations. The \$D terms cancel: V<sub>+</sub> + V<sub>&minus;</sub> &minus; 2V<sub>0</sub> = \$C &times; (0.0050)<sup>2</sup>, so \$C = (${Vp.toFixed(2)} + ${Vm.toFixed(2)} &minus; 2 &times; ${V0.toFixed(2)})/0.000025 = ${dc}`,
+        `Dividing by today's price gives the duration and convexity: D = \$D/V<sub>0</sub> = ${DD.toFixed(2)}/${V0.toFixed(2)} = ${(DD/V0).toFixed(4)} and C = \$C/V<sub>0</sub> = ${dc}/${V0.toFixed(2)} = ${(DC<0?"&minus;":"")+Math.abs(DC/V0).toFixed(2)}`,
+        `<table class="eqs"><tr><td>Change in price</td><td>&asymp; &minus;\$D &times; (change in rates) + 0.5 &times; \$C &times; (change in rates)<sup>2</sup></td></tr><tr><td></td><td>= &minus;${DD.toFixed(2)} &times; ${x>0?"":"(&minus;"}${(Math.abs(x)/100).toFixed(4)}${x>0?"":")"} + 0.5 &times; (${dc}) &times; (${(Math.abs(x)/100).toFixed(4)})<sup>2</sup> = <b>${sn16(correct,2)}</b></td></tr></table>`,
+        `<b>Approach 2: the note's formulas</b>`,
+        `Effective dollar duration \$D = &minus;(V<sub>+</sub> &minus; V<sub>&minus;</sub>)/(2 &times; &Delta;y) = &minus;(${Vp.toFixed(2)} &minus; ${Vm.toFixed(2)})/(2 &times; 0.0050) = ${DD.toFixed(2)}`,
+        `Effective dollar convexity \$C = (V<sub>+</sub> + V<sub>&minus;</sub> &minus; 2V<sub>0</sub>)/(&Delta;y)<sup>2</sup> = (${Vp.toFixed(2)} + ${Vm.toFixed(2)} &minus; 2 &times; ${V0.toFixed(2)})/(0.0050)<sup>2</sup> = ${dc}`,
+        `Change in price &asymp; &minus;\$D &times; (change in rates) + 0.5 &times; \$C &times; (change in rates)<sup>2</sup> = &minus;${DD.toFixed(2)} &times; ${x>0?"":"(&minus;"}${(Math.abs(x)/100).toFixed(4)}${x>0?"":")"} + 0.5 &times; (${dc}) &times; (${(Math.abs(x)/100).toFixed(4)})<sup>2</sup> = <b>${sn16(correct,2)}</b>`,
+        `The two approaches agree exactly: the note's formulas are what you get by subtracting and adding the two equations in Approach 1. The negative convexity makes the price ${x>0?"fall by more":"rise by less"} than duration alone predicts.`
+      ]};
+  }}
+
+];
+
+/* ======================= CHOICE-MODE ITEMS ==============================
+   Auto-graded by which option is clicked, not by a typed number.
+     topic "error"   — a worked solution with one planted mistake
+     topic "concept" — reason about the direction of an effect, no arithmetic
+   Directional items shuffle their own options so position carries no
+   information; spot-the-error items must stay in step order.            */
+
+function shuffle(a){
+  const out = a.slice();
+  for (let i=out.length-1; i>0; i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [out[i],out[j]] = [out[j],out[i]];
+  }
+  return out;
+}
+
+const CHOICE_TEMPLATES = [{ id:"k1", topic:"concept", name:"Why yield to maturity is awkward here", gen(){
+    const opts=shuffle([
+      {html:`Its maturity is not fixed, so its cash flows are not known`, correct:true,
+       msg:`Right. No single yield describes cash flows that are not known: a 10 NC 5 might run five years or ten. Traders compute a yield anyway by <em>assuming</em> one or the other, which is what yield to maturity and yield to call are.`},
+      {html:`Its price is capped at the call price, so no yield matches it`, correct:false,
+       msg:`Any price gives a yield once the cash flows are known. The problem is that they are not known: they depend on whether the bond is called.`},
+      {html:`Its coupons are reset to current rates at the call date`, correct:false,
+       msg:`The coupons are fixed. What is uncertain is how many of them there will be.`},
+      {html:`It is priced on a rate tree, and a tree has no single yield`, correct:false,
+       msg:`A straight bond can be priced on the same tree and still has a yield to maturity. What the callable lacks is a known set of cash flows.`}
+    ]);
+    return {mode:"choice",
+      text:`Strictly speaking, yield to maturity cannot be computed for a callable bond.`,
+      ask:"Why not?",
+      options:opts,
+      steps:[
+        `A 10 NC 5 bond may be redeemed at year 5 or run to year 10.`,
+        `Different lives mean different cash flows.`,
+        `So each quoted yield rests on an assumption about whether the bond is called.`
+      ]};
+  }},
+
+/* k2 (why yield to worst takes the minimum) dropped 23 Oct 2026: Anh, "it makes no sense". Backup n16_ch.js.bak23oct-k2. */
+
+{ id:"k4", topic:"concept", also:["tree"], name:"Where in the tree does the call bite?", gen(){
+    /* 23 Oct 2026 (blind sitting, rule 39): every option now carries a reason of similar length, so the key
+       is no longer the only explained, longest option.
+       23 Oct 2026 (Anh): plainer wording, "nodes on the call date" and "the non-callable bond tree".     */
+    const opts=shuffle([
+      {html:`The low-rate nodes, where the bond alive is worth more than the call price`, correct:true,
+       msg:`Right, and it is the same instinct as refinancing a mortgage. The call caps the bond's value exactly where the holder would otherwise have done best.`},
+      {html:`The high-rate nodes, where the bond is cheapest for the issuer to buy back`, correct:false,
+       msg:`At high rates the bond is worth well below the call price, so calling would mean paying more than the bond is worth.`},
+      {html:`Every node on the call date, since the issuer is allowed to call at each of them`, correct:false,
+       msg:`Being allowed to call is not the same as calling. The issuer calls only where the bond alive is worth more than the call price.`},
+      {html:`The middle nodes, where rates are closest to the coupon rate`, correct:false,
+       msg:`Near the coupon rate the bond alive is worth about par. The issuer calls only where the bond alive is worth more than the call price, which is at the low-rate nodes.`}
+    ]);
+    return {mode:"choice",
+      text:`Pricing a callable bond by backward induction, only some of the nodes on the call date differ from the
+            non-callable bond tree.`,
+      ask:"Which nodes on the call date, and why?",
+      options:opts,
+      steps:[
+        `At each call date the value is min(value alive, call price).`,
+        `The bond is worth most when rates are low.`,
+        `So the cap binds at the low-rate nodes &mdash; which is precisely when the issuer wants to refinance.`
+      ]};
+  }},
+
+{ id:"k5", topic:"concept", also:["spread"], name:"What the OAS is for", gen(){
+    /* Rewritten 11 Oct 2026 (outside review): the old version's wrong-option feedback stated k8's key
+       ("compensates for credit and liquidity risk"). k8 asks what the OAS measures; this item asks
+       only what it is used for, as in the note's section on the option-adjusted spread.                                      */
+    const P=pick(range(96,99.5,.25));
+    const opts=shuffle([
+      {html:`Add it to the risk-free tree to price the issuer's non-callable twin`, correct:true,
+       msg:`Right. The call is handled in the tree, so the spread carries only what the two bonds share: this issuer's credit and liquidity risk. The same spread therefore prices the non-callable bond.`},
+      {html:`Add it to the risk-free tree to price a non-callable bond from any issuer`, correct:false,
+       msg:`The spread is this issuer's credit and liquidity risk. Another issuer's bonds carry their own.`},
+      {html:`Add it to the callable's static spread to get the non-callable's spread`, correct:false,
+       msg:`The static spread already contains the option's piece. The non-callable carries only the option-adjusted spread, so adding the two double counts.`},
+      {html:`Nothing beyond this bond: a spread found with the call applies only to callables`, correct:false,
+       msg:`The call is handled by the tree, not by the spread. What the spread carries is the issuer's credit and liquidity risk, which its non-callable bonds share.`}
+    ]);
+    return {mode:"choice",
+      text:`A callable bond trades at \$${P.toFixed(2)}. An analyst finds the spread that, added to every rate in the
+            risk-free tree, prices the callable at \$${P.toFixed(2)}, with the call decision made at every node.`,
+      ask:"What can the analyst use this spread for?",
+      options:opts,
+      steps:[
+        `The call is handled in the tree, by capping values at the call price.`,
+        `So the spread found this way, the option-adjusted spread, carries the issuer's credit and liquidity risk.`,
+        `A non-callable bond from the same issuer carries the same risks, so the shifted tree prices it.`
+      ]};
+  }},
+
+{ id:"k6", topic:"concept", name:"Why callable issuance fell", gen(){
+    /* 23 Oct 2026 (blind sitting, rule 39): the key shortened to the length of the others, and feedback kept to
+       what the note says (the specialization argument).                                                     */
+    const opts=shuffle([
+      {html:`Derivatives let firms hedge separately from borrowing`, correct:true,
+       msg:`Right. With a callable bond the lender doubles as an insurance provider. Once interest rate derivatives markets developed, firms could issue straight bonds and buy the protection from specialized providers.`},
+      {html:`Regulators restricted call features on corporate bonds`, correct:false,
+       msg:`Nothing was banned. The economics changed: hedging could be bought separately.`},
+      {html:`Firms stopped wanting protection against falling rates`, correct:false,
+       msg:`They still want it. They just buy it a different way now.`},
+      {html:`Investors refused to buy bonds that could be called`, correct:false,
+       msg:`Investors buy callable bonds when the coupon compensates them for the call. What changed was the issuer's cheaper alternative: hedging with derivatives.`}
+    ]);
+    return {mode:"choice",
+      text:`Before 1970 almost all corporate bonds were callable, and between 1970 and 1990 about 80% of
+            fixed rate corporate bonds were. In the late 1980s and early 1990s, callable issuance dropped sharply.`,
+      ask:"What changed?",
+      options:opts,
+      steps:[
+        `A callable bond bundles borrowing with an interest rate hedge.`,
+        `The interest rate derivatives markets developed in the late 1980s and early 1990s.`,
+        `Specialization is cheaper: issue straight debt, and buy the hedge from someone who provides it for a living.`
+      ]};
+  }},
+
+{ id:"e1", topic:"error", also:["tree"], name:"Find the mistake — pricing the callable", gen(){
+    const C=4;
+    /* Blind sitting 10 Oct 2026: the old values were the note's tree nodes from different dates
+       (99.77 is a time-1.5 value), and 0.5 x 199.77 rounded down. Fresh values now, with an even
+       number of cents in vu + vd so the half is exact.
+       23 Oct 2026 (blind sitting): the stem now gives the two values (and a tree), so Step 1 can carry a fault
+       (the states swapped); a fifth fault puts the error in Step 4 (the full annual rate). The key now falls on
+       every step. Step 3 in the no-coupon variant says it adds the coupon, so the error sits there and only
+       there. Rates on a quarter-point grid. The worked solution names the error drawn.                     */
+    const call=100;
+    const r=pick([.06,.0625,.065,.0675,.07,.0725]);
+    let vu, vd;
+    do { vu=pick(range(98.40,99.80,0.02)); vd=pick(range(100.40,101.40,0.02)); } while (Math.round((vu+call)*100)%2 || Math.round((vu+vd)*100)%2);
+    const j=pick([0,1]), here=nodeAt(1,j), hiN=NODE[2][j], loN=NODE[2][j+1];   // which time-0.5 node (23 Oct 2026)
+    const fault=pick(["maxNotMin","callTooEarly","noCoupon","annualRate"]);   // swapState dropped 23 Oct 2026: it planted two errors (second sitting)
+    const canCall = fault!=="callTooEarly";
+    const up = fault==="swapState" ? vd : vu, dn = fault==="swapState" ? vu : vd;     // the student's up and down values
+    const capped = fault==="maxNotMin" ? Math.max(dn,call) : Math.min(dn,call);
+    const num = fault==="noCoupon" ? 0.5*(up+capped) : 0.5*(up+capped)+C;
+    const val = fault==="annualRate" ? num/(1+r) : num/(1+r/2);
+    const st=[
+      `<b>Step 1.</b> At time 1.0 the bond is worth ${money(up)} at the ${hiN} node (rates rise) and ${money(dn)} at the ${loN} node (rates fall); the call price is ${money(call)}`,
+      fault==="maxNotMin"
+        ? `<b>Step 2.</b> The issuer will call, so use max(${money(dn)}, ${money(call)}) = ${money(capped)} at the ${loN} node`
+        : `<b>Step 2.</b> The issuer will call, so use min(${money(dn)}, ${money(call)}) = ${money(capped)} at the ${loN} node`,
+      fault==="noCoupon"
+        ? `<b>Step 3.</b> Risk-neutral expected value plus the coupon = 0.5 &times; (${money(up)} + ${money(capped)}) = ${money(num)}`
+        : `<b>Step 3.</b> Risk-neutral expected value plus the coupon = 0.5 &times; (${money(up)} + ${money(capped)}) + ${money(C)} = ${money(num)}`,
+      fault==="annualRate"
+        ? `<b>Step 4.</b> Discount one period: ${money(num)} / (1 + ${pctS(r,2)}) = ${money(val)}`
+        : `<b>Step 4.</b> Discount one period: ${money(num)} / (1 + ${pctS(r,2)}/2) = ${money(val)}`
+    ];
+    const fine=[
+      `Step 1 is fine &mdash; those are the two values from the question, and the call price.`,
+      `Step 2 is fine &mdash; the call caps the holder's value at the call price.`,
+      `Step 3 is fine &mdash; the coupon is paid at time 1.0 at either node.`,
+      `Step 4 is fine &mdash; a six-month step discounts at half the annual rate.`
+    ];
+    const at={swapState:0, maxNotMin:1, callTooEarly:1, noCoupon:2, annualRate:3}[fault];
+    const why={
+      swapState:`The states are swapped. When rates rise the bond is worth less, so the ${hiN} node is ${money(vu)} and the ${loN} node ${money(vd)}. With the swap, the call is checked against the wrong value.`,
+      maxNotMin:`It is <em>min</em>, not max. The issuer calls to stop the bond being worth more than the call price, so the holder's value is capped at ${money(call)}, not floored at it. Taking the maximum makes the call look valuable to the holder, which reverses who owns it.`,
+      callTooEarly:`The bond is inside its call protection period at this date, so the issuer cannot call at all and the value at the ${loN} node at time 1.0 stands at ${money(vd)}.`,
+      noCoupon:`Step 3 says it adds the coupon but leaves it out. The coupon of ${money(C)} is paid at that date in both states, so it belongs in the numerator.`,
+      annualRate:`One period is six months, so discount at half the annual rate: divide by 1 + ${pctS(r,2)}/2, not 1 + ${pctS(r,2)}.`
+    }[fault];
+    const dnRight = canCall ? Math.min(vd,call) : vd;
+    const right = (0.5*(vu+dnRight)+C)/(1+r/2);
+    return {mode:"choice",
+      text:`A student takes one step back through the tree for a callable bond, face \$100 with a semi-annual coupon of ${money(C)},
+            from time 1.0 to ${here}. The six-month rate at ${here} is ${pctS(r,2)} p.a., compounded semiannually, and each branch has
+            risk-neutral probability 0.5. At time 1.0 the bond will be worth ${money(vu)} at the ${hiN} node (rates rise) and ${money(vd)}
+            at the ${loN} node (rates fall), after that date's coupon${canCall
+              ?`. The bond is callable at time 1.0 at \$100`
+              :`. The bond is still inside its call protection period at time 1.0: it cannot be called until time 1.5`}. Here is their work:`,
+      fig:[latOn("The student's step back", 3,
+             {[`1,${j}`]:[`r = ${pctS(r,2)}`, "value ?"], [`2,${j}`]:[money(vu), `+ ${money(C)} coupon`], [`2,${j+1}`]:[money(vd), `+ ${money(C)} coupon`]},
+             ["today", "time 0.5", "time 1.0"])],
+      ask:"Which step introduces the mistake?",
+      options:st.map((html,q)=>({html, correct:q===at, msg:q===at?why:fine[q]})),
+      steps:[
+        `${RN16}.`,
+        canCall
+          ? `Applying this to the bond at ${here}: value = [0.5 &times; (value at the ${hiN} node + value at the ${loN} node at time 1.0) + coupon] / (1 + r/2), where at a call date each value is min(value alive, call price)`
+          : `Applying this to the bond at ${here}: value = [0.5 &times; (value at the ${hiN} node + value at the ${loN} node at time 1.0) + coupon] / (1 + r/2), with each value the value alive, since the bond cannot be called at time 1.0`,
+        `= [0.5 &times; (${money(vu)} + ${money(dnRight)}) + ${money(C)}] / (1 + ${pctS(r,2)}/2) = ${money(right)}`,
+        `The mistake is in Step ${at+1}: ${why}`
+      ]};
+  }},
+
+{ id:"e2", topic:"error", also:["dur"], name:"Find the mistake — effective duration", gen(){
+    /* Note 16, Section 10: effective duration reprices on trees shifted up and down by 0.10%, redoing
+       the call decision at every node (at +0.10% no node is called any more). Outside review, 11 Oct
+       2026. One planted error, varied across draws; options are the steps, not shuffled (rule 21).
+       23 Oct 2026 (Anh): no "slope"; the solution derives $D = -(V+ - V-)/(2 dy) from the duration-and-
+       convexity equation written for V+ and V- (subtract, the $C terms cancel).                     */
+    const fault=pick(["fixedCalls","todayOnly","oneDy"]);
+    const st=[
+      `<b>Step 1.</b> Price the bond on the tree with its option-adjusted spread, checking the call at every node: V<sub>0</sub>`,
+      fault==="todayOnly"
+        ? `<b>Step 2.</b> Raise the rate at the first node of the tree, today's rate, by 0.10%`
+        : `<b>Step 2.</b> Raise the rate at every node of the tree by 0.10%`,
+      fault==="fixedCalls"
+        ? `<b>Step 3.</b> Reprice on the new tree, keeping the call decisions from Step 1: nodes called there stay at the call price, all others stay uncalled. This gives V<sub>+</sub>`
+        : `<b>Step 3.</b> Reprice on the new tree, checking the call again at every node. This gives V<sub>+</sub>`,
+      fault==="oneDy"
+        ? `<b>Step 4.</b> Repeat with the rates lowered by 0.10% to get V<sub>&minus;</sub>; dollar duration = &minus;(V<sub>+</sub> &minus; V<sub>&minus;</sub>)/0.0010`
+        : `<b>Step 4.</b> Repeat with the rates lowered by 0.10% to get V<sub>&minus;</sub>; dollar duration = &minus;(V<sub>+</sub> &minus; V<sub>&minus;</sub>)/(2 &times; 0.0010)`
+    ];
+    const fine=[
+      `Step 1 is fine &mdash; the tree with the spread is the one that reprices the bond.`,
+      `Step 2 is fine &mdash; effective duration shifts every rate in the tree.`,
+      `Step 3 is fine &mdash; the call is checked afresh on the shifted tree.`,
+      `Step 4 is fine &mdash; V<sub>+</sub> and V<sub>&minus;</sub> are 2 &times; 0.10% apart.`
+    ];
+    const at={fixedCalls:2, todayOnly:1, oneDy:3}[fault];
+    const why={
+      fixedCalls:`When rates rise, a node that was called may no longer be worth more than the call price, so the issuer would not call it. In the note's example, no node is called after the shift. Holding the old decisions misprices V<sub>+</sub>, and catching this change is the point of effective duration.`,
+      todayOnly:`Effective duration asks what happens when the whole tree shifts, so every rate moves by 0.10%, not just today's.`,
+      oneDy:`The two repricings are 0.10% above and 0.10% below, so they are 2 &times; 0.0010 apart. Dividing by 0.0010 doubles the duration.`
+    }[fault];
+    return {mode:"choice",
+      text:`An analyst computes a callable bond's effective dollar duration from the rate tree. Here is the work:`,
+      ask:"Which step introduces the mistake?",
+      options:st.map((html,q)=>({html, correct:q===at, msg:q===at?why:fine[q]})),
+      steps:[
+        `Shift every rate in the tree up, then down, by the same amount, &Delta;y = 0.10% = 0.0010.`,
+        `Reprice on each shifted tree, checking the call again at every node: the call decisions move with rates.`,
+        `Where the 2 &times; 0.0010 comes from: the duration-and-convexity equation says the change in price is &Delta;P &asymp; &minus;\$D &times; &Delta;y + 0.5 &times; \$C &times; (&Delta;y)<sup>2</sup>, where \$D is the dollar duration and \$C the dollar convexity. Apply it to each repricing:`,
+        `Rates up by 0.10%: V<sub>+</sub> &minus; V<sub>0</sub> = &minus;\$D &times; 0.0010 + 0.5 &times; \$C &times; (0.0010)<sup>2</sup>`,
+        `Rates down by 0.10%:<table class="eqs"><tr><td>V<sub>&minus;</sub> &minus; V<sub>0</sub></td><td>= &minus;\$D &times; (&minus;0.0010) + 0.5 &times; \$C &times; (&minus;0.0010)<sup>2</sup></td></tr><tr><td></td><td>= \$D &times; 0.0010 + 0.5 &times; \$C &times; (0.0010)<sup>2</sup></td></tr></table>`,
+        `Subtract the second equation from the first. The \$C terms cancel: V<sub>+</sub> &minus; V<sub>&minus;</sub> = &minus;\$D &times; 2 &times; 0.0010, so \$D = &minus;(V<sub>+</sub> &minus; V<sub>&minus;</sub>)/(2 &times; 0.0010). This is the note's formula for effective dollar duration: the price gap is divided by 2 &times; 0.0010, because V<sub>+</sub> and V<sub>&minus;</sub> are 0.10% above and 0.10% below today's rates.`
+      ]};
+  }},
+
+{ id:"e3", topic:"error", also:["spread"], name:"Find the mistake — finding the option-adjusted spread", gen(){
+    /* 23 Oct 2026, third sitting: the stem no longer says "from the risk-free rate tree" (it gave the static-spread fault away);
+       under that fault Step 2 follows from Step 1; the no-call fault is worded neutrally.
+       New 23 Oct 2026 (blind sitting idea, chosen by Anh): Note 16, sections 6-7. The OAS is the spread that,
+       added to every rate in the risk-free tree, prices the callable at its market price with the call checked
+       at every node; static spread = OAS + spread due to optionality. One planted error per draw, options in
+       step order, not shuffled (rule 21). No arithmetic: the student judges the procedure.                   */
+    const P=pick(range(95,99,0.5));
+    const fault=pick(["staticWay","noCall","direction","plusSign"]);
+    const st=[
+      fault==="staticWay"
+        ? `<b>Step 1.</b> Add a trial spread s to each zero yield, and discount the bond's promised cash flows at those yields`
+        : `<b>Step 1.</b> Add a trial spread s to every rate in the risk-free tree, so every node discounts more heavily`,
+      fault==="staticWay"
+        ? `<b>Step 2.</b> Add up those discounted cash flows to get the bond's price at this trial spread`   // follows from the faulty Step 1 (rule 21)
+        : fault==="noCall"
+        ? `<b>Step 2.</b> Price the bond on the shifted tree, discounting its coupons and face value back node by node`
+        : `<b>Step 2.</b> Price the bond on the shifted tree, checking at every call-date node whether the issuer calls`,
+      fault==="direction"
+        ? `<b>Step 3.</b> If the price from Step 2 is above \$${P.toFixed(2)}, lower s; if it is below, raise s. Repeat until the price is \$${P.toFixed(2)}`
+        : `<b>Step 3.</b> If the price from Step 2 is above \$${P.toFixed(2)}, raise s; if it is below, lower s. Repeat until the price is \$${P.toFixed(2)}`,
+      fault==="plusSign"
+        ? `<b>Step 4.</b> That s is the option-adjusted spread, and the spread due to optionality = static spread + s`
+        : `<b>Step 4.</b> That s is the option-adjusted spread, and the spread due to optionality = static spread &minus; s`
+    ];
+    const fine=[
+      `Step 1 is fine &mdash; the option-adjusted spread is added to every rate in the tree.`,
+      `Step 2 is fine &mdash; the call is handled in the tree, by checking it at every call-date node.`,
+      `Step 3 is fine &mdash; a bigger spread means heavier discounting and a lower price, so a price above the market calls for a bigger spread.`,
+      `Step 4 is fine &mdash; static spread = option-adjusted spread + spread due to optionality.`
+    ];
+    const at={staticWay:0, noCall:1, direction:2, plusSign:3}[fault];
+    const why={
+      staticWay:`Adding one spread to the zero yields and discounting the promised cash flows is how the static spread is found. It ignores the call, so the spread it gives still contains the optionality. The option-adjusted spread is added to every rate in the tree.`,
+      noCall:`Step 2 never checks whether the issuer calls, so the tree prices a straight bond, and the spread that matches the callable's lower price has to make up for the call: it still contains the optionality. The call must be handled in the tree, so that the spread carries only credit and liquidity risk.`,
+      direction:`Backwards. A bigger spread discounts more heavily and lowers the price, so if the price is above \$${P.toFixed(2)}, s must go up.`,
+      plusSign:`Static spread = option-adjusted spread + spread due to optionality, so the spread due to optionality is the static spread minus s, not plus.`
+    }[fault];
+    return {mode:"choice",
+      text:`A callable bond trades at \$${P.toFixed(2)}. An analyst finds its option-adjusted spread, and then its spread due to
+            optionality from its static spread. Here is the work:`,
+      ask:"Which step introduces the mistake?",
+      options:st.map((html,q)=>({html, correct:q===at, msg:q===at?why:fine[q]})),
+      steps:[
+        `The option-adjusted spread is the spread that, added to every rate in the risk-free tree, prices the callable at its market price, with the call checked at every node.`,
+        `A bigger spread means a lower price, so raise the spread when the tree price is too high.`,
+        `Static spread = option-adjusted spread + spread due to optionality.`,
+        `The mistake is in Step ${at+1}: ${why}`
+      ]};
+  }},
+
+{ id:"k11", topic:"concept", also:["dur"], name:"Hedging negative convexity", gen(){
+    /* Note 16, Section 9: companies holding fixed rate mortgages want negative-convexity liabilities,
+       and one way to have them is to issue callable bonds. Outside review, 11 Oct 2026.            */
+    const opts=shuffle([
+      {html:`Issue callable bonds of matching duration`, correct:true,
+       msg:`Right. Homeowners prepay when rates fall, so the mortgages rise little in value; a callable bond the bank issued rises little too, because the bank can call it. Both have negative convexity, so they move together.`},
+      {html:`Issue straight bonds of matching duration`, correct:false,
+       msg:`That matches the duration but not the convexity. When rates fall far, the straight bonds rise in value much more than the prepayable mortgages do.`},
+      {html:`Issue floating rate notes of matching size`, correct:false,
+       msg:`A floating rate note resets to current rates, so its value barely moves when rates change: it matches neither the mortgages' duration nor their convexity.`},
+      {html:`Issue long zero-coupon bonds instead`, correct:false,
+       msg:`Long zeros have large positive convexity: as liabilities they rise most exactly when the mortgages rise least.`}
+    ]);
+    return {mode:"choice",
+      text:`A bank holds fixed rate mortgages. Homeowners can prepay them when rates fall, so the mortgages have negative
+            convexity. The bank wants liabilities whose value moves with the mortgages' as rates change.`,
+      ask:"Which liability gives it the closest natural hedge?",
+      options:opts,
+      steps:[
+        `Prepayment caps the mortgages' gain when rates fall: negative convexity.`,
+        `A callable bond is capped the same way, because the issuer can call it.`,
+        `So issuing callable bonds gives the bank negative-convexity liabilities to match.`
+      ]};
+  }},
+
+{ id:"k7", topic:"concept", also:["dur"], name:"Where a callable bond's convexity turns negative", gen(){
+    /* Sections 8-9, and the 2025 UG final (a commented-out item): "when rates are very low, very
+       high, or in the middle range?" 23 Oct 2026 (blind sitting): "long/short straight bond" read as positions;
+       now the note's own 2-year callable and its 1-year and 2-year straight bonds. Options of similar length. */
+    const opts=shuffle([
+      {html:`In the middle range of rates, between the two extremes`, correct:true,
+       msg:`Right. At very high rates the bond is almost never called and behaves like the 2-year straight bond; at very low rates it is almost surely called and behaves like the 1-year one. Both have positive convexity. In between, its dollar duration rises as rates rise, which is negative convexity.`},
+      {html:`At very low rates, where it is almost sure to be called`, correct:false,
+       msg:`There the callable behaves like the 1-year straight bond, which has positive convexity. The bend happens on the way between the two.`},
+      {html:`At very high rates, where it is almost never called`, correct:false,
+       msg:`There the callable behaves like the 2-year straight bond, which has positive convexity.`},
+      {html:`At every level of rates, since the issuer can always call`, correct:false,
+       msg:`At the extremes the call is either almost certain or almost irrelevant, so the bond behaves like a straight bond with positive convexity. Only the middle range bends the other way.`}
+    ]);
+    return {mode:"choice",
+      text:`A 2-year bond is callable at year 1 at \$100. Plot its price against the level of interest rates.`,
+      ask:"Where is its convexity most likely to be negative?",
+      options:opts,
+      steps:[
+        `Very high rates: rarely called, so it behaves like the 2-year straight bond.`,
+        `Very low rates: almost surely called, so it behaves like the 1-year straight bond.`,
+        `In between, its dollar duration increases as rates increase: negative convexity.`
+      ]};
+  }},
+
+{ id:"k8", topic:"concept", also:["spread"], name:"Why two dealers find different option-adjusted spreads", gen(){
+    /* Rebuilt 23 Oct 2026 (blind sitting): the old k8 ("what the OAS measures") restated k5's key. This one tests
+       the end of section 7: the OAS comes off a rate tree, so it is model-dependent; the static spread needs only
+       the yield curve.
+       23 Oct 2026 (Anh): no "model risk"; the steps say why: same yield curve, different volatility (branch
+       dispersion), so the same straight-bond values but different callable values, hence different spreads.   */
+    const P=pick(range(96,99.5,.25));
+    const opts=shuffle([
+      {html:`They use different rate trees, and the spread depends on the tree`, correct:true,
+       msg:`Right. The static spread needs only the yield curve, so both find the same one. The option-adjusted spread is the spread that, added to every rate in a tree, prices the callable, so a different tree gives a different spread.`},
+      {html:`They assume different default probabilities for the issuer`, correct:false,
+       msg:`Neither dealer assumes a default probability. Both back the spread out of the same market price; what differs is the tree they back it out with.`},
+      {html:`One of them made a mistake: a bond has only one option-adjusted spread`, correct:false,
+       msg:`The option-adjusted spread depends on the rate tree used to find it. Two careful dealers with different trees can both be right about their own trees.`},
+      {html:`They assume different call prices for the same callable bond`, correct:false,
+       msg:`The call price is written in the bond's contract, so both use the same one.`}
+    ]);
+    return {mode:"choice",
+      text:`Two dealers price the same callable bond, which trades at \$${P.toFixed(2)}, using the same risk-free yield curve. They find the
+            same static spread but different option-adjusted spreads.`,
+      ask:"What explains the difference?",
+      options:opts,
+      steps:[
+        `The static spread is added to the zero yields from the yield curve, so both dealers find the same one.`,
+        `The dealers can use different trees of risk-free rates, with the branches more spread out in one than in the other. Such trees can imply the same yield curve despite the different dispersion in the branches (different volatilities).`,
+        `The option-adjusted spread is the spread that, added to every rate in a rate tree, prices the callable at its market price.`,
+        `Trees with different volatilities give the callable bond very different values, so the spread that makes each tree price the callable at \$${P.toFixed(2)} is different: each dealer finds a different option-adjusted spread.`
+      ]};
+  }},
+
+{ id:"k9", topic:"concept", also:["spread"], name:"Rising rates and the spread due to optionality", gen(){
+    /* The 2025 UG final: an increase in inflation expectations, with the hint that it raises
+       rates. Section 7's logic: when a call becomes less likely, the option is worth less.     */
+    const opts=shuffle([
+      {html:`Its price falls, and its spread due to optionality falls, because a call becomes less likely`, correct:true,
+       msg:`Right. Higher rates lower every bond's value, the callable's included. With the bond worth less, the issuer is less likely to call, so the call option is worth less and so is the spread that pays for it.`},
+      {html:`Its price falls, and its spread due to optionality rises, since the price is further below the call price`, correct:false,
+       msg:`The price does fall, but the option becomes <em>less</em> valuable: the issuer calls when the bond is worth more than the call price, which is less likely when rates are higher.`},
+      {html:`Its price rises, because the issuer is less likely to call it`, correct:false,
+       msg:`A smaller call option helps a little, but the rise in rates lowers the value of the bond's cash flows by much more: the price falls.`},
+      {html:`Its price falls, and its spread due to optionality is unchanged, since the call price is fixed`, correct:false,
+       msg:`The call price is fixed, but the chance of using it is not. Higher rates make a call less likely, so the option, and its spread, shrink.`}
+    ]);
+    return {mode:"choice",
+      text:`Inflation expectations rise, pushing up interest rates at all maturities. Nothing else changes.`,
+      ask:"What happens to the price of a callable bond and to its spread due to optionality?",
+      options:opts,
+      steps:[
+        `Higher rates lower the value of the bond's cash flows: the price falls.`,
+        `With bond values smaller across the board, it is less likely that the bond will be worth enough (more than the call price) to be called.`,
+        `A less valuable call means a smaller spread due to optionality.`
+      ]};
+  }},
+
+{ id:"k10", topic:"concept", also:["yields"], name:"Why the callable is worth less than both straight bonds", gen(){
+    /* Section 3, "A word of caution", and the 2025 UG final ("explain intuitively why callable
+       bonds are less expensive than otherwise identical non-callable bonds").
+       23 Oct 2026 (Anh): the steps lay out the cash flows at t = 0.5 and t = 1 for all three bonds (a table),
+       then the lecture's intuition (call risk, so a discount).                                 */
+    const opts=shuffle([
+      {html:`Its cash flow at year 1 is never above either straight bond's`, correct:true,
+       msg:`Right. The callable pays the less valuable of the two straight bonds' payoffs. If the 2-year straight bond is worth more than the call price, the issuer calls and the callable becomes the 1-year bond; otherwise it stays the 2-year bond. Its cash flow is never more than either, so its price is no more than either.`},
+      {html:`Its coupon is lower than the straight bonds' coupons`, correct:false,
+       msg:`The question gives all three the same coupon. The difference comes from the call: at year 1 the callable pays the smaller of the two straight bonds' cash flows.`},
+      {html:`Callable bonds trade less often, so they carry a liquidity discount`, correct:false,
+       msg:`The argument needs no liquidity difference. Even with identical trading, the callable's cash flow at the call date is never above either straight bond's.`},
+      {html:`Its yield to worst is higher than both straight bonds' yields`, correct:false,
+       msg:`That is the puzzle, not the explanation. A higher yield is what a cheaper bond shows; the reason it must be cheaper is in its cash flows at the call date.`}
+    ]);
+    return {mode:"choice",
+      text:`A 2-year bond, callable at year 1 at \$100, is compared with two straight bonds from the same issuer with the
+            same coupon: one maturing in 1 year and one in 2 years.`,
+      ask:"Why must the callable bond be worth no more than either straight bond?",
+      options:opts,
+      steps:[
+        `Write c for the coupon paid every six months, and P<sub>1</sub> for the market price at year 1 of the 2-year straight bond, just after that coupon. Up to year 1, the three bonds give:<table class="cf" data-cols="3"><tr><th>Bond</th><th>t = 0.5</th><th>t = 1</th></tr><tr><td>1-year straight bond</td><td>c</td><td>c + \$100</td></tr><tr><td>2-year straight bond</td><td>c</td><td>c + P<sub>1</sub></td></tr><tr><td>2-year callable bond</td><td>c</td><td>c + min(\$100, P<sub>1</sub>)</td></tr></table>`,
+        `At t = 0.5 the three bonds pay the same coupon.`,
+        `At t = 1 the issuer calls only if P<sub>1</sub> is more than \$100, so the callable bond is worth min(\$100, P<sub>1</sub>), the smaller of \$100 and P<sub>1</sub>. That is never more than \$100 and never more than P<sub>1</sub>.`,
+        `So the callable bond's cash flows are never more than either straight bond's, and its value must be no more than either straight bond's value.`,
+        `The intuition: the callable bond carries an extra risk, call risk. The issuer uses the call when that is best for the issuer, which is exactly when it is worst for the investor. Investors take on that risk only if the callable bond is offered at a discount.`
+      ]};
+  }},
+
+{ id:"k12", topic:"concept", also:["call"], name:"A second call date", gen(){
+    /* New 23 Oct 2026 (blind sitting): section 4's bond callable at times 1 and 1.5. Each call date is one more
+       right for the issuer, so it can only lower the bond's value to the holder. Closest to t5 (which computes
+       a two-call-date node) and k10 (callable against straight bonds); this one ranks two callables.
+       23 Oct 2026 (Anh): last step adds the lecture's call-risk intuition (more call risk, bigger discount), as in k10. */
+    const opts=shuffle([
+      {html:`Y is worth no more than X, since the issuer has one more chance to call`, correct:true,
+       msg:`Right. The issuer calls only when it lowers what the issuer owes, so each call date can only cap the holder's value. In the note's example, a node not called at time 1 is called at time 1.5.`},
+      {html:`Y is worth more than X, since the holder may be repaid sooner`, correct:false,
+       msg:`Being repaid at \$100 happens only when the bond is worth more than \$100 to the holder. Early repayment helps the issuer, not the holder.`},
+      {html:`They are worth the same, since a bond not called at year 1 is never called later`, correct:false,
+       msg:`Rates can fall between year 1 and year 1.5. In the note's example the bond is called at a time-1.5 node even though it is not called at time 1.`},
+      {html:`It depends on whether rates are expected to fall after year 1`, correct:false,
+       msg:`Whatever rates do, the extra call date is one more right for the issuer. It can never raise what the holder receives.`}
+    ]);
+    return {mode:"choice",
+      text:`Bonds X and Y are 2-year bonds from the same issuer with the same coupon. X can be called at \$100 at year 1 only.
+            Y can be called at \$100 at year 1 or at year 1.5.`,
+      ask:"How does Y's price compare with X's?",
+      options:opts,
+      steps:[
+        `Each call date gives the issuer one more right to buy the bond back at the call price.`,
+        `The issuer uses it only when the bond alive is worth more than the call price, so each call date can only cap the holder's value.`,
+        `So Y, with two call dates, is worth no more than X.`,
+        `The intuition: a callable bond carries call risk, the risk that the issuer calls when that is best for the issuer, which is exactly when it is worst for the investor. With a second call date, Y carries more call risk than X, so investors hold Y only if it is offered at an even bigger discount.`
+      ]};
+  }},
+
+{ id:"k13", topic:"concept", also:["spread"], name:"Spreads of a default-free callable", gen(){
+    /* New 23 Oct 2026 (blind sitting): section 5's case. With no credit or liquidity risk, the risk-free tree
+       prices the callable, so its OAS is zero, while its static spread is positive (13 basis points in the
+       note): static spread = OAS + spread due to optionality. Closest to s2 (OAS from the decomposition) and
+       k5 (what the OAS is for); this one asks which piece is zero.
+       23 Oct 2026 (Anh): stem no longer says the price equals the risk-free tree value; the logic is OAS = credit +
+       liquidity = 0, call risk -> spread due to optionality > 0, so static spread > 0.                      */
+    const opts=shuffle([
+      {html:`Its option-adjusted spread is zero and its static spread is positive`, correct:true,
+       msg:`Right. The option-adjusted spread is the spread due to credit risk and liquidity, and this bond has neither, so it is zero. The call still carries call risk, which investors must be paid for, so the spread due to optionality is positive, and the static spread is all spread due to optionality (13 basis points in the note).`},
+      {html:`Both spreads are zero, since it has no credit or liquidity risk`, correct:false,
+       msg:`The option-adjusted spread is zero, but the static spread also includes the spread due to optionality. The call carries call risk, which investors must be paid for, so that piece is positive.`},
+      {html:`Its static spread is zero and its option-adjusted spread is positive`, correct:false,
+       msg:`The other way round. The option-adjusted spread covers credit risk and liquidity, which this bond does not have. The call risk shows up in the static spread.`},
+      {html:`Both spreads are positive and equal, since both are found from its price`, correct:false,
+       msg:`Static spread = option-adjusted spread + spread due to optionality. They are equal only when the call is worth nothing.`}
+    ]);
+    return {mode:"choice",
+      text:`A callable bond has no credit or liquidity risk.`,
+      ask:"What are its option-adjusted spread and its static spread?",
+      options:opts,
+      steps:[
+        `The option-adjusted spread is the spread due to credit risk and liquidity. This bond has neither, so OAS = 0.`,
+        `The bond is still callable, so it carries call risk: the issuer calls when that is best for the issuer, which is exactly when it is worst for the investor. Investors require extra return for taking on this risk, so the spread due to optionality is positive.`,
+        `Static spread = OAS + spread due to optionality = 0 + spread due to optionality &gt; 0.`
+      ]};
+  }},
+
+{ id:"k14", topic:"concept", name:"Which firm should issue callable bonds?", gen(){
+    /* New 23 Oct 2026 (claude.ai review, kept after the rules check): section 2's signalling argument. A firm
+       expecting its credit to improve can call and refinance at a lower spread; a firm expecting its credit to
+       worsen should lock in a rate. The stem sets interest rates aside (rule 34).                            */
+    const opts=shuffle([
+      {html:`Firm A, since it can refinance more cheaply later`, correct:true,
+       msg:`Right. When the market sees A's better credit, A can call the old, expensive bonds and issue new ones with lower coupons. Issuing callables also signals A's confidence.`},
+      {html:`Firm B, since it can call and refinance if its credit worsens`, correct:false,
+       msg:`Worse credit raises B's borrowing cost, so calling and refinancing would cost B more: B would never call. B does better to lock in a rate with a straight bond.`},
+      {html:`Both equally, since a call protects any borrower`, correct:false,
+       msg:`A call is worth using only if borrowing becomes cheaper. With rates set aside, that happens for A, whose credit improves, not for B.`},
+      {html:`Neither, since with rates set aside a call is worth nothing`, correct:false,
+       msg:`Rates aside, a firm's own borrowing cost can still fall as its credit improves. That is A's reason to issue callables.`}
+    ]);
+    return {mode:"choice",
+      text:`Leave interest rates aside. Firm A expects its credit quality to improve over the next few years; Firm B expects its credit
+            quality to get worse.`,
+      ask:"Which firm has the stronger reason to issue callable bonds rather than straight bonds?",
+      options:opts,
+      steps:[
+        `Better credit quality means lower borrowing costs.`,
+        `A firm whose credit improves can call its old bonds and replace them with bonds that pay lower coupons.`,
+        `A firm whose credit worsens would never call, so it should lock in a rate with a straight bond.`
+      ]};
+  }}
+];
+
+const TOPICS = [
+  {key:"all", label:"Mixed"},
+  {key:"yields", label:"Yields"},
+  {key:"tree", label:"The tree"},
+  {key:"call", label:"The option"},
+  {key:"spread", label:"OAS"},
+  {key:"dur", label:"Duration"},
+  {key:"concept", label:"Reason it out"},
+  {key:"error", label:"Find the mistake"}
+];
+
+/* ----------------------------------------------------------------- state */
+let active = "all", current = null, tries = 0;
+let peeked = false, solved = false, tallied = false;  // tallied = already counted in `attempted`
+const stats = {att:0, first:0, streak:0, peek:0};
+
+const $ = id => document.getElementById(id);
+
+/* One-period trees for templates that return q.fig = [{label, now, outs:[...], probs:[...]?}, ...]
+   (added 22 Oct 2026 for Note 13, at Anh's request). Values come from the same draw as the text. */
+function figHTML(fig){
+  const txt = s => String(s).replace(/<[^>]+>/g, "");
+  const len = s => txt(s).replace(/&[a-z]+;/g, "x").length;
+  /* A multi-period recombining tree (Notes 16 and 19, 22 Oct 2026): t.lat[k] lists the nodes at
+     date k from the top; a node is a string or an array of lines; t.times labels the dates.      */
+  const latSVG = t => {
+    const L = t.lat.length, lines = v => (Array.isArray(v) ? v : [v]).map(txt);
+    const colW = t.lat.map(col => Math.max(24, ...col.map(v => Math.max(...lines(v).map(len))*8.2)));
+    const nl = Math.max(...t.lat.flat().map(v => lines(v).length)), lh = 17, h = nl > 1 ? 30 : 17, top = 30;
+    const cx = []; let x = 4;
+    colW.forEach((w, k) => { cx.push(x + w/2); x += w + 44; });
+    const W = Math.max(x - 44 + 4, 8.5*len(t.label) + 10);
+    const yOf = (k, i) => top + h*(2*i + (L-1-k)) + (nl-1)*lh/2;
+    const H = top + h*2*(L-1) + nl*lh + (t.times ? 26 : 6);
+    /* t.on (23 Oct 2026, Anh): the nodes the question works at, as "k,i". The rest of the tree is drawn
+       in grey, with a dot for a node that carries no figure, so students see where in the tree they are. */
+    const on = t.on ? new Set(t.on) : null, isOn = (k, i) => !on || on.has(k + "," + i);
+    const half = (k, i) => lines(t.lat[k][i]).join("") ? colW[k]/2 + 4 : 6;
+    let g = `<text class="tl" x="${W/2}" y="14" text-anchor="middle">${txt(t.label)}</text>`;
+    t.lat.forEach((col, k) => col.forEach((v, i) => {
+      const y = yOf(k, i), ls = lines(v);
+      if (ls.join("")) ls.forEach((s, j) => g += `<text x="${cx[k]}" y="${y + 5 + (j - (ls.length-1)/2)*lh}" text-anchor="middle">${s}</text>`);
+      else g += `<circle cx="${cx[k]}" cy="${y}" r="3.2"${isOn(k, i) ? "" : ` class="off"`}/>`;
+      if (k < L-1) [i, i+1].forEach(c => {
+        const y2 = yOf(k+1, c);
+        g += `<line x1="${cx[k] + half(k, i)}" y1="${y}" x2="${cx[k+1] - half(k+1, c)}" y2="${y2}" stroke-width="1.6"${isOn(k, i) && isOn(k+1, c) ? "" : ` class="off"`}/>`;
+      });
+    }));
+    if (t.times) t.times.forEach((s, k) => g += `<text class="tp" x="${cx[k]}" y="${H - 6}" text-anchor="middle">${txt(s)}</text>`);
+    return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${txt(t.label)}: ${t.lat.map(c => c.map(v => lines(v).join(" ")).join(" / ")).join("; then ")}">${g}</svg>`;
+  };
+  return fig.map(t => {
+    if (t.lat) return latSVG(t);
+    const n = t.outs.length, gap = n > 2 ? 30 : 46, top = 34;
+    const x1 = Math.max(40, 12 + 8.5*len(t.now)), x2 = x1 + 56;
+    const wide = Math.max(...t.outs.map((v, i) => 8.4*len(v) + (t.probs ? 6.6*(len(t.probs[i]) + 2) + 6 : 0)));
+    const W = Math.max(x2 + 10 + wide, 8.5*len(t.label) + 10), H = top + gap*(n-1) + 14, mid = top + gap*(n-1)/2;
+    let g = `<text class="tl" x="${(x1 + x2)/2}" y="14" text-anchor="middle">${txt(t.label)}</text>`;
+    g += `<text x="${x1-8}" y="${mid+5}" text-anchor="end">${txt(t.now)}</text>`;
+    t.outs.forEach((v, i) => {
+      const y = top + gap*i, dx = x2-x1, dy = y-mid, L = Math.hypot(dx, dy), ux = dx/L, uy = dy/L;
+      const ex = x2 - 2*ux, ey = y - 2*uy, bx = ex - 9*ux, by = ey - 9*uy;
+      g += `<line x1="${x1}" y1="${mid}" x2="${bx}" y2="${by}" stroke-width="1.8"/>`;
+      g += `<polygon points="${ex},${ey} ${bx-4*uy},${by+4*ux} ${bx+4*uy},${by-4*ux}" stroke-width="0"/>`;
+      g += `<text x="${x2+6}" y="${y+5}">${txt(v)}${t.probs ? `<tspan class="tp" dx="6">(${txt(t.probs[i])})</tspan>` : ""}</text>`;
+    });
+    return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${txt(t.label)}: ${txt(t.now) || "today"}, then ${t.outs.map(txt).join(" or ")}">${g}</svg>`;
+  }).join("");
+}
+
+function buildTopics(){
+  const box = $("topics");
+  TOPICS.forEach(t=>{
+    const b = document.createElement("button");
+    b.className = "chip"; b.textContent = t.label;
+    b.setAttribute("aria-pressed", String(t.key===active));
+    b.onclick = ()=>{
+      active = t.key;
+      [...box.children].forEach(c=>c.setAttribute("aria-pressed","false"));
+      b.setAttribute("aria-pressed","true");
+      seqIdx = 0;                 // a new topic restarts the sequence
+      newQuestion();
+    };
+    box.appendChild(b);
+  });
+  /* the Starred chip: practise only the questions starred on this page */
+  const s = document.createElement("button");
+  s.className = "chip"; s.id = "chipStar";
+  s.setAttribute("aria-pressed", "false");
+  s.onclick = ()=>{
+    active = "starred";
+    [...box.children].forEach(c=>c.setAttribute("aria-pressed","false"));
+    s.setAttribute("aria-pressed","true");
+    seqIdx = 0;
+    newQuestion();
+  };
+  box.appendChild(s);
+  updateStarChip();
+}
+
+const ALL_TEMPLATES = TEMPLATES.concat(CHOICE_TEMPLATES);
+
+/* A template's primary topic is `topic`; it may also list secondary topics in
+   `also`, so one item can appear under several chips. */
+function inTopic(t, key){
+  return t.topic === key || (Array.isArray(t.also) && t.also.includes(key));
+}
+
+/* ---- progress: distinct templates solved without opening the solution ---- */
+const PROG_KEY = "practice-progress:" + document.title;
+let mastered = new Set();
+try { mastered = new Set(JSON.parse(localStorage.getItem(PROG_KEY) || "[]")); }
+catch (e) { mastered = new Set(); }
+
+function saveProgress(){
+  try { localStorage.setItem(PROG_KEY, JSON.stringify([...mastered])); } catch (e) {}
+}
+function markMastered(id){
+  if (!id || mastered.has(id)) return;
+  mastered.add(id);
+  saveProgress();
+}
+
+/* ---- starred questions: kept per template, so a starred question comes back with new
+   numbers. Starred automatically on a wrong answer or on opening the solution before
+   solving; the student can star or unstar any question by hand. ---- */
+const STAR_KEY = "practice-starred:" + document.title;
+let starred = new Set();
+try { starred = new Set(JSON.parse(localStorage.getItem(STAR_KEY) || "[]")); }
+catch (e) { starred = new Set(); }
+starred = new Set([...starred].filter(id => ALL_TEMPLATES.some(t => t.id === id)));
+
+function saveStars(){
+  try { localStorage.setItem(STAR_KEY, JSON.stringify([...starred])); } catch (e) {}
+}
+function updateStarChip(){
+  const c = document.getElementById("chipStar");   // made by buildTopics, not in the markup
+  if (c) c.textContent = "★ Starred (" + starred.size + ")";
+}
+function showStar(){
+  const on = !!(current && starred.has(current.id));
+  $("star").hidden = !current;
+  $("star").setAttribute("aria-pressed", String(on));
+  $("star").textContent = on ? "★ Starred" : "☆ Star";
+}
+function setStar(id, on){
+  if (!id) return;
+  if (on) starred.add(id); else starred.delete(id);
+  saveStars(); updateStarChip(); showStar();
+}
+function autoStar(){ if (current && !starred.has(current.id)) setStar(current.id, true); }
+
+function poolFor(key){
+  if (key === "all") return ALL_TEMPLATES;
+  if (key === "starred") return ALL_TEMPLATES.filter(t => starred.has(t.id));
+  return ALL_TEMPLATES.filter(t => inTopic(t, key));
+}
+
+/* Templates are drawn WITHOUT immediate repeats. Sampling with replacement
+   looks fine on the full bank, but a topic holding only three or four
+   templates repeats roughly one press in three, which reads as the button
+   being broken. Hold the most recent half of the pool out of the draw. */
+let recentIds = [];
+/* Questions seen this session, so the arrow keys can step back and forth through them. */
+let history = [], histIdx = -1;
+let navKey = false;      // true while an arrow key is doing the rendering
+let order = "shuffle";   // "shuffle" | "seq"
+let seqIdx = 0;
+
+function newQuestion(replay){
+  let q;
+  if (replay){ q = replay.q; }
+  else {
+  const pool = poolFor(active);
+  if (!pool.length){
+    current = null;
+    $("qmeta").textContent = "Starred";
+    $("qtext").innerHTML = "No starred questions yet. A question is starred when you answer it " +
+      "wrongly or open its solution before solving it, and you can star any question yourself with " +
+      "<b>☆ Star</b>. Pick another chip to practise.";
+    $("qask").innerHTML = "";
+    $("opts").hidden = true; $("opts").innerHTML = "";
+    $("ans").hidden = true; $("check").hidden = true; $("next").hidden = true;
+    $("fb").innerHTML = ""; $("soldetails").hidden = true; $("seqPos").textContent = "";
+    showStar();
+    return;
+  }
+  let tpl;
+  if (order === "seq"){
+    /* walk the bank in order, wrapping at the end */
+    if (seqIdx >= pool.length) seqIdx = 0;
+    tpl = pool[seqIdx];
+    seqIdx = (seqIdx + 1) % pool.length;
+    $("seqPos").textContent = `${seqIdx === 0 ? pool.length : seqIdx} of ${pool.length}`;
+  } else {
+    const hold = Math.max(1, Math.floor(pool.length / 2));
+    let choices = pool.filter(t => !recentIds.slice(0, hold).includes(t.id));
+    if (!choices.length) choices = pool;        // pool of one, or all held out
+    tpl = pick(choices);
+    recentIds.unshift(tpl.id);
+    if (recentIds.length > 40) recentIds.length = 40;
+    $("seqPos").textContent = "";
+  }
+  q = tpl.gen();
+  q.name = tpl.name;
+  q.id   = tpl.id;
+  q.seqPos = $("seqPos").textContent;   // carried so stepping back shows its own position
+  if (q.mode !== "choice") q.distractors = usable(q.correct, q.cands, q.sep);
+  }
+  current = q;
+  if (replay){
+    tries = replay.tries; peeked = replay.peeked; solved = replay.solved; tallied = replay.tallied;
+  } else {
+    tries = 0; peeked = false; solved = false; tallied = false;
+    history = history.slice(0, histIdx + 1);           // a new draw discards anything ahead
+    history.push({q, tries:0, peeked:false, solved:false, tallied:false, fb:"", ans:""});
+    if (history.length > 50){ history.shift(); }
+    histIdx = history.length - 1;
+  }
+
+  const isChoice = q.mode === "choice";
+  $("qmeta").textContent = q.name;
+  $("qtext").innerHTML   = q.text;
+  $("qfig").innerHTML    = q.fig ? figHTML(q.fig) : "";
+  $("qfig").hidden       = !q.fig;
+  $("qask").innerHTML    = q.ask;
+  /* Hide the input and Check individually, NOT the whole row -- the
+     "New question" button lives in that row and must stay reachable
+     on choice questions. */
+  $("ans").hidden   = isChoice;
+  $("check").hidden = isChoice;
+  $("next").hidden  = false;
+  showStar();
+  $("opts").hidden     = !isChoice;
+  const box = $("opts");
+  box.innerHTML = "";              // always clear, even when the panel is hidden
+  if (isChoice){
+    q.options.forEach((o,k)=>{
+      const btn = document.createElement("button");
+      btn.className = "opt"; btn.innerHTML = o.html;
+      btn.onclick = () => pickOption(k);
+      box.appendChild(btn);
+    });
+  }
+  $("ans").value = "";
+  $("ans").placeholder = q.unit==="money" ? "e.g. 1234.56"
+                     : q.unit==="percent" ? "e.g. 12.34  (percent)"
+                     : "e.g. 18";
+  $("ans").disabled = false;
+  $("check").disabled = false;
+  $("fb").innerHTML = "";
+  $("steps").innerHTML = q.steps.map(s=>`<div>${s}</div>`).join("");
+  const d = $("soldetails"); d.hidden = false; d.open = false;
+  if (replay){
+    /* Put the question back exactly as it was left --- the feedback, what was typed, and
+       whether it had already been answered. The tallied/solved flags come back with it,
+       so revisiting a question never re-counts an attempt or re-awards mastery. */
+    $("fb").innerHTML = replay.fb || "";
+    $("ans").value    = replay.ans || "";
+    $("seqPos").textContent = q.seqPos || "";
+    if (isChoice && q.wrong){
+      [...$("opts").children].forEach((b,j)=>{
+        if (q.wrong.indexOf(j) >= 0){ b.classList.add("wrong"); b.disabled = true; }
+      });
+    }
+    if (solved || q.done){
+      if (isChoice){
+        [...$("opts").children].forEach((b,j)=>{ b.disabled = true;
+          if (q.options[j].correct) b.classList.add("right"); });
+      } else { $("ans").disabled = true; $("check").disabled = true; }
+    }
+    d.open = peeked || solved;
+  }
+  /* Arriving by arrow key must not park the cursor in the answer box: a restored answer
+     sitting there would swallow the next arrow press and strand the student. */
+  if (navKey) $("ans").blur();
+  else if (!isChoice && !$("ans").disabled) $("ans").focus();
+}
+
+function parseInput(raw){
+  const cleaned = raw.replace(/[$,%\s,]/g,"");
+  if (cleaned === "" ) return NaN;
+  return Number(cleaned);
+}
+
+function say(kind, title, body){
+  $("fb").innerHTML = `<div class="fb ${kind}"><strong>${title}</strong>${body}</div>`;
+}
+
+function pickOption(k){
+  const q = current;
+  if (q.done) return;
+  const o    = q.options[k];
+  const btns = [...$("opts").children];
+
+  tries++;
+  if (!tallied){ tallied = true; stats.att++; }
+
+  if (o.correct){
+    q.done = true; solved = true;
+    btns.forEach((b2,j)=>{ b2.disabled = true; if (q.options[j].correct) b2.classList.add("right"); });
+    if (peeked){
+      stats.streak = 0;
+      say("ok","Correct — but you read the solution first.",
+          "It still counts as attempted, just not toward first-try accuracy or your streak. " + o.msg);
+    } else {
+      stats.streak++;
+      if (tries === 1) stats.first++;
+      markMastered(q.id);
+      say("ok", tries===1 ? "Correct — first try." : "Correct.", o.msg);
+    }
+    $("soldetails").open = true;
+  } else {
+    stats.streak = 0;
+    btns[k].classList.add("wrong");
+    btns[k].disabled = true;
+    (q.wrong || (q.wrong = [])).push(k);   // remembered so a revisit keeps it eliminated
+    autoStar();
+    say("no","Not that one.", o.msg);
+  }
+  render();
+}
+
+function check(){
+  const raw = $("ans").value;
+  const parsed = parseInput(raw);
+  if (!Number.isFinite(parsed)){
+    say("hint","Enter a number","Type your answer as a number — you can include $ , or % and it will be ignored.");
+    return;
+  }
+  const q = current;
+  const val = q.unit==="percent" ? parsed/100 : parsed;
+  const TOL = q.tol || REL_MATCH;
+
+  /* Unit slips are formatting mistakes, not wrong answers, so they cost
+     neither an attempt nor first-try credit. Guarded so a genuinely
+     correct entry can never be mistaken for one. */
+  if (!near(val, q.correct, TOL)){
+    if (q.unit==="percent" && near(parsed, q.correct, TOL)){
+      say("hint","Right number, wrong units.",
+          `You entered <code>${raw}</code> as a decimal. This box wants a percent — enter <code>${(q.correct*100).toFixed(4).replace(/\.?0+$/,"")}</code> instead.`);
+      return;
+    }
+    if (near(val*100, q.correct, TOL) || near(val/100, q.correct, TOL)){
+      say("hint","Check your units.","Your figure is off by a factor of 100. Re-read what the box is asking for.");
+      return;
+    }
+  }
+
+  tries++;
+  if (!tallied){ tallied = true; stats.att++; }   // count each question once, right or wrong
+
+  if (near(val, q.correct, TOL)){
+    solved = true;
+    if (peeked){
+      stats.streak = 0;
+      say("ok","Correct — but you read the solution first.",
+          "That is a perfectly good way to learn, and it still counts as attempted. It does " +
+          "not count toward first-try accuracy or your streak, so those numbers stay honest. " +
+          "Try the next one before opening the solution.");
+    } else {
+      stats.streak++;
+      if (tries === 1) stats.first++;
+      markMastered(q.id);
+      say("ok","Correct.", tries===1 ? "First try — well done." : "Got there.");
+    }
+    $("check").disabled = true; $("ans").disabled = true;
+    $("soldetails").open = true;
+    render(); return;
+  }
+
+  stats.streak = 0;
+  autoStar();
+  const hit = q.distractors.find(d => near(val, d.val, TOL));
+  say("no", hit ? "Not quite — and I can see why." : "Not quite.",
+      hit ? hit.msg
+          : "That does not match any of the usual slips, so it may be an arithmetic error. Try again, or open the worked solution below.");
+  render();
+}
+
+function render(){
+  $("sAtt").textContent    = stats.att;
+  $("sFirst").textContent  = stats.first;
+  $("sAcc").textContent    = stats.att ? Math.round(stats.first/stats.att*100)+"%" : "—";
+  $("sStreak").textContent = stats.streak;
+  $("sPeek").textContent   = stats.peek;
+  const total = ALL_TEMPLATES.length;
+  $("pTotal").textContent  = total;
+  $("pDone").textContent   = mastered.size;
+  $("progfill").style.width = (total ? 100*mastered.size/total : 0).toFixed(1) + "%";
+}
+
+$("check").onclick = () => { if (current) check(); };
+$("star").onclick  = () => { if (current) setStar(current.id, !starred.has(current.id)); };
+$("next").onclick  = () => newQuestion();   // arrow fn: never pass the click Event as `replay`
+
+/* ---- arrow keys: right for the next question, left for the previous one -------------
+   Ignored while the answer box is being typed in, where the arrows move the caret, and
+   ignored with a modifier held so the browser's own shortcuts still work.            */
+function snapshotQuestion(){
+  const h = history[histIdx];
+  if (!h) return;
+  h.tries = tries; h.peeked = peeked; h.solved = solved; h.tallied = tallied;
+  h.fb = $("fb").innerHTML; h.ans = $("ans").value;
+}
+function goBack(){
+  if (histIdx <= 0) return;
+  snapshotQuestion(); histIdx--;
+  navKey = true; newQuestion(history[histIdx]); navKey = false;
+}
+function goForward(){
+  snapshotQuestion();
+  navKey = true;
+  if (histIdx < history.length - 1){ histIdx++; newQuestion(history[histIdx]); }
+  else newQuestion();
+  navKey = false;
+}
+document.addEventListener("keydown", e => {
+  if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+  if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
+  const t = e.target;
+  if (t && (t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+  /* Inside the answer box the arrows belong to the caret --- but only while it still has
+     somewhere to go. Once it sits at the end you are pressing toward, the press is free,
+     so a half-typed answer never traps a student in the field. */
+  if (t && t.tagName === "INPUT" && !t.disabled){
+    const at = t.selectionStart, to = t.selectionEnd, n = String(t.value).length;
+    if (at === null || at !== to) return;                       // a selection: leave it alone
+    if (e.key === "ArrowRight" ? at < n : at > 0) return;
+  }
+  e.preventDefault();
+  if (e.key === "ArrowRight") goForward(); else goBack();
+});
+$("ans").addEventListener("keydown", e=>{ if(e.key==="Enter" && !$("check").disabled) check(); });
+$("soldetails").addEventListener("toggle", ()=>{
+  if ($("soldetails").open && !solved && !peeked){
+    peeked = true;
+    stats.peek++;
+    autoStar();
+    if (!tallied){ tallied = true; stats.att++; }  // opening it counts as engaging with the question
+    render();
+  }
+});
+
+function setOrder(o){
+  order = o; seqIdx = 0;
+  $("mShuffle").setAttribute("aria-pressed", String(o === "shuffle"));
+  $("mSeq").setAttribute("aria-pressed",     String(o === "seq"));
+  newQuestion();
+}
+$("mShuffle").onclick = () => setOrder("shuffle");
+$("mSeq").onclick     = () => setOrder("seq");
+
+$("pReset").onclick = () => {
+  if (!mastered.size) return;
+  mastered.clear(); saveProgress(); render();
+};
+
+buildTopics();
+newQuestion();
+render();
+</script>
+</body>
+</html>
