@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Note 25 — Options Basics, Part 1 (calls): practice</title>
+<style>
+  :root{
+    --bg:#ffffff; --fg:#1a1a1a; --muted:#5f6672; --line:#e2e5ea;
+    --card:#f7f8fa; --accent:#00205b; --accent-fg:#ffffff;
+    --ok-bg:#e8f5ec; --ok-line:#2e7d47; --ok-fg:#17532c;
+    --no-bg:#fdeceb; --no-line:#c0392b; --no-fg:#8e2b20;
+    --hint-bg:#fff8e6; --hint-line:#b8860b; --hint-fg:#6b4e00;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#14161a; --fg:#e8eaed; --muted:#9aa3af; --line:#2b2f36;
+      --card:#1b1e24; --accent:#7f9cd4; --accent-fg:#0d1015;
+      --ok-bg:#132a1c; --ok-line:#4caf70; --ok-fg:#9fdcb4;
+      --no-bg:#2c1614; --no-line:#e06c5d; --no-fg:#f0a99f;
+      --hint-bg:#2a2313; --hint-line:#d4a017; --hint-fg:#e5c976;
+    }
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:0; background:var(--bg); color:var(--fg);
+    font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  .wrap{max-width:760px; margin:0 auto; padding:24px 18px 64px}
+  header{border-bottom:1px solid var(--line); padding-bottom:14px; margin-bottom:20px}
+  h1{font-size:1.35rem; margin:0 0 4px}
+  .sub{color:var(--muted); font-size:.9rem}
+  .topics{display:flex; flex-wrap:wrap; gap:7px; margin:18px 0}
+  .chip{
+    border:1px solid var(--line); background:var(--card); color:var(--fg);
+    padding:6px 12px; border-radius:999px; cursor:pointer; font-size:.85rem;
+    font-family:inherit;
+  }
+  .chip[aria-pressed="true"]{background:var(--accent); color:var(--accent-fg); border-color:var(--accent)}
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:10px;
+    padding:20px; margin-bottom:16px;
+  }
+  .qmeta{font-size:.75rem; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin-bottom:10px}
+  .qtext{font-size:1.05rem; margin-bottom:6px}
+  .qtext b{font-variant-numeric:tabular-nums}
+  .qfig{display:flex; flex-wrap:wrap; gap:6px 26px; margin:10px 0 2px}
+  .qfig svg{max-width:100%; height:auto; overflow:visible}
+  .qfig text{fill:var(--fg); font-family:inherit; font-variant-numeric:tabular-nums}
+  .qfig .tl{font-weight:600}
+  .qfig .tp{fill:var(--muted); font-size:13px}
+  .qfig line, .qfig polygon{stroke:var(--accent); fill:var(--accent)}
+  .qfig circle{fill:var(--accent)}
+  .qfig line.off{stroke:var(--muted); opacity:.35}
+  .qfig circle.off{fill:var(--muted); opacity:.45}
+  .ask{margin-top:14px; font-weight:600}
+  .row{display:flex; gap:9px; margin-top:14px; flex-wrap:wrap}
+  input[type=text]{
+    flex:1 1 190px; min-width:0; padding:11px 13px; font-size:1rem; font-family:inherit;
+    border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--fg);
+  }
+  input[type=text]:focus{outline:2px solid var(--accent); outline-offset:1px}
+  button{
+    padding:11px 17px; font-size:.95rem; font-family:inherit; border-radius:8px;
+    border:1px solid var(--accent); background:var(--accent); color:var(--accent-fg);
+    cursor:pointer; font-weight:600;
+  }
+  button.ghost{background:transparent; color:var(--fg); border-color:var(--line); font-weight:500}
+  button:disabled{opacity:.45; cursor:default}
+  .fb{border-radius:8px; padding:13px 15px; margin-top:15px; border-left:4px solid; font-size:.95rem}
+  .fb.ok{background:var(--ok-bg); border-color:var(--ok-line); color:var(--ok-fg)}
+  .fb.no{background:var(--no-bg); border-color:var(--no-line); color:var(--no-fg)}
+  .fb.hint{background:var(--hint-bg); border-color:var(--hint-line); color:var(--hint-fg)}
+  .fb strong{display:block; margin-bottom:3px}
+  details{margin-top:15px; border-top:1px solid var(--line); padding-top:13px}
+  summary{cursor:pointer; font-size:.9rem; color:var(--muted); font-weight:600}
+  .steps{margin-top:11px; font-size:.92rem}
+  .steps div{padding:5px 0; border-bottom:1px dashed var(--line)}
+  .steps div:last-child{border-bottom:none; font-weight:600}
+  .steps table.eqs{border-collapse:collapse; margin:2px 0}
+  .steps table.eqs td{padding:0; vertical-align:top}
+  .steps table.eqs td:first-child{text-align:right; padding-right:.3em}
+  .steps table.cf{border-collapse:collapse; margin:6px 0}
+  .steps table.cf td,.steps table.cf th{padding:2px 12px 2px 0; text-align:center}
+  .steps table.cf td:first-child,.steps table.cf th:first-child{text-align:left}
+  .steps table.cf th{border-bottom:1px solid var(--line)}
+  code{
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.88em;
+    background:var(--bg); padding:1px 5px; border-radius:4px; border:1px solid var(--line);
+  }
+  .opts{display:flex; flex-direction:column; gap:8px; margin-top:14px}
+  .opt{
+    text-align:left; padding:11px 14px; border:1px solid var(--line); background:var(--bg);
+    color:var(--fg); border-radius:8px; cursor:pointer; font-family:inherit;
+    font-size:.95rem; font-weight:400; line-height:1.55;
+  }
+  .opt:hover:not(:disabled){border-color:var(--accent)}
+  .opt.right{background:var(--ok-bg); border-color:var(--ok-line); border-width:2px}
+  .opt.wrong{background:var(--no-bg); border-color:var(--no-line)}
+  .opt:disabled{cursor:default}
+  .opt sup{font-size:.75em}
+  .stats{display:flex; gap:22px; font-size:.86rem; color:var(--muted); margin-top:22px;
+         border-top:1px solid var(--line); padding-top:14px; flex-wrap:wrap}
+  .stats b{color:var(--fg); font-variant-numeric:tabular-nums}
+  footer{margin-top:26px; font-size:.78rem; color:var(--muted); text-align:center}
+  /* The hidden attribute's UA rule is only [hidden]{display:none}, which loses
+     to author rules like .opts{display:flex} and .row{display:flex}. Without
+     this, hiding those panels silently does nothing. */
+  .modes{display:flex; gap:8px; align-items:center; margin-top:10px;
+         font-size:.84rem; color:var(--muted); flex-wrap:wrap}
+  .modes .chip{font-size:.84rem; padding:5px 12px}
+  .prog{margin-top:18px}
+  .progtop{display:flex; justify-content:space-between; align-items:baseline;
+           font-size:.86rem; color:var(--muted); margin-bottom:6px}
+  .progtop b{color:var(--fg); font-variant-numeric:tabular-nums}
+  .progbar{height:9px; border-radius:999px; background:var(--line); overflow:hidden}
+  .progfill{height:100%; width:0%; border-radius:999px; background:var(--accent);
+            transition:width .35s ease}
+  .progreset{background:none; border:none; color:var(--muted); font-size:.8rem;
+             padding:0; cursor:pointer; text-decoration:underline; font-weight:400}
+  .progreset:hover{color:var(--fg)}
+  .qhead{display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:10px}
+  .qhead .qmeta{margin-bottom:0}
+  .star{background:transparent; color:var(--muted); border:1px solid var(--line); border-radius:999px;
+        padding:3px 11px; font-size:.8rem; font-weight:500; white-space:nowrap; flex:none}
+  .star[aria-pressed="true"]{color:var(--hint-fg); background:var(--hint-bg); border-color:var(--hint-line)}
+  .star:hover{border-color:var(--accent)}
+  [hidden]{display:none !important}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>Note 25 — Options Basics, Part 1 (calls): practice</h1>
+  <div class="sub">Part 1, the call option. Payoff = max(S − K, 0); profit = payoff − premium. One share per option. Answers are matched within 0.25%.</div>
+</header>
+
+<div class="topics" id="topics" role="group" aria-label="Choose topics"></div>
+
+<div class="modes" id="modes" role="group" aria-label="Question order">
+  <span>Order</span>
+  <button class="chip" id="mShuffle" type="button" aria-pressed="true">Shuffle</button>
+  <button class="chip" id="mSeq" type="button" aria-pressed="false">In order</button>
+  <span id="seqPos"></span>
+</div>
+
+<div class="card" id="card">
+  <div class="qhead">
+    <div class="qmeta" id="qmeta">—</div>
+    <button class="star" id="star" type="button" aria-pressed="false"
+            title="Star this question to practise it again under the Starred chip">☆ Star</button>
+  </div>
+  <div class="qtext" id="qtext">Loading…</div>
+  <div class="qfig" id="qfig" hidden></div>
+  <div class="ask" id="qask"></div>
+  <div class="opts" id="opts" hidden></div>
+  <div class="row" id="inputrow">
+    <input type="text" id="ans" autocomplete="off" inputmode="decimal"
+           placeholder="Your answer" aria-label="Your answer">
+    <button id="check">Check</button>
+    <button id="next" class="ghost">New question</button>
+  </div>
+  <div id="fb"></div>
+  <details id="soldetails" hidden>
+    <summary>Show the worked solution</summary>
+    <div class="steps" id="steps"></div>
+  </details>
+</div>
+
+<div class="prog">
+  <div class="progtop">
+    <span>Templates solved unaided <b id="pDone">0</b> of <b id="pTotal">0</b></span>
+    <button class="progreset" id="pReset" type="button">reset</button>
+  </div>
+  <div class="progbar"><div class="progfill" id="progfill"></div></div>
+</div>
+
+<div class="stats">
+  <span>Attempted <b id="sAtt">0</b></span>
+  <span>Correct first try <b id="sFirst">0</b></span>
+  <span>Accuracy <b id="sAcc">—</b></span>
+  <span>Streak <b id="sStreak">0</b></span>
+  <span>Solutions opened <b id="sPeek">0</b></span>
+</div>
+
+<footer>Numbers are randomised, so every attempt is different. Nothing you type leaves this page.<br>Use the &rarr; and &larr; arrow keys to move between questions.</footer>
+
+</div>
+
+<script>
+"use strict";
+
+/* ------------------------------------------------------------------ utils */
+const pick = a => a[Math.floor(Math.random()*a.length)];
+/* stepped range, e.g. range(0.04,0.24,0.0025) -> 81 rates instead of a list of 6 */
+const range = (lo,hi,step) => {
+  const out=[]; for(let v=lo; v<=hi+1e-9; v+=step) out.push(Number(v.toFixed(8)));
+  return out;
+};
+const ORD = n => n + (["th","st","nd","rd"][(n%100-n%10!=10)*(n%10<4)*(n%10)]||"th");
+const money = v => "$" + v.toLocaleString("en-US",{minimumFractionDigits:2, maximumFractionDigits:2});
+const pct   = (v,d=4) => (v*100).toFixed(d).replace(/\.?0+$/,"") + "%";
+const pctS  = (v,d=2) => (v*100).toFixed(d) + "%";
+const REL_SEP  = 0.01;    // distractors must sit >1% from everything else
+const REL_MATCH= 0.0025;  // student answer counts as a match within 0.25%
+
+const near = (a,b,tol) =>
+  Number.isFinite(a) && Number.isFinite(b) &&
+  Math.abs(a-b) / Math.max(Math.abs(a), Math.abs(b), 1e-12) < tol;
+
+/* Drop distractors too close to the answer (or to each other) to diagnose.
+   Templates about small effects (perpetuity timing) pass a tighter `sep`. */
+function usable(correct, cands, sep){
+  const s = sep || REL_SEP;
+  const kept = [];
+  for (const c of cands){
+    if (!Number.isFinite(c.val)) continue;
+    if (near(c.val, correct, s)) continue;
+    if (kept.some(k => near(k.val, c.val, s))) continue;
+    kept.push(c);
+  }
+  return kept;
+}
+
+/* ------------------------------------------------------------- templates */
+/* ---------------------------------------------------------------- Note 25 ---
+   Options Basics, Part 1: The Call Option (FIN 577, Lecture 2, 28 Oct 2026).
+   Payoff = max(S - K, 0); profit = payoff - c; break-even = K + c. Dominance and no arbitrage
+   (a lower strike costs more); expected payoff over two outcomes (convexity); intrinsic value
+   max(S - K, 0) and time value = premium - intrinsic value. One share per option (the note's
+   simplification). Built 24 Oct 2026 from the note and Anh's own practice questions, saved in
+   Notes 25/Draft/Note_25_Part1_Practice_for_templates.tex (rule 5):
+     pp1  <- practice 1 (payoff and profit at three prices), one price per draw
+     be1  <- practice 1 (break-even), turned into the rise the share needs from today
+     ev1  <- the note's Section 3.2 / 3.4 expected payoffs, with unequal probabilities as well
+     ceo1 <- Section 3.5, the negative-NPV project the note mentions
+     iv1  <- practice 3 and Section 4 (premium = intrinsic value + time value)
+     arb1 <- practice 2 (the $45 call at $3, the $50 call at $4)
+   Practice 4 (exercise or sell) is left out: Section 4 (early exercise, 25 Oct) does not make the
+   sell-the-call argument. k9-k11 (choice) cover Section 4.                                         */
+const farFrom = (correct,cands,sep) => cands.every(c=>Number.isFinite(c.val) && !near(c.val,correct,sep));
+const keepFar = (correct,cands,sep) => cands.filter(c=>Number.isFinite(c.val) && !near(c.val,correct,sep));
+const smoney = v => (v < 0 ? "&minus;" : "") + money(Math.abs(v));   // −$4.38, not $-4.38
+const spct = (v,d=2) => (v < 0 ? "&minus;" : "") + pctS(Math.abs(v),d);
+const tr = (label, now, outs, probs) => probs ? {label, now, outs, probs} : {label, now, outs};   // one tree for q.fig
+const cpay = (S,K) => Math.max(S-K,0);
+const centsTol = v => Math.max(0.0025, 0.0051/Math.abs(v));          // a small dollar key is accepted to the cent
+const centsSep = v => Math.max(REL_SEP, 0.02/Math.abs(v));
+
+const TEMPLATES = [{ id:"pp1", topic:"payoff", name:"A call's profit at expiration", gen(){
+    /* Practice 1. The share ends below the strike, between the strike and the break-even, or above the
+       break-even. The middle zone is the trap: the profit is negative, but you still exercise.          */
+    let K, c, S, zone, correct, cands, tol, sep;
+    do {
+      K=pick(range(20,80,5)); c=pick(range(1.00,6.00,0.25)); zone=pick(["out","between","above"]);
+      S = zone==="out" ? K-pick(range(1,10,1)) : zone==="between" ? K+pick(range(0.25,5.75,0.25)) : K+c+pick(range(1,15,1));
+      correct=cpay(S,K)-c;
+      tol=centsTol(correct); sep=centsSep(correct);
+      cands=keepFar(correct,[
+        {val:cpay(S,K), msg:`That is the payoff. The profit also takes off the ${money(c)} premium you paid: profit = payoff &minus; premium.`},
+        {val:S-K-c, msg:`The payoff never falls below zero. With the share below the strike you walk away: the payoff is $0.00, and you lose only the premium.`},
+        {val:c-cpay(S,K), msg:`That is the writer's profit. The writer keeps the premium and pays out the buyer's payoff; you are the buyer.`},
+        {val:-c, msg:`With the share above the strike you exercise: you pay ${money(K)} for a share worth ${money(S)}. You exercise even when that payoff is less than the premium, because the premium is gone either way.`},
+        {val:0, msg:`You set a loss to zero. The premium is paid up front and is lost whatever happens, so the profit is the payoff minus ${money(c)}, which can be negative.`}
+      ],sep);
+    } while ((zone==="between" && S>=K+c) || Math.abs(correct)<0.25 || usable(correct,cands,sep).length<3);
+    return {
+      unit:"money", tol, sep,
+      text:`You buy a call on a share for a premium of <b>${money(c)}</b>. The call has a strike price of <b>${money(K)}</b>.
+            At expiration the share trades at <b>${money(S)}</b>.`,
+      ask:"What is your profit per share? (Two decimals; enter a negative number for a loss.)",
+      correct, cands,
+      steps:[
+        `Payoff = max(S &minus; K, 0) = max(${money(S)} &minus; ${money(K)}, 0) = ${money(cpay(S,K))}`,
+        `Profit = payoff &minus; premium = ${money(cpay(S,K))} &minus; ${money(c)} = <b>${smoney(correct)}</b>`
+      ]};
+  }},
+
+{ id:"be1", topic:"payoff", name:"How far the share must rise to break even", gen(){
+    /* Practice 1's break-even, K + c, measured against today's share price: the share must first reach
+       the strike and then cover the premium.                                                          */
+    let S0, K, c, correct, cands, tol, sep;
+    do {
+      S0=pick(range(20,100,1)); K=5*Math.round(S0/5)+pick([0,5,10]); c=pick(range(0.50,5.00,0.05));
+      correct=(K+c)/S0-1;
+      tol=Math.max(0.0025, 0.000051/Math.abs(correct)); sep=Math.max(REL_SEP,tol);
+      cands=keepFar(correct,[
+        {val:c/S0, msg:`That covers only the premium. The call pays nothing until the share reaches the ${money(K)} strike, so the break-even share price is K + c, not today's price plus c.`},
+        {val:(K-S0)/S0, msg:`That gets the share to the strike, where the payoff is still zero. To break even, the payoff must also cover the ${money(c)} premium: break-even = K + c.`},
+        {val:(K+c-S0)/(K+c), msg:`You divided by the break-even price. The rise is measured from today's share price: break-even/S &minus; 1.`},
+        {val:(K-c)/S0-1, msg:`The premium is a cost, so it raises the price the share must reach: break-even = K + c, not K &minus; c.`},
+        {val:c/K, msg:`That is the premium as a share of the strike. The rise is measured from today's share price, and the share must cover the strike as well as the premium.`}
+      ],sep);
+    } while (correct<0.01 || usable(correct,cands,sep).length<3);
+    return {
+      unit:"percent", tol, sep,
+      text:`A share trades at <b>${money(S0)}</b>. A call on it with a strike price of <b>${money(K)}</b> costs <b>${money(c)}</b>.`,
+      ask:"By what percentage must the share price rise by expiration for the buyer of the call to break even? (Two decimals.)",
+      correct, cands,
+      steps:[
+        `The buyer breaks even when the payoff S &minus; K just covers the premium c: break-even = K + c = ${money(K)} + ${money(c)} = ${money(K+c)}`,
+        `Rise needed = break-even/S &minus; 1 = ${money(K+c)}/${money(S0)} &minus; 1 = <b>${pctS(correct)}</b>`
+      ]};
+  }},
+
+{ id:"ev1", topic:"value", name:"A call's expected payoff over two outcomes", gen(){
+    /* Sections 3.2 and 3.4: expected payoff = probability-weighted average of the payoffs. The trap is the
+       payoff at the average share price, which ignores the floor at zero. Unequal probabilities as well,
+       so the answer is not always half of the good payoff.                                              */
+    let U, D, K, p, avg, correct, cands, tol, sep;
+    do {
+      D=pick(range(10,60,1)); U=D+pick(range(6,30,2)); K=D+Math.round(pick([0.2,0.3,0.4,0.5,0.6,0.7,0.8])*(U-D));
+      p=pick([0.3,0.4,0.5,0.6,0.7]); avg=p*U+(1-p)*D;
+      correct=p*cpay(U,K)+(1-p)*cpay(D,K);
+      tol=centsTol(correct); sep=centsSep(correct);
+      cands=keepFar(correct,[
+        {val:cpay(avg,K), msg:`That is the payoff at the expected share price, ${money(avg)}. The call's payoff is convex: the expected payoff averages the payoffs themselves, and the bad outcome's payoff stops at zero.`},
+        {val:avg-K, msg:`You let the payoff go negative in the bad outcome. There you walk away: the payoff is max(S &minus; K, 0) = $0.00.`},
+        {val:U-K, msg:`That is the payoff if the share ends at ${money(U)}. Weight it by its probability, ${p}.`},
+        {val:(1-p)*cpay(U,K), msg:`You swapped the probabilities. The share ends at ${money(U)} with probability ${p}.`},
+        {val:0.5*cpay(U,K), msg:`You used equal probabilities. The share ends at ${money(U)} with probability ${p}.`}
+      ],sep);
+    } while (usable(correct,cands,sep).length<3);
+    const q=+(1-p).toFixed(1);
+    return {
+      unit:"money", tol, sep,
+      text:`At the expiration of a call, the share will trade at either <b>${money(U)}</b>, with probability <b>${p}</b>, or <b>${money(D)}</b>,
+            with probability <b>${q}</b>. The call has a strike price of <b>${money(K)}</b>.`,
+      ask:"What is the call's expected payoff? (Two decimals.)",
+      correct, cands,
+      fig:[tr("Share at expiration", "", [money(U), money(D)], [String(p), String(q)])],
+      steps:[
+        `Payoff = max(S &minus; K, 0). If the share ends at ${money(U)}: max(${money(U)} &minus; ${money(K)}, 0) = ${money(cpay(U,K))}. If it ends at ${money(D)}: max(${money(D)} &minus; ${money(K)}, 0) = $0.00`,
+        `Expected payoff = probability-weighted average of the payoffs = ${p} &times; ${money(cpay(U,K))} + ${q} &times; $0.00 = <b>${money(correct)}</b>`
+      ]};
+  }},
+
+{ id:"ceo1", topic:"exec", also:["value"], name:"A CEO's options and a value-destroying risky project", gen(){
+    /* Section 3.5: "A manager may even take a risky project with a negative NPV ... if the extra value that the
+       higher risk adds to her options more than makes up for the lower share price." The strike is today's
+       share price; the safe project keeps the average there, the risky one lowers it by a little (m = $0.50
+       or $1) and the risky project always wins for the options (b - m - a >= 1; Anh, 25 Oct 2026).      */
+    let S0, a, b, m, N, U2, D2, eSafe, eRisky, correct, cands, tol, sep;
+    do {
+      S0=pick([20,25,30,40,50]); a=pick([2,3,4,5]); m=pick([0.5,1]); b=a+m+pick([1,2,3,4,5,6]);
+      N=pick([50000,100000,200000]);
+      U2=S0-m+b; D2=S0-m-b;
+      eSafe=0.5*cpay(S0+a,S0)+0.5*cpay(S0-a,S0); eRisky=0.5*cpay(U2,S0)+0.5*cpay(D2,S0);
+      correct=N*(eRisky-eSafe);
+      tol=REL_MATCH; sep=REL_SEP;
+      cands=keepFar(correct,[
+        {val:N*0.5*(b-a), msg:`You left out the lower average share price. With the risky project the good outcome is ${money(U2)}, not ${money(S0+b)}: the project lowers the average by ${money(m)}.`},
+        {val:-N*m, msg:`That is the change for a holder of ${N.toLocaleString("en-US")} shares: the average share price falls by ${money(m)}. An option's payoff stops at zero in the bad outcome, so the wider swing helps it.`},
+        {val:eRisky-eSafe, msg:`That is the change for one option. She holds ${N.toLocaleString("en-US")} of them.`},
+        {val:N*(cpay(U2,S0)-cpay(S0+a,S0)), msg:`Each outcome has probability 0.5: weight the payoffs before comparing.`}
+      ],sep);
+    } while (Math.abs(eRisky-eSafe)<0.25 || usable(correct,cands,sep).length<3);
+    const n=N.toLocaleString("en-US");
+    return {
+      unit:"money", tol, sep,
+      text:`A CEO holds <b>${n}</b> call options on her firm's shares. Today's share price is <b>${money(S0)}</b>. Each option has a strike price
+            equal to today's share price, <b>${money(S0)}</b>, and expires in one year. She can take one of two projects. With the safe project, the share price in one year will be
+            <b>${money(S0+a)}</b> or <b>${money(S0-a)}</b>, with equal probabilities. With the risky project, it will be <b>${money(U2)}</b>
+            or <b>${money(D2)}</b>, with equal probabilities: on average ${money(m)} lower.`,
+      ask:"How much higher is the expected payoff of all her options with the risky project than with the safe one? (Two decimals.)",
+      correct, cands,
+      fig:[tr("Share in one year, safe project", "", [money(S0+a), money(S0-a)], ["0.5","0.5"]),
+           tr("Share in one year, risky project", "", [money(U2), money(D2)], ["0.5","0.5"])],
+      steps:[
+        `Each option pays max(S &minus; K, 0) with K = ${money(S0)}; its expected payoff is the probability-weighted average of the payoffs`,
+        `Safe project: 0.5 &times; max(${money(S0+a)} &minus; ${money(S0)}, 0) + 0.5 &times; max(${money(S0-a)} &minus; ${money(S0)}, 0) = 0.5 &times; ${money(a)} + 0.5 &times; $0.00 = ${money(eSafe)}`,
+        `Risky project: 0.5 &times; max(${money(U2)} &minus; ${money(S0)}, 0) + 0.5 &times; max(${money(D2)} &minus; ${money(S0)}, 0) = 0.5 &times; ${money(b-m)} + 0.5 &times; $0.00 = ${money(eRisky)}`,
+        `Change for all her options = ${n} &times; (${money(eRisky)} &minus; ${money(eSafe)}) = <b>${smoney(correct)}</b>${correct>0?`: the wider swing adds more to her options than the ${money(m)} lower average takes away`:""}`
+      ]};
+  }},
+
+{ id:"iv1", topic:"tv", name:"Splitting a call's premium into intrinsic value and time value", gen(){
+    /* Practice 3 and Section 4: premium = max(S - K, 0) + time value. In the money only: out of the money
+       the answer is the premium itself, printed in the stem (gridall report, 24 Oct 2026); k4 covers the
+       zero-intrinsic case.                                                                              */
+    let K, S, c, correct, cands, tol, sep;
+    do {
+      K=pick(range(20,100,5)); S=K+pick([1,2,3,4,5,6,7,8,10,12,15]);
+      c=+(cpay(S,K)+pick(range(0.40,4.00,0.05))).toFixed(2);
+      correct=c-cpay(S,K);
+      tol=centsTol(correct); sep=centsSep(correct);
+      cands=keepFar(correct,[
+        {val:cpay(S,K), msg:`That is the intrinsic value, what exercising now would pay. Time value is the rest of the premium: premium &minus; intrinsic value.`},
+        {val:c+cpay(S,K), msg:`Time value is what is left of the premium after the intrinsic value, S &minus; K = ${money(S-K)}: subtract it, don't add it. (Subtracting K &minus; S gives the same wrong number: a call's intrinsic value is S &minus; K.)`},
+        {val:c, msg:`The call is in the money: exercising now would pay ${money(S-K)}. That part of the premium is intrinsic value; only the rest is time value.`}
+      ],sep);
+    } while (usable(correct,cands,sep).length<3);
+    return {
+      unit:"money", tol, sep,
+      text:`A share trades at <b>${money(S)}</b>. A call on it with a strike price of <b>${money(K)}</b> costs <b>${money(c)}</b>.`,
+      ask:"How much of the call's premium is time value? (Two decimals.)",
+      correct, cands,
+      steps:[
+        `Intrinsic value is the payoff if you exercised now: max(S &minus; K, 0) = max(${money(S)} &minus; ${money(K)}, 0) = ${money(cpay(S,K))}`,
+        `Time value = premium &minus; intrinsic value = ${money(c)} &minus; ${money(cpay(S,K))} = <b>${money(correct)}</b>`
+      ]};
+  }},
+
+{ id:"arb1", topic:"arb", name:"Two calls priced the wrong way round", gen(){
+    /* Practice 2: the lower-strike call dominates, so it must cost more. Here it costs less: buy it, sell the
+       higher-strike call, keep the difference, and the call you own always covers the one you sold.    */
+    let K1, K2, c1, c2, S, zone, X, A, B, correct, cands, tol, sep;
+    do {
+      K1=pick(range(30,70,5)); K2=K1+pick([5,10]); c1=pick(range(2.00,5.00,0.25)); c2=c1+pick([0.25,0.50,0.75,1.00]);
+      zone=pick(["between","above"]);   // not below K1: both calls then expire worthless and the answer is the price gap (blind sitting 24 Oct 2026)
+      S = zone==="between" ? K1+pick(range(1,9,1)) : K2+pick(range(1,10,1));
+      X=c2-c1; A=cpay(S,K1); B=cpay(S,K2);
+      correct=X+A-B;
+      tol=centsTol(correct); sep=centsSep(correct);
+      cands=keepFar(correct,[
+        {val:X, msg:`That is only the cash you receive today. At expiration the call you own pays ${money(A)} and the call you sold costs you ${money(B)}.`},
+        {val:-correct, msg:`You made the trade the wrong way round. The ${money(K1)} call pays at least as much as the ${money(K2)} call whatever happens, yet it is cheaper: buy it and sell the ${money(K2)} call.`},
+        {val:A-B, msg:`You left out the ${money(X)} you receive today from selling the dearer call and buying the cheaper one.`},
+        {val:X+(S-K1)-(S-K2), msg:`A call's payoff never falls below zero: max(S &minus; K, 0). A call that ends out of the money pays nothing.`}
+      ],sep);
+    } while ((zone==="between" && S>=K2) || usable(correct,cands,sep).length<3);
+    return {
+      unit:"money", tol, sep,
+      text:`Two calls on the same share have the same expiration date. The call with a strike price of <b>${money(K1)}</b> costs
+            <b>${money(c1)}</b>; the call with a strike price of <b>${money(K2)}</b> costs <b>${money(c2)}</b>. These prices let you
+            make a guaranteed, riskless profit: buy one of the two calls and sell the other, one call each. At expiration the share trades at <b>${money(S)}</b>.`,
+      ask:"What is this strategy's total profit per share, counting both today's trade and the payoffs at expiration? (Ignore interest. Two decimals.)",
+      correct, cands,
+      steps:[
+        `The ${money(K1)} call pays at least as much as the ${money(K2)} call whatever the share does, so it should cost more. It costs less: buy it and sell the ${money(K2)} call. Cash today = ${money(c2)} &minus; ${money(c1)} = ${money(X)}`,
+        `At expiration, the call you own pays max(${money(S)} &minus; ${money(K1)}, 0) = ${money(A)}, and the call you sold costs you max(${money(S)} &minus; ${money(K2)}, 0) = ${money(B)}`,
+        `Total profit = cash today + payoff received &minus; payoff paid = ${money(X)} + ${money(A)} &minus; ${money(B)} = <b>${money(correct)}</b>`
+      ]};
+  }}
+
+];
+
+/* ======================= CHOICE-MODE ITEMS ==============================
+   Auto-graded by which option is clicked, not by a typed number.
+     topic "error"   — a worked solution with one planted mistake
+     topic "concept" — reason about the direction of an effect, no arithmetic
+   Directional items shuffle their own options so position carries no
+   information; spot-the-error items must stay in step order.            */
+
+function shuffle(a){
+  const out = a.slice();
+  for (let i=out.length-1; i>0; i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [out[i],out[j]] = [out[j],out[i]];
+  }
+  return out;
+}
+
+const CHOICE_TEMPLATES = [{ id:"k1", topic:"concept", also:["payoff"], name:"Why a call costs money when a forward does not", gen(){
+    /* Section 2: "with a forward you must buy, even if Citi falls to $12. The call lets you walk away, and
+       that is what the $3 pays for."                                                                      */
+    const K=pick(range(20,80,5)), c=pick(range(1.50,5.00,0.25));
+    const opts=shuffle([
+      {html:`The call lets you walk away when the share ends below ${money(K)}, so it never pays less than the forward`, correct:true,
+       msg:`Right. If the share ends above ${money(K)}, the two pay the same, S &minus; K. If it ends below ${money(K)}, the forward makes you pay ${money(K)} for a cheaper share, while the call pays $0.00. A payoff that is never lower and sometimes higher must cost more.`},
+      {html:`The call can be exercised at any time before expiration, while the forward settles only at the end`, correct:false,
+       msg:`Even a European call, which can be exercised only at expiration, costs money. What the premium pays for is the right to walk away when the share ends below the strike.`},
+      {html:`The call's writer bears the risk that the share rises above ${money(K)}, and must be paid for it`, correct:false,
+       msg:`The forward's seller bears exactly the same risk and is paid nothing up front. The difference is on the other side: below ${money(K)}, the forward's buyer must still pay ${money(K)}, while the call's buyer walks away.`},
+      {html:`The call is guaranteed by a clearinghouse, while the forward's buyer bears the risk of default`, correct:false,
+       msg:`A clearinghouse can stand behind futures too, and that does not make them cost anything to enter. The premium pays for the right to walk away when the share ends below the strike.`}
+    ]);
+    return {mode:"choice",
+      text:`A one-year forward and a one-year call on the same share both lock in a purchase price of ${money(K)}. Entering the
+            forward costs nothing today; the call costs ${money(c)}.`,
+      ask:"Why must the call cost something when the forward does not?",
+      options:opts,
+      steps:[
+        `At expiration the forward pays S &minus; ${money(K)}, which is negative when the share ends below ${money(K)}.`,
+        `The call pays max(S &minus; ${money(K)}, 0). If the share ends above ${money(K)}, you exercise and the call pays S &minus; ${money(K)}, the same as the forward. If the share ends below ${money(K)}, you walk away and the call pays $0.00, while the forward's payoff is negative.`,
+        `So the call's payoff is never lower than the forward's and sometimes higher. The forward costs nothing, so the call must cost something.`
+      ]};
+  }},
+
+{ id:"k2", topic:"value", name:"Same expected share price, bigger swing", gen(){
+    /* Sections 3.2 and 3.4: the call's payoff is convex, so a wider spread with the same average raises the
+       expected payoff. The distractors are the three ways students explain the result away.              */
+    const opts=shuffle([
+      {html:`The call on share A: a bigger swing raises the payoff in the good outcome, and in the bad outcome the payoff cannot fall below zero`, correct:true,
+       msg:`Right. The call's payoff is convex. Spreading the outcomes further apart around the same average adds to the good outcome's payoff and takes nothing extra away in the bad one, where the call pays $0.00 either way.`},
+      {html:`Neither: both shares have the same expected price, so calls on them have the same expected payoff`, correct:false,
+       msg:`That holds for a payoff that is a straight line in the share price, such as a forward's or the share's own. A call's payoff stops at zero, so its expected payoff depends on the spread as well as the average.`},
+      {html:`The call on share B: its payoff is easier to predict, and investors pay more for a payoff they can count on`, correct:false,
+       msg:`The call's holder is protected on the downside already: the payoff never falls below zero. A wider swing only adds to the good outcome, so the call on the more volatile share is worth more.`},
+      {html:`The call on share A: a share whose price swings more must also be expected to end at a higher price`, correct:false,
+       msg:`The question fixes the two shares' expected prices to be the same. The call on A is worth more because its payoff stops at zero in the bad outcome, not because A is expected to end higher.`}
+    ]);
+    return {mode:"choice",
+      text:`Shares A and B trade at the same price today and have the same expected price in one year, but A's price can swing
+            much further than B's. A call on each has the same strike price and expires in one year.`,
+      ask:"Which call has the higher expected payoff, and why?",
+      options:opts,
+      steps:[
+        `A call pays max(S &minus; K, 0): it rises with the share above the strike and is stuck at zero below it.`,
+        `With share A's wider swing, the call gains in the good outcome and loses nothing extra in the bad one, so the call on A has the higher expected payoff.`
+      ]};
+  }},
+
+{ id:"k4", topic:"tv", name:"Recording an at-the-money option at its intrinsic value", gen(){
+    /* Section 4: APB 25 let firms record employee options at intrinsic value, zero at the money. */
+    const opts=shuffle([
+      {html:`Its intrinsic value is zero, but the chance that the share rises before expiration gives it a value well above zero`, correct:true,
+       msg:`Right. Intrinsic value is what exercising now would pay, which is zero at the money. The option's value comes from waiting: the share may rise, and if it falls the payoff stops at zero.`},
+      {html:`Nothing: an at-the-money option pays nothing if exercised today, so granting it costs the firm nothing`, correct:false,
+       msg:`It pays nothing if exercised today, but the employee will not exercise today. The option's value is its time value, the chance that the share rises before expiration, and that is far from zero.`},
+      {html:`It used the share price on the grant date instead of the share price at expiration, when the payoff is known`, correct:false,
+       msg:`The value of an option today cannot wait for the price at expiration. The flaw is that intrinsic value leaves out time value, which is all of an at-the-money option's value.`},
+      {html:`It overstated the cost: employees cannot sell their options, so the options are worth less than their intrinsic value`, correct:false,
+       msg:`Intrinsic value is zero at the money, so it cannot overstate anything. The rule understated the cost by leaving out the option's time value.`}
+    ]);
+    return {mode:"choice",
+      text:`For years, US accounting rules let a firm record an employee stock option at its intrinsic value. Firms granted options
+            at the money and recorded no expense.`,
+      ask:"What was wrong with this, economically?",
+      options:opts,
+      steps:[
+        `Premium = intrinsic value + time value, with intrinsic value = max(S &minus; K, 0).`,
+        `At the money, S = K, so the intrinsic value is zero and the whole value of the option is time value.`,
+        `Time value is the value of waiting: the share may rise before expiration, and if it falls the payoff stops at zero. So the option is worth well above zero, and recording it at zero understated its cost.`
+      ]};
+  }},
+
+{ id:"k5", topic:"payoff", name:"The most a call's writer can lose", gen(){
+    /* Section 2.1: the writer's payoff is the buyer's turned upside down, falling a dollar for every dollar the
+       share rises above the strike; the profit is that moved up by the premium.                           */
+    const K=pick(range(20,80,5)), c=pick(range(1.00,6.00,0.25));
+    const opts=shuffle([
+      {html:`There is no limit, because the share price has no ceiling`, correct:true,
+       msg:`Right. Above ${money(K)} the writer loses a dollar for every dollar the share rises, and the share price can rise without limit. The premium only offsets the first ${money(c)}.`},
+      {html:`${money(c)}, the premium`, correct:false,
+       msg:`That is the most the buyer can lose. The writer keeps at most the premium, and pays out S &minus; ${money(K)} if the share ends above the strike.`},
+      {html:`${money(K)}, the strike price`, correct:false,
+       msg:`The writer receives the strike, and gives up a share worth S. That loss, S &minus; ${money(K)}, grows without limit as the share rises.`},
+      {html:`${money(K+c)}, the strike price plus the premium`, correct:false,
+       msg:`${money(K+c)} is the break-even share price, where the writer's profit is zero. Above it the writer loses a dollar for every dollar the share rises, without limit.`}
+    ]);
+    return {mode:"choice",
+      text:`You write (sell) a call with a strike price of ${money(K)} and collect a premium of ${money(c)}.`,
+      ask:"What is the most you can lose per share?",
+      options:opts,
+      steps:[
+        `The writer's payoff is the buyer's turned upside down: &minus;max(S &minus; ${money(K)}, 0). The writer's profit adds the ${money(c)} premium.`,
+        `If the share ends above ${money(K)}, the writer must deliver a share worth S for ${money(K)}, losing S &minus; ${money(K)}.`,
+        `The share price has no ceiling, so neither has that loss.`
+      ]};
+  }},
+
+{ id:"k6", topic:"value", name:"Why the longer call is worth more", gen(){
+    /* Section 3.3 and Part 1's corrected wording (24 Oct 2026): more time does not make the share more
+       volatile; it gives the same volatility more time to work. American calls: dominance.              */
+    const K=pick(range(20,80,5));
+    const opts=shuffle([
+      {html:`Anything you can do with the one-year call, you can also do with the two-year call, for a year longer`, correct:true,
+       msg:`Right. Anything you can do with the one-year call you can do with the two-year call, so it cannot be worth less. The extra year also lets the share's price spread out further, which raises the expected payoff.`},
+      {html:`The share's price is more volatile from day to day the further out you look`, correct:false,
+       msg:`More time does not make the share more volatile. It gives the same volatility more time to work, so the possible prices at expiration are more spread out.`},
+      {html:`It has a higher intrinsic value, because the share has longer to rise above ${money(K)}`, correct:false,
+       msg:`Intrinsic value is max(S &minus; K, 0) at today's share price, so it is the same for both calls. The extra value of the longer call is time value.`},
+      {html:`Its writer bears the risk for longer, so the market adds a charge for each extra year`, correct:false,
+       msg:`There is no separate charge per year: the price follows from the payoff. The two-year call is worth at least as much because it gives you every right the one-year call does, plus another year.`}
+    ]);
+    return {mode:"choice",
+      text:`Two American calls on the same share have the same strike price, ${money(K)}. One expires in one year, the other in two years.`,
+      ask:"The two-year call costs more. Why?",
+      options:opts,
+      steps:[
+        `An American call can be exercised at any time up to expiration.`,
+        `So the two-year call gives you every right the one-year call gives you, plus another year: its payoff dominates, and it cannot be worth less.`,
+        `The extra year also lets the share's price spread out further, which raises the call's expected payoff.`
+      ]};
+  }},
+
+{ id:"k7", topic:"arb", name:"A call with a strike price of zero", gen(){
+    /* Section 3.4: "the price of a call option with K = 0 must be S" (no dividend before expiration). */
+    const S=pick(range(20,90,1));
+    const opts=shuffle([
+      {html:`Exactly ${money(S)}: it pays the share price at expiration, the same as the share itself`, correct:true,
+       msg:`Right. A call with K = 0 pays max(S &minus; 0, 0) = S at expiration, which is exactly what one share is worth then. Two things with the same payoff must have the same price, so the call costs ${money(S)}.`},
+      {html:`Nothing: with a strike price of zero, the call has no intrinsic value`, correct:false,
+       msg:`Intrinsic value is max(S &minus; K, 0). With K = 0 that is the whole share price, ${money(S)}.`},
+      {html:`More than ${money(S)}: on top of its intrinsic value of ${money(S)}, it also has time value`, correct:false,
+       msg:`The call's payoff is S at expiration, exactly the share's. Paying more than ${money(S)} for it would let someone sell you the call and buy the share instead, at no risk.`},
+      {html:`Less than ${money(S)}: the call delivers the share only at expiration, so its value must be discounted`, correct:false,
+       msg:`The share pays no dividend, so holding the share until expiration gives you nothing the call does not. The two have the same payoff and must cost the same, ${money(S)}.`}
+    ]);
+    return {mode:"choice",
+      text:`A share trades at ${money(S)} and will pay no dividend before expiration. A call on it has a strike price of $0.`,
+      ask:"What must the call cost?",
+      options:opts,
+      steps:[
+        `A call with K = 0 pays max(S &minus; 0, 0) = S at expiration.`,
+        `That is exactly what one share is worth at expiration, and with no dividend, holding the share gives you nothing more.`,
+        `Same payoff, same price: the call costs ${money(S)}.`
+      ]};
+  }},
+
+{ id:"k8", topic:"concept", name:"Which call is deepest in the money?", gen(){
+    /* Section 2.2: moneyness is measured by S/K. The trap is the dollar gap S - K. Practice 6, with three
+       different shares, so the dollar gap and the ratio rank them differently.                          */
+    /* Blind sitting 24 Oct 2026: the top two ratios were 0.003 apart, and on one draw all three wrong options
+       named the same stock. Now the top ratio leads by at least 0.05, and the wrong options name both other stocks. */
+    let st, hi, gap, big, lowK;
+    do {
+      st=["A","B","C"].map(n=>{ const K=pick(range(10,150,5)); const r=pick([1.04,1.08,1.12,1.16,1.20,1.25,1.30,1.40]); return {n, K, S:Math.round(K*r)}; });
+      const by=f=>st.reduce((a,b)=>f(b)>f(a)?b:a).n;
+      hi=by(s=>s.S/s.K); gap=by(s=>s.S-s.K); big=by(s=>s.S); lowK=by(s=>-s.K);
+    } while (gap===hi || big===hi || lowK===hi || new Set([gap,big,lowK]).size<2 || st.some(s=>s.S<=s.K)
+             || new Set(st.map(s=>s.S-s.K)).size<3 || st.filter(s=>s.n!==hi).some(s=>s.S/s.K > st.find(x=>x.n===hi).S/st.find(x=>x.n===hi).K - 0.05));
+    const opts=shuffle([
+      {html:`Stock ${hi}'s call, because its share price is the highest multiple of its strike price`, correct:true,
+       msg:`Right. Moneyness is measured by S/K, and Stock ${hi}'s ratio is the highest.`},
+      {html:`Stock ${gap}'s call, because its share price is furthest above its strike price in dollars`, correct:false,
+       msg:`A dollar gap grows with the size of the share price, so it does not compare calls on different shares. Moneyness is measured by S/K, and Stock ${hi}'s ratio is the highest.`},
+      {html:`Stock ${big}'s call, because it is on the share with the highest price`, correct:false,
+       msg:`The share price alone says nothing about moneyness; what matters is the share price compared with the strike. S/K is highest for Stock ${hi}.`},
+      {html:`Stock ${lowK}'s call, because it has the lowest strike price`, correct:false,
+       msg:`A low strike helps only relative to the share price. Moneyness compares the two: S/K is highest for Stock ${hi}.`}
+    ]);
+    const S=n=>st.find(s=>s.n===n);
+    return {mode:"choice",
+      text:`Three calls on three different shares: Stock A trades at ${money(S("A").S)} and its call has a strike price of ${money(S("A").K)};
+            Stock B trades at ${money(S("B").S)} and its call has a strike price of ${money(S("B").K)}; Stock C trades at ${money(S("C").S)}
+            and its call has a strike price of ${money(S("C").K)}.`,
+      ask:"Which call is deepest in the money?",
+      options:opts,
+      steps:[
+        `Moneyness is measured by S/K: above 1 is in the money, and the further above 1, the deeper.`,
+        `Stock A: ${money(S("A").S)}/${money(S("A").K)} = ${(S("A").S/S("A").K).toFixed(4)}. Stock B: ${money(S("B").S)}/${money(S("B").K)} = ${(S("B").S/S("B").K).toFixed(4)}. Stock C: ${money(S("C").S)}/${money(S("C").K)} = ${(S("C").S/S("C").K).toFixed(4)}.`,
+        `The highest ratio is Stock ${hi}'s, so its call is the deepest in the money.`
+      ]};
+  }}
+,
+
+{ id:"k9", topic:"early", name:"Exercise an American call today, or wait?", gen(){
+    /* Section 4 (added 25 Oct 2026): exercise today = pay K today; wait = pay K at expiration if the share ends
+       above K, or buy the share in the market for less than K if it ends below; and pay later. The wrong
+       options are the three reasons students give for exercising early.                                   */
+    const K=pick(range(20,80,5)), S=K+pick(range(5,20,1)), m=pick([3,6,9]);
+    const opts=shuffle([
+      {html:`At most ${money(K)} (less if the share ends below ${money(K)}), paid ${m} months from now`, correct:true,
+       msg:`Right. If the share ends above ${money(K)}, you exercise then and pay ${money(K)}. If it ends below, you walk away from the call and buy the share in the market for less. Either way you pay no more than ${money(K)}, and you pay it later, so waiting beats exercising today.`},
+      {html:`The share's price at expiration, which could be well above today's ${money(S)} if the share keeps rising`, correct:false,
+       msg:`You still hold the call while you wait. If the share ends above ${money(K)}, you exercise then and pay ${money(K)}, however high the share has risen.`},
+      {html:`${money(K)} either way, so waiting only delays the purchase and gains you nothing`, correct:false,
+       msg:`If the share ends below ${money(K)}, you do not have to pay ${money(K)}: you walk away from the call and buy the share in the market for less. And paying later is itself worth something.`},
+      {html:`${money(K)}, paid ${m} months from now, but you lose today's ${money(S-K)} gain if the share falls below ${money(K)}`, correct:false,
+       msg:`Exercising today does not protect that gain: if the share then falls below ${money(K)}, you own a share worth less than the ${money(K)} you paid. If you wait instead, you walk away from the call and buy the share for less than ${money(K)}.`}
+    ]);
+    return {mode:"choice",
+      text:`You hold an American call on a share with a strike price of ${money(K)} and ${m} months to expiration. The share pays
+            no dividend and trades at ${money(S)} today. You want to own the share at expiration either way.`,
+      ask:`Exercising today means paying ${money(K)} today. If you wait until expiration instead, what will you pay for the share?`,
+      options:opts,
+      steps:[
+        `If the share ends above ${money(K)}: you exercise at expiration and pay ${money(K)}.`,
+        `If the share ends below ${money(K)}: you walk away from the call and buy the share in the market for less than ${money(K)}.`,
+        `So by waiting you never pay more than ${money(K)}, sometimes less, and you pay ${m} months later, which the time value of money favours. It is not optimal to exercise the call today.`
+      ]};
+  }},
+
+{ id:"k10", topic:"early", name:"American and European calls on a share with no dividend", gen(){
+    /* Section 4: it is never optimal to exercise an American call early on a share that pays no dividend
+       before expiration, so the right to do so is worth nothing: c_American = c_European.
+       Blind sitting 25 Oct 2026: the deep-in-the-money lure repeated k11's (now volatility), and the
+       'cannot exercise too early by mistake' lure was weak (now 'makes sure that you wait').           */
+    const K=pick(range(20,80,5)), c=pick(range(1.50,8.00,0.25)), m=pick([3,6,9,12]);
+    const opts=shuffle([
+      {html:`Exactly ${money(c)}: an American call on this share is never worth exercising early, so that right adds nothing`, correct:true,
+       msg:`Right. The only thing the American call gives you that the European call does not is the right to exercise early. On a share that pays no dividend you would never use it, so it is worth nothing, and the two calls cost the same.`},
+      {html:`Less than ${money(c)}: the European call gives you fewer rights, and every right is worth something`, correct:false,
+       msg:`A right you would never use is worth nothing. On a share with no dividend, exercising an American call early is never optimal, so the European call costs the same.`},
+      {html:`Less than ${money(c)} by an amount that depends on the share's volatility: the wilder the swings, the more early exercise is worth`, correct:false,
+       msg:`Wilder swings make waiting worth more, not less: if the share falls, you walk away and buy it for less. On a share with no dividend the early-exercise right is never used, however volatile the share, so the European call costs ${money(c)}.`},
+      {html:`More than ${money(c)}: waiting beats exercising early, and the European call makes sure that you wait`, correct:false,
+       msg:`The holder of the American call can wait too. Being made to do what you would choose to do anyway adds nothing, so the European call cannot be worth more than ${money(c)}.`}
+    ]);
+    return {mode:"choice",
+      text:`An American call on a share with a strike price of ${money(K)} and ${m} months to expiration costs ${money(c)}.
+            The share pays no dividend before expiration.`,
+      ask:`What must a European call on the same share, with the same strike price and expiration, cost?`,
+      options:opts,
+      steps:[
+        `The only difference between the two calls is that the American call can be exercised before expiration.`,
+        `On a share with no dividend, exercising early is never optimal: by waiting you pay no more than ${money(K)}, sometimes less, and you pay later.`,
+        `So the right to exercise early is never used and is worth nothing: c<sub>American</sub> = c<sub>European</sub> = ${money(c)}.`
+      ]};
+  }},
+
+{ id:"k11", topic:"early", name:"When exercising an American call early can pay", gen(){
+    /* Section 4: "If Citi pays a dividend before the option's maturity, however, it is a different story.
+       Shareholders get the dividend and call option holders do not, so exercising just before the dividend is
+       paid can be worth it." Wrong options: deep in the money, an earnings announcement, a zero interest rate. Blind sitting 25 Oct 2026:
+       'exercise to lock in the gain' needed the sell-the-call argument, which Section 4 does not make; it is k9's
+       lure anyway. The stem now says you want the share either way, as in k9.          */
+    const K=pick(range(20,80,5)), S=K+pick(range(5,20,1)), m=pick([3,6,9]);
+    const opts=shuffle([
+      {html:`The share will pay a large dividend next week, which shareholders receive and call holders do not`, correct:true,
+       msg:`Right. Exercising just before the dividend makes you a shareholder in time to receive it. That can be worth more than what you give up by paying ${money(K)} early.`},
+      {html:`The call is deep in the money, so there is little left to gain by waiting`, correct:false,
+       msg:`However deep in the money the call is, waiting still means paying no more than ${money(K)}, sometimes less, and paying later. Being deep in the money is not a reason to exercise early.`},
+      {html:`The firm will announce its earnings next week, and the share may swing sharply either way`, correct:false,
+       msg:`Bigger swings make waiting worth more: if the share falls, you walk away from the call and buy the share for less than ${money(K)}. An announcement is a reason to wait, not to exercise.`},
+      {html:`Interest rates have fallen to zero, so paying ${money(K)} now rather than later costs you nothing`, correct:false,
+       msg:`Even with no interest, waiting still pays: if the share ends below ${money(K)}, you walk away from the call and buy the share in the market for less. Paying ${money(K)} today gives that up.`}
+    ]);
+    return {mode:"choice",
+      text:`You hold an American call on a share with a strike price of ${money(K)} and ${m} months to expiration. The share
+            trades at ${money(S)}. You want to own the share at expiration either way.`,
+      ask:"Which of these could make it worth exercising the call before expiration?",
+      options:opts,
+      steps:[
+        `Without a dividend, exercising early is never optimal: by waiting you pay no more than ${money(K)}, sometimes less, and you pay later.`,
+        `A dividend changes this. Shareholders receive it and call holders do not.`,
+        `So exercising just before the dividend is paid can be worth it: you become a shareholder in time to receive the dividend.`
+      ]};
+  }}
+];
+
+const TOPICS = [
+  {key:"all", label:"Mixed"},
+  {key:"payoff", label:"Payoff and profit"},
+  {key:"value", label:"What drives value"},
+  {key:"arb", label:"No arbitrage"},
+  {key:"tv", label:"Intrinsic and time value"},
+  {key:"exec", label:"Executive pay"},
+  {key:"early", label:"Early exercise"},
+  {key:"concept", label:"Reason it out"}
+];
+
+/* ----------------------------------------------------------------- state */
+let active = "all", current = null, tries = 0;
+let peeked = false, solved = false, tallied = false;  // tallied = already counted in `attempted`
+const stats = {att:0, first:0, streak:0, peek:0};
+
+const $ = id => document.getElementById(id);
+
+/* One-period trees for templates that return q.fig = [{label, now, outs:[...], probs:[...]?}, ...]
+   (added 22 Oct 2026 for Note 13, at Anh's request). Values come from the same draw as the text. */
+function figHTML(fig){
+  const txt = s => String(s).replace(/<[^>]+>/g, "");
+  const len = s => txt(s).replace(/&[a-z]+;/g, "x").length;
+  /* A multi-period recombining tree (Notes 16 and 19, 22 Oct 2026): t.lat[k] lists the nodes at
+     date k from the top; a node is a string or an array of lines; t.times labels the dates.      */
+  const latSVG = t => {
+    const L = t.lat.length, lines = v => (Array.isArray(v) ? v : [v]).map(txt);
+    const colW = t.lat.map(col => Math.max(24, ...col.map(v => Math.max(...lines(v).map(len))*8.2)));
+    const nl = Math.max(...t.lat.flat().map(v => lines(v).length)), lh = 17, h = nl > 1 ? 30 : 17, top = 30;
+    const cx = []; let x = 4;
+    colW.forEach((w, k) => { cx.push(x + w/2); x += w + 44; });
+    const W = Math.max(x - 44 + 4, 8.5*len(t.label) + 10);
+    const yOf = (k, i) => top + h*(2*i + (L-1-k)) + (nl-1)*lh/2;
+    const H = top + h*2*(L-1) + nl*lh + (t.times ? 26 : 6);
+    /* t.on (23 Oct 2026, Anh): the nodes the question works at, as "k,i". The rest of the tree is drawn
+       in grey, with a dot for a node that carries no figure, so students see where in the tree they are. */
+    const on = t.on ? new Set(t.on) : null, isOn = (k, i) => !on || on.has(k + "," + i);
+    const half = (k, i) => lines(t.lat[k][i]).join("") ? colW[k]/2 + 4 : 6;
+    let g = `<text class="tl" x="${W/2}" y="14" text-anchor="middle">${txt(t.label)}</text>`;
+    t.lat.forEach((col, k) => col.forEach((v, i) => {
+      const y = yOf(k, i), ls = lines(v);
+      if (ls.join("")) ls.forEach((s, j) => g += `<text x="${cx[k]}" y="${y + 5 + (j - (ls.length-1)/2)*lh}" text-anchor="middle">${s}</text>`);
+      else g += `<circle cx="${cx[k]}" cy="${y}" r="3.2"${isOn(k, i) ? "" : ` class="off"`}/>`;
+      if (k < L-1) [i, i+1].forEach(c => {
+        const y2 = yOf(k+1, c);
+        g += `<line x1="${cx[k] + half(k, i)}" y1="${y}" x2="${cx[k+1] - half(k+1, c)}" y2="${y2}" stroke-width="1.6"${isOn(k, i) && isOn(k+1, c) ? "" : ` class="off"`}/>`;
+      });
+    }));
+    if (t.times) t.times.forEach((s, k) => g += `<text class="tp" x="${cx[k]}" y="${H - 6}" text-anchor="middle">${txt(s)}</text>`);
+    return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${txt(t.label)}: ${t.lat.map(c => c.map(v => lines(v).join(" ")).join(" / ")).join("; then ")}">${g}</svg>`;
+  };
+  return fig.map(t => {
+    if (t.lat) return latSVG(t);
+    const n = t.outs.length, gap = n > 2 ? 30 : 46, top = 34;
+    const x1 = Math.max(40, 12 + 8.5*len(t.now)), x2 = x1 + 56;
+    const wide = Math.max(...t.outs.map((v, i) => 8.4*len(v) + (t.probs ? 6.6*(len(t.probs[i]) + 2) + 6 : 0)));
+    const W = Math.max(x2 + 10 + wide, 8.5*len(t.label) + 10), H = top + gap*(n-1) + 14, mid = top + gap*(n-1)/2;
+    let g = `<text class="tl" x="${(x1 + x2)/2}" y="14" text-anchor="middle">${txt(t.label)}</text>`;
+    g += `<text x="${x1-8}" y="${mid+5}" text-anchor="end">${txt(t.now)}</text>`;
+    t.outs.forEach((v, i) => {
+      const y = top + gap*i, dx = x2-x1, dy = y-mid, L = Math.hypot(dx, dy), ux = dx/L, uy = dy/L;
+      const ex = x2 - 2*ux, ey = y - 2*uy, bx = ex - 9*ux, by = ey - 9*uy;
+      g += `<line x1="${x1}" y1="${mid}" x2="${bx}" y2="${by}" stroke-width="1.8"/>`;
+      g += `<polygon points="${ex},${ey} ${bx-4*uy},${by+4*ux} ${bx+4*uy},${by-4*ux}" stroke-width="0"/>`;
+      g += `<text x="${x2+6}" y="${y+5}">${txt(v)}${t.probs ? `<tspan class="tp" dx="6">(${txt(t.probs[i])})</tspan>` : ""}</text>`;
+    });
+    return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${txt(t.label)}: ${txt(t.now) || "today"}, then ${t.outs.map(txt).join(" or ")}">${g}</svg>`;
+  }).join("");
+}
+
+function buildTopics(){
+  const box = $("topics");
+  TOPICS.forEach(t=>{
+    const b = document.createElement("button");
+    b.className = "chip"; b.textContent = t.label;
+    b.setAttribute("aria-pressed", String(t.key===active));
+    b.onclick = ()=>{
+      active = t.key;
+      [...box.children].forEach(c=>c.setAttribute("aria-pressed","false"));
+      b.setAttribute("aria-pressed","true");
+      seqIdx = 0;                 // a new topic restarts the sequence
+      newQuestion();
+    };
+    box.appendChild(b);
+  });
+  /* the Starred chip: practise only the questions starred on this page */
+  const s = document.createElement("button");
+  s.className = "chip"; s.id = "chipStar";
+  s.setAttribute("aria-pressed", "false");
+  s.onclick = ()=>{
+    active = "starred";
+    [...box.children].forEach(c=>c.setAttribute("aria-pressed","false"));
+    s.setAttribute("aria-pressed","true");
+    seqIdx = 0;
+    newQuestion();
+  };
+  box.appendChild(s);
+  updateStarChip();
+}
+
+const ALL_TEMPLATES = TEMPLATES.concat(CHOICE_TEMPLATES);
+
+/* A template's primary topic is `topic`; it may also list secondary topics in
+   `also`, so one item can appear under several chips. */
+function inTopic(t, key){
+  return t.topic === key || (Array.isArray(t.also) && t.also.includes(key));
+}
+
+/* ---- progress: distinct templates solved without opening the solution ---- */
+const PROG_KEY = "practice-progress:" + document.title;
+let mastered = new Set();
+try { mastered = new Set(JSON.parse(localStorage.getItem(PROG_KEY) || "[]")); }
+catch (e) { mastered = new Set(); }
+
+function saveProgress(){
+  try { localStorage.setItem(PROG_KEY, JSON.stringify([...mastered])); } catch (e) {}
+}
+function markMastered(id){
+  if (!id || mastered.has(id)) return;
+  mastered.add(id);
+  saveProgress();
+}
+
+/* ---- starred questions: kept per template, so a starred question comes back with new
+   numbers. Starred automatically on a wrong answer or on opening the solution before
+   solving; the student can star or unstar any question by hand. ---- */
+const STAR_KEY = "practice-starred:" + document.title;
+let starred = new Set();
+try { starred = new Set(JSON.parse(localStorage.getItem(STAR_KEY) || "[]")); }
+catch (e) { starred = new Set(); }
+starred = new Set([...starred].filter(id => ALL_TEMPLATES.some(t => t.id === id)));
+
+function saveStars(){
+  try { localStorage.setItem(STAR_KEY, JSON.stringify([...starred])); } catch (e) {}
+}
+function updateStarChip(){
+  const c = document.getElementById("chipStar");   // made by buildTopics, not in the markup
+  if (c) c.textContent = "★ Starred (" + starred.size + ")";
+}
+function showStar(){
+  const on = !!(current && starred.has(current.id));
+  $("star").hidden = !current;
+  $("star").setAttribute("aria-pressed", String(on));
+  $("star").textContent = on ? "★ Starred" : "☆ Star";
+}
+function setStar(id, on){
+  if (!id) return;
+  if (on) starred.add(id); else starred.delete(id);
+  saveStars(); updateStarChip(); showStar();
+}
+function autoStar(){ if (current && !starred.has(current.id)) setStar(current.id, true); }
+
+function poolFor(key){
+  if (key === "all") return ALL_TEMPLATES;
+  if (key === "starred") return ALL_TEMPLATES.filter(t => starred.has(t.id));
+  return ALL_TEMPLATES.filter(t => inTopic(t, key));
+}
+
+/* Templates are drawn WITHOUT immediate repeats. Sampling with replacement
+   looks fine on the full bank, but a topic holding only three or four
+   templates repeats roughly one press in three, which reads as the button
+   being broken. Hold the most recent half of the pool out of the draw. */
+let recentIds = [];
+/* Questions seen this session, so the arrow keys can step back and forth through them. */
+let history = [], histIdx = -1;
+let navKey = false;      // true while an arrow key is doing the rendering
+let order = "shuffle";   // "shuffle" | "seq"
+let seqIdx = 0;
+
+function newQuestion(replay){
+  let q;
+  if (replay){ q = replay.q; }
+  else {
+  const pool = poolFor(active);
+  if (!pool.length){
+    current = null;
+    $("qmeta").textContent = "Starred";
+    $("qtext").innerHTML = "No starred questions yet. A question is starred when you answer it " +
+      "wrongly or open its solution before solving it, and you can star any question yourself with " +
+      "<b>☆ Star</b>. Pick another chip to practise.";
+    $("qask").innerHTML = "";
+    $("opts").hidden = true; $("opts").innerHTML = "";
+    $("ans").hidden = true; $("check").hidden = true; $("next").hidden = true;
+    $("fb").innerHTML = ""; $("soldetails").hidden = true; $("seqPos").textContent = "";
+    showStar();
+    return;
+  }
+  let tpl;
+  if (order === "seq"){
+    /* walk the bank in order, wrapping at the end */
+    if (seqIdx >= pool.length) seqIdx = 0;
+    tpl = pool[seqIdx];
+    seqIdx = (seqIdx + 1) % pool.length;
+    $("seqPos").textContent = `${seqIdx === 0 ? pool.length : seqIdx} of ${pool.length}`;
+  } else {
+    const hold = Math.max(1, Math.floor(pool.length / 2));
+    let choices = pool.filter(t => !recentIds.slice(0, hold).includes(t.id));
+    if (!choices.length) choices = pool;        // pool of one, or all held out
+    tpl = pick(choices);
+    recentIds.unshift(tpl.id);
+    if (recentIds.length > 40) recentIds.length = 40;
+    $("seqPos").textContent = "";
+  }
+  q = tpl.gen();
+  q.name = tpl.name;
+  q.id   = tpl.id;
+  q.seqPos = $("seqPos").textContent;   // carried so stepping back shows its own position
+  if (q.mode !== "choice") q.distractors = usable(q.correct, q.cands, q.sep);
+  }
+  current = q;
+  if (replay){
+    tries = replay.tries; peeked = replay.peeked; solved = replay.solved; tallied = replay.tallied;
+  } else {
+    tries = 0; peeked = false; solved = false; tallied = false;
+    history = history.slice(0, histIdx + 1);           // a new draw discards anything ahead
+    history.push({q, tries:0, peeked:false, solved:false, tallied:false, fb:"", ans:""});
+    if (history.length > 50){ history.shift(); }
+    histIdx = history.length - 1;
+  }
+
+  const isChoice = q.mode === "choice";
+  $("qmeta").textContent = q.name;
+  $("qtext").innerHTML   = q.text;
+  $("qfig").innerHTML    = q.fig ? figHTML(q.fig) : "";
+  $("qfig").hidden       = !q.fig;
+  $("qask").innerHTML    = q.ask;
+  /* Hide the input and Check individually, NOT the whole row -- the
+     "New question" button lives in that row and must stay reachable
+     on choice questions. */
+  $("ans").hidden   = isChoice;
+  $("check").hidden = isChoice;
+  $("next").hidden  = false;
+  showStar();
+  $("opts").hidden     = !isChoice;
+  const box = $("opts");
+  box.innerHTML = "";              // always clear, even when the panel is hidden
+  if (isChoice){
+    q.options.forEach((o,k)=>{
+      const btn = document.createElement("button");
+      btn.className = "opt"; btn.innerHTML = o.html;
+      btn.onclick = () => pickOption(k);
+      box.appendChild(btn);
+    });
+  }
+  $("ans").value = "";
+  $("ans").placeholder = q.unit==="money" ? "e.g. 1234.56"
+                     : q.unit==="percent" ? "e.g. 12.34  (percent)"
+                     : "e.g. 18";
+  $("ans").disabled = false;
+  $("check").disabled = false;
+  $("fb").innerHTML = "";
+  $("steps").innerHTML = q.steps.map(s=>`<div>${s}</div>`).join("");
+  const d = $("soldetails"); d.hidden = false; d.open = false;
+  if (replay){
+    /* Put the question back exactly as it was left --- the feedback, what was typed, and
+       whether it had already been answered. The tallied/solved flags come back with it,
+       so revisiting a question never re-counts an attempt or re-awards mastery. */
+    $("fb").innerHTML = replay.fb || "";
+    $("ans").value    = replay.ans || "";
+    $("seqPos").textContent = q.seqPos || "";
+    if (isChoice && q.wrong){
+      [...$("opts").children].forEach((b,j)=>{
+        if (q.wrong.indexOf(j) >= 0){ b.classList.add("wrong"); b.disabled = true; }
+      });
+    }
+    if (solved || q.done){
+      if (isChoice){
+        [...$("opts").children].forEach((b,j)=>{ b.disabled = true;
+          if (q.options[j].correct) b.classList.add("right"); });
+      } else { $("ans").disabled = true; $("check").disabled = true; }
+    }
+    d.open = peeked || solved;
+  }
+  /* Arriving by arrow key must not park the cursor in the answer box: a restored answer
+     sitting there would swallow the next arrow press and strand the student. */
+  if (navKey) $("ans").blur();
+  else if (!isChoice && !$("ans").disabled) $("ans").focus();
+}
+
+function parseInput(raw){
+  const cleaned = raw.replace(/[$,%\s,]/g,"");
+  if (cleaned === "" ) return NaN;
+  return Number(cleaned);
+}
+
+function say(kind, title, body){
+  $("fb").innerHTML = `<div class="fb ${kind}"><strong>${title}</strong>${body}</div>`;
+}
+
+function pickOption(k){
+  const q = current;
+  if (q.done) return;
+  const o    = q.options[k];
+  const btns = [...$("opts").children];
+
+  tries++;
+  if (!tallied){ tallied = true; stats.att++; }
+
+  if (o.correct){
+    q.done = true; solved = true;
+    btns.forEach((b2,j)=>{ b2.disabled = true; if (q.options[j].correct) b2.classList.add("right"); });
+    if (peeked){
+      stats.streak = 0;
+      say("ok","Correct — but you read the solution first.",
+          "It still counts as attempted, just not toward first-try accuracy or your streak. " + o.msg);
+    } else {
+      stats.streak++;
+      if (tries === 1) stats.first++;
+      markMastered(q.id);
+      say("ok", tries===1 ? "Correct — first try." : "Correct.", o.msg);
+    }
+    $("soldetails").open = true;
+  } else {
+    stats.streak = 0;
+    btns[k].classList.add("wrong");
+    btns[k].disabled = true;
+    (q.wrong || (q.wrong = [])).push(k);   // remembered so a revisit keeps it eliminated
+    autoStar();
+    say("no","Not that one.", o.msg);
+  }
+  render();
+}
+
+function check(){
+  const raw = $("ans").value;
+  const parsed = parseInput(raw);
+  if (!Number.isFinite(parsed)){
+    say("hint","Enter a number","Type your answer as a number — you can include $ , or % and it will be ignored.");
+    return;
+  }
+  const q = current;
+  const val = q.unit==="percent" ? parsed/100 : parsed;
+  const TOL = q.tol || REL_MATCH;
+
+  /* Unit slips are formatting mistakes, not wrong answers, so they cost
+     neither an attempt nor first-try credit. Guarded so a genuinely
+     correct entry can never be mistaken for one. */
+  if (!near(val, q.correct, TOL)){
+    if (q.unit==="percent" && near(parsed, q.correct, TOL)){
+      say("hint","Right number, wrong units.",
+          `You entered <code>${raw}</code> as a decimal. This box wants a percent — enter <code>${(q.correct*100).toFixed(4).replace(/\.?0+$/,"")}</code> instead.`);
+      return;
+    }
+    if (near(val*100, q.correct, TOL) || near(val/100, q.correct, TOL)){
+      say("hint","Check your units.","Your figure is off by a factor of 100. Re-read what the box is asking for.");
+      return;
+    }
+  }
+
+  tries++;
+  if (!tallied){ tallied = true; stats.att++; }   // count each question once, right or wrong
+
+  if (near(val, q.correct, TOL)){
+    solved = true;
+    if (peeked){
+      stats.streak = 0;
+      say("ok","Correct — but you read the solution first.",
+          "That is a perfectly good way to learn, and it still counts as attempted. It does " +
+          "not count toward first-try accuracy or your streak, so those numbers stay honest. " +
+          "Try the next one before opening the solution.");
+    } else {
+      stats.streak++;
+      if (tries === 1) stats.first++;
+      markMastered(q.id);
+      say("ok","Correct.", tries===1 ? "First try — well done." : "Got there.");
+    }
+    $("check").disabled = true; $("ans").disabled = true;
+    $("soldetails").open = true;
+    render(); return;
+  }
+
+  stats.streak = 0;
+  autoStar();
+  const hit = q.distractors.find(d => near(val, d.val, TOL));
+  say("no", hit ? "Not quite — and I can see why." : "Not quite.",
+      hit ? hit.msg
+          : "That does not match any of the usual slips, so it may be an arithmetic error. Try again, or open the worked solution below.");
+  render();
+}
+
+function render(){
+  $("sAtt").textContent    = stats.att;
+  $("sFirst").textContent  = stats.first;
+  $("sAcc").textContent    = stats.att ? Math.round(stats.first/stats.att*100)+"%" : "—";
+  $("sStreak").textContent = stats.streak;
+  $("sPeek").textContent   = stats.peek;
+  const total = ALL_TEMPLATES.length;
+  $("pTotal").textContent  = total;
+  $("pDone").textContent   = mastered.size;
+  $("progfill").style.width = (total ? 100*mastered.size/total : 0).toFixed(1) + "%";
+}
+
+$("check").onclick = () => { if (current) check(); };
+$("star").onclick  = () => { if (current) setStar(current.id, !starred.has(current.id)); };
+$("next").onclick  = () => newQuestion();   // arrow fn: never pass the click Event as `replay`
+
+/* ---- arrow keys: right for the next question, left for the previous one -------------
+   Ignored while the answer box is being typed in, where the arrows move the caret, and
+   ignored with a modifier held so the browser's own shortcuts still work.            */
+function snapshotQuestion(){
+  const h = history[histIdx];
+  if (!h) return;
+  h.tries = tries; h.peeked = peeked; h.solved = solved; h.tallied = tallied;
+  h.fb = $("fb").innerHTML; h.ans = $("ans").value;
+}
+function goBack(){
+  if (histIdx <= 0) return;
+  snapshotQuestion(); histIdx--;
+  navKey = true; newQuestion(history[histIdx]); navKey = false;
+}
+function goForward(){
+  snapshotQuestion();
+  navKey = true;
+  if (histIdx < history.length - 1){ histIdx++; newQuestion(history[histIdx]); }
+  else newQuestion();
+  navKey = false;
+}
+document.addEventListener("keydown", e => {
+  if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+  if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
+  const t = e.target;
+  if (t && (t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+  /* Inside the answer box the arrows belong to the caret --- but only while it still has
+     somewhere to go. Once it sits at the end you are pressing toward, the press is free,
+     so a half-typed answer never traps a student in the field. */
+  if (t && t.tagName === "INPUT" && !t.disabled){
+    const at = t.selectionStart, to = t.selectionEnd, n = String(t.value).length;
+    if (at === null || at !== to) return;                       // a selection: leave it alone
+    if (e.key === "ArrowRight" ? at < n : at > 0) return;
+  }
+  e.preventDefault();
+  if (e.key === "ArrowRight") goForward(); else goBack();
+});
+$("ans").addEventListener("keydown", e=>{ if(e.key==="Enter" && !$("check").disabled) check(); });
+$("soldetails").addEventListener("toggle", ()=>{
+  if ($("soldetails").open && !solved && !peeked){
+    peeked = true;
+    stats.peek++;
+    autoStar();
+    if (!tallied){ tallied = true; stats.att++; }  // opening it counts as engaging with the question
+    render();
+  }
+});
+
+function setOrder(o){
+  order = o; seqIdx = 0;
+  $("mShuffle").setAttribute("aria-pressed", String(o === "shuffle"));
+  $("mSeq").setAttribute("aria-pressed",     String(o === "seq"));
+  newQuestion();
+}
+$("mShuffle").onclick = () => setOrder("shuffle");
+$("mSeq").onclick     = () => setOrder("seq");
+
+$("pReset").onclick = () => {
+  if (!mastered.size) return;
+  mastered.clear(); saveProgress(); render();
+};
+
+buildTopics();
+newQuestion();
+render();
+</script>
+</body>
+</html>
