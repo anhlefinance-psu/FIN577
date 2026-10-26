@@ -44,6 +44,15 @@
   .qmeta{font-size:.75rem; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin-bottom:10px}
   .qtext{font-size:1.05rem; margin-bottom:6px}
   .qtext b{font-variant-numeric:tabular-nums}
+  .qfig{display:flex; flex-wrap:wrap; gap:6px 26px; margin:10px 0 2px}
+  .qfig svg{max-width:100%; height:auto; overflow:visible}
+  .qfig text{fill:var(--fg); font-family:inherit; font-variant-numeric:tabular-nums}
+  .qfig .tl{font-weight:600}
+  .qfig .tp{fill:var(--muted); font-size:13px}
+  .qfig line, .qfig polygon{stroke:var(--accent); fill:var(--accent)}
+  .qfig circle{fill:var(--accent)}
+  .qfig line.off{stroke:var(--muted); opacity:.35}
+  .qfig circle.off{fill:var(--muted); opacity:.45}
   .ask{margin-top:14px; font-weight:600}
   .row{display:flex; gap:9px; margin-top:14px; flex-wrap:wrap}
   input[type=text]{
@@ -68,6 +77,13 @@
   .steps{margin-top:11px; font-size:.92rem}
   .steps div{padding:5px 0; border-bottom:1px dashed var(--line)}
   .steps div:last-child{border-bottom:none; font-weight:600}
+  .steps table.eqs{border-collapse:collapse; margin:2px 0}
+  .steps table.eqs td{padding:0; vertical-align:top}
+  .steps table.eqs td:first-child{text-align:right; padding-right:.3em}
+  .steps table.cf{border-collapse:collapse; margin:6px 0}
+  .steps table.cf td,.steps table.cf th{padding:2px 12px 2px 0; text-align:center}
+  .steps table.cf td:first-child,.steps table.cf th:first-child{text-align:left}
+  .steps table.cf th{border-bottom:1px solid var(--line)}
   code{
     font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.88em;
     background:var(--bg); padding:1px 5px; border-radius:4px; border:1px solid var(--line);
@@ -136,6 +152,7 @@
             title="Star this question to practise it again under the Starred chip">☆ Star</button>
   </div>
   <div class="qtext" id="qtext">Loading…</div>
+  <div class="qfig" id="qfig" hidden></div>
   <div class="ask" id="qask"></div>
   <div class="opts" id="opts" hidden></div>
   <div class="row" id="inputrow">
@@ -584,7 +601,9 @@ const TEMPLATES = [{ id:"s1", topic:"spread", name:"Spread when nothing is recov
       unit:"percent",
       text:`Two firms each have a single debt issue maturing in one year.${row(J)}${row(K)}
             <br>The asset returns are compounded continuously.`,
-      ask:"Which firm is more likely to default over the year? Give that firm's default probability.",
+      // Anh, 25 Oct 2026: the old ask ("Which firm ...? Give that firm's ...") asked for two things
+      // and took one answer. The "which firm" is still tested: the other firm's P is a distractor.
+      ask:"What is the one-year default probability of the firm that is more likely to default?",
       correct,
       cands:[
         {val:Math.min(J.P,K.P), msg:`That is Firm ${safer.n}'s default probability, the lower of the two. Firm ${safer.n} does have ${wins.join(" and ")}, but Firm ${worse.n} wins on what is left &mdash; and the model weighs leverage, volatility and growth at once, which is exactly why we stopped ranking firms by eye.`},
@@ -650,7 +669,8 @@ const TEMPLATES = [{ id:"s1", topic:"spread", name:"Spread when nothing is recov
             <br>The risk-free rate is <b>${pctS(rf,1)} p.a.</b>; the asset returns and the risk-free
             rate are all compounded continuously. The loss given default is <b>${pctS(L,0)}</b> for
             both firms.`,
-      ask:"Which firm must pay the wider credit spread, and approximately what is that spread?",
+      // Anh, 25 Oct 2026: one question, not two (see cmp1); the tighter firm's spread is a distractor
+      ask:"Approximately what credit spread must the firm with the wider spread pay?",
       correct,
       cands:[
         {val:Math.min(J.Q,K.Q)*L, msg:`That is Firm ${tighter.n}'s spread, the tighter of the two. Check the two inputs again: what separates them is leverage and volatility only, because r has replaced &mu; in both.`},
@@ -1159,22 +1179,26 @@ const TEMPLATES = [{ id:"s1", topic:"spread", name:"Spread when nothing is recov
       noRec=pA-pB;                                     // priced both as if nothing came back
       swapRec=pA*recA-pB*recB;                         // recovery where the loss given default goes
     } while (correct < .003
-             || [correct,flip,noRec,swapRec].some((a,i,z) =>
+             || [correct,flip,noRec,swapRec,sA].some((a,i,z) =>
                   z.some((b,j) => j>i && Math.abs(a-b) < .02*Math.max(Math.abs(a),Math.abs(b)))));
     return {
       unit:"percent",
       text:`Two pools of one-year loans, each large enough for the law of large numbers to do its
             work, each made up of \$1 loans, and in each of them the borrowers default independently
             of one another.
-            <br>&bull; <b>Pool A</b>: default probability <b>${pctS(pA,2)}</b> over the year, and the
-            lender recovers <b>${pctS(recA,0)}</b> of a defaulted loan.
-            <br>&bull; <b>Pool B</b>: default probability <b>${pctS(pB,2)}</b> over the year, and the
-            lender recovers <b>${pctS(recB,0)}</b> of a defaulted loan.
+            <br>&bull; <b>Pool A</b>: each loan has a one-year default probability of <b>${pctS(pA,2)}</b>,
+            and the lender recovers <b>${pctS(recA,0)}</b> of a defaulted loan.
+            <br>&bull; <b>Pool B</b>: each loan has a one-year default probability of <b>${pctS(pB,2)}</b>,
+            and the lender recovers <b>${pctS(recB,0)}</b> of a defaulted loan.
             <br>Spreads are quoted per year, compounded annually.`,
-      ask:"Which pool has to pay the higher credit spread, and approximately how much more?",
+      // Anh, 25 Oct 2026: "which pool ... how much more" had signed answers that named no pool.
+      // The ask now fixes the direction, A minus B, so the sign carries the "which pool".
+      ask:"Approximately how much higher is Pool A's credit spread than Pool B's? (A negative answer means Pool A's spread is lower.)",
       correct,
       cands:[
         {val:flip, msg:`Sign reversed, and it is the reflex this question is about. Pool B does default ${(pB/pA).toFixed(2)} times as often. But it hands back ${pctS(recB,0)} of a defaulted loan against Pool A's ${pctS(recA,0)}, and that difference is the bigger one.`},
+        // Anh, 25 Oct 2026: with only negative slips, the key was the one positive option. This one is positive.
+        {val:sA, msg:`That is Pool A's spread on its own, ${pctS(pA,2)} &times; ${LA.toFixed(2)}. The question asks how much higher it is than Pool B's, so subtract Pool B's ${pctS(sB,4)}.`},
         {val:noRec, msg:`You priced both pools as though nothing were recovered, s &asymp; p. Recovery is exactly what separates these two, so it cannot be left out.`},
         {val:swapRec, msg:`You used the <em>recovery</em> rate where the loss given default belongs. What a lender has to be paid for is the part it does <em>not</em> get back, ${pctS(LA,0)} in Pool A and ${pctS(LB,0)} in Pool B.`}
       ],
@@ -1265,7 +1289,8 @@ const TEMPLATES = [{ id:"s1", topic:"spread", name:"Spread when nothing is recov
             <b>${pctS(mu,0)} p.a.</b>, compounded continuously, and asset volatility of
             <b>${pctS(sig,0)} p.a.</b> It is deciding how much to borrow on a single debt issue
             maturing in <b>${T} year${T>1?"s":""}</b>.`,
-      ask:"What face value of debt would make its probability of default at that maturity exactly 50%? Answer in $ million.",
+      // hint added 26 Oct 2026 (Anh, from Lan's dry run of Quiz 3): students may not know N(0) = 0.5
+      ask:"What face value of debt would make its probability of default at that maturity exactly 50%? (Hint: N(0) = 0.5.) Answer in $ million.",
       correct,
       cands:[
         {val:V*Math.exp(mu*T), msg:`You used &mu; as the drift of log assets. It is &mu; &minus; &sigma;&sup2;/2. The gap is the whole of the variance term: at ${pctS(sig,0)} volatility that is ${pctS(sig*sig/2,2)} a year, and over ${T} year${T>1?"s":""} it is enough to move the answer from \$${correct.toFixed(2)} million to \$${(V*Math.exp(mu*T)).toFixed(2)} million.`},
@@ -2016,9 +2041,9 @@ const CHOICE_TEMPLATES = [{ id:"k1", topic:"concept", also:["spread"], name:"Why
        msg:`${N} &times; ${pctS(p,2)} = ${(N*p).toFixed(2)} of a loan is exactly the expected number of defaults, and an expectation does not have to be a number of defaults you could actually see. The most likely single outcome is indeed no defaults at all, with probability ${pctS(none,2)}, but that is the mode, not the mean.`}
     ]);
     return {mode:"choice",
-      text:`The note's bank writes <b>100,000</b> student loans of \$1 each to borrowers who default
-            independently with probability <b>${pctS(p,2)}</b> over the year and return nothing when
-            they do, and it is <b>pretty sure</b> it will lose ${pctS(p,2)} of the money it lent. A
+      text:`The note's bank writes <b>100,000</b> student loans of \$1 each. Each borrower has a one-year
+            default probability of <b>${pctS(p,2)}</b>, independently of the others, and returns nothing
+            on default. The bank is <b>pretty sure</b> it will lose ${pctS(p,2)} of the money it lent. A
             second lender writes just <b>${N}</b> loans of \$1 each on exactly the same terms: the same
             default probability, the same independence, nothing recovered.`,
       ask:"What is different about the small pool?",
@@ -2360,6 +2385,58 @@ const stats = {att:0, first:0, streak:0, peek:0};
 
 const $ = id => document.getElementById(id);
 
+/* One-period trees for templates that return q.fig = [{label, now, outs:[...], probs:[...]?}, ...]
+   (added 22 Oct 2026 for Note 13, at Anh's request). Values come from the same draw as the text. */
+function figHTML(fig){
+  const txt = s => String(s).replace(/<[^>]+>/g, "");
+  const len = s => txt(s).replace(/&[a-z]+;/g, "x").length;
+  /* A multi-period recombining tree (Notes 16 and 19, 22 Oct 2026): t.lat[k] lists the nodes at
+     date k from the top; a node is a string or an array of lines; t.times labels the dates.      */
+  const latSVG = t => {
+    const L = t.lat.length, lines = v => (Array.isArray(v) ? v : [v]).map(txt);
+    const colW = t.lat.map(col => Math.max(24, ...col.map(v => Math.max(...lines(v).map(len))*8.2)));
+    const nl = Math.max(...t.lat.flat().map(v => lines(v).length)), lh = 17, h = nl > 1 ? 30 : 17, top = 30;
+    const cx = []; let x = 4;
+    colW.forEach((w, k) => { cx.push(x + w/2); x += w + 44; });
+    const W = Math.max(x - 44 + 4, 8.5*len(t.label) + 10);
+    const yOf = (k, i) => top + h*(2*i + (L-1-k)) + (nl-1)*lh/2;
+    const H = top + h*2*(L-1) + nl*lh + (t.times ? 26 : 6);
+    /* t.on (23 Oct 2026, Anh): the nodes the question works at, as "k,i". The rest of the tree is drawn
+       in grey, with a dot for a node that carries no figure, so students see where in the tree they are. */
+    const on = t.on ? new Set(t.on) : null, isOn = (k, i) => !on || on.has(k + "," + i);
+    const half = (k, i) => lines(t.lat[k][i]).join("") ? colW[k]/2 + 4 : 6;
+    let g = `<text class="tl" x="${W/2}" y="14" text-anchor="middle">${txt(t.label)}</text>`;
+    t.lat.forEach((col, k) => col.forEach((v, i) => {
+      const y = yOf(k, i), ls = lines(v);
+      if (ls.join("")) ls.forEach((s, j) => g += `<text x="${cx[k]}" y="${y + 5 + (j - (ls.length-1)/2)*lh}" text-anchor="middle">${s}</text>`);
+      else g += `<circle cx="${cx[k]}" cy="${y}" r="3.2"${isOn(k, i) ? "" : ` class="off"`}/>`;
+      if (k < L-1) [i, i+1].forEach(c => {
+        const y2 = yOf(k+1, c);
+        g += `<line x1="${cx[k] + half(k, i)}" y1="${y}" x2="${cx[k+1] - half(k+1, c)}" y2="${y2}" stroke-width="1.6"${isOn(k, i) && isOn(k+1, c) ? "" : ` class="off"`}/>`;
+      });
+    }));
+    if (t.times) t.times.forEach((s, k) => g += `<text class="tp" x="${cx[k]}" y="${H - 6}" text-anchor="middle">${txt(s)}</text>`);
+    return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${txt(t.label)}: ${t.lat.map(c => c.map(v => lines(v).join(" ")).join(" / ")).join("; then ")}">${g}</svg>`;
+  };
+  return fig.map(t => {
+    if (t.lat) return latSVG(t);
+    const n = t.outs.length, gap = n > 2 ? 30 : 46, top = 34;
+    const x1 = Math.max(40, 12 + 8.5*len(t.now)), x2 = x1 + 56;
+    const wide = Math.max(...t.outs.map((v, i) => 8.4*len(v) + (t.probs ? 6.6*(len(t.probs[i]) + 2) + 6 : 0)));
+    const W = Math.max(x2 + 10 + wide, 8.5*len(t.label) + 10), H = top + gap*(n-1) + 14, mid = top + gap*(n-1)/2;
+    let g = `<text class="tl" x="${(x1 + x2)/2}" y="14" text-anchor="middle">${txt(t.label)}</text>`;
+    g += `<text x="${x1-8}" y="${mid+5}" text-anchor="end">${txt(t.now)}</text>`;
+    t.outs.forEach((v, i) => {
+      const y = top + gap*i, dx = x2-x1, dy = y-mid, L = Math.hypot(dx, dy), ux = dx/L, uy = dy/L;
+      const ex = x2 - 2*ux, ey = y - 2*uy, bx = ex - 9*ux, by = ey - 9*uy;
+      g += `<line x1="${x1}" y1="${mid}" x2="${bx}" y2="${by}" stroke-width="1.8"/>`;
+      g += `<polygon points="${ex},${ey} ${bx-4*uy},${by+4*ux} ${bx+4*uy},${by-4*ux}" stroke-width="0"/>`;
+      g += `<text x="${x2+6}" y="${y+5}">${txt(v)}${t.probs ? `<tspan class="tp" dx="6">(${txt(t.probs[i])})</tspan>` : ""}</text>`;
+    });
+    return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${txt(t.label)}: ${txt(t.now) || "today"}, then ${t.outs.map(txt).join(" or ")}">${g}</svg>`;
+  }).join("");
+}
+
 function buildTopics(){
   const box = $("topics");
   TOPICS.forEach(t=>{
@@ -2513,6 +2590,8 @@ function newQuestion(replay){
   const isChoice = q.mode === "choice";
   $("qmeta").textContent = q.name;
   $("qtext").innerHTML   = q.text;
+  $("qfig").innerHTML    = q.fig ? figHTML(q.fig) : "";
+  $("qfig").hidden       = !q.fig;
   $("qask").innerHTML    = q.ask;
   /* Hide the input and Check individually, NOT the whole row -- the
      "New question" button lives in that row and must stay reachable
