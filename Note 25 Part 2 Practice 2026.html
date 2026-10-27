@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Note 25 — Options Basics, Part 2 (puts): practice</title>
+<style>
+  :root{
+    --bg:#ffffff; --fg:#1a1a1a; --muted:#5f6672; --line:#e2e5ea;
+    --card:#f7f8fa; --accent:#00205b; --accent-fg:#ffffff;
+    --ok-bg:#e8f5ec; --ok-line:#2e7d47; --ok-fg:#17532c;
+    --no-bg:#fdeceb; --no-line:#c0392b; --no-fg:#8e2b20;
+    --hint-bg:#fff8e6; --hint-line:#b8860b; --hint-fg:#6b4e00;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#14161a; --fg:#e8eaed; --muted:#9aa3af; --line:#2b2f36;
+      --card:#1b1e24; --accent:#7f9cd4; --accent-fg:#0d1015;
+      --ok-bg:#132a1c; --ok-line:#4caf70; --ok-fg:#9fdcb4;
+      --no-bg:#2c1614; --no-line:#e06c5d; --no-fg:#f0a99f;
+      --hint-bg:#2a2313; --hint-line:#d4a017; --hint-fg:#e5c976;
+    }
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:0; background:var(--bg); color:var(--fg);
+    font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  .wrap{max-width:760px; margin:0 auto; padding:24px 18px 64px}
+  header{border-bottom:1px solid var(--line); padding-bottom:14px; margin-bottom:20px}
+  h1{font-size:1.35rem; margin:0 0 4px}
+  .sub{color:var(--muted); font-size:.9rem}
+  .topics{display:flex; flex-wrap:wrap; gap:7px; margin:18px 0}
+  .chip{
+    border:1px solid var(--line); background:var(--card); color:var(--fg);
+    padding:6px 12px; border-radius:999px; cursor:pointer; font-size:.85rem;
+    font-family:inherit;
+  }
+  .chip[aria-pressed="true"]{background:var(--accent); color:var(--accent-fg); border-color:var(--accent)}
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:10px;
+    padding:20px; margin-bottom:16px;
+  }
+  .qmeta{font-size:.75rem; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin-bottom:10px}
+  .qtext{font-size:1.05rem; margin-bottom:6px}
+  .qtext b{font-variant-numeric:tabular-nums}
+  .qfig{display:flex; flex-wrap:wrap; gap:6px 26px; margin:10px 0 2px}
+  .qfig svg{max-width:100%; height:auto; overflow:visible}
+  .qfig text{fill:var(--fg); font-family:inherit; font-variant-numeric:tabular-nums}
+  .qfig .tl{font-weight:600}
+  .qfig .tp{fill:var(--muted); font-size:13px}
+  .qfig line, .qfig polygon{stroke:var(--accent); fill:var(--accent)}
+  .qfig circle{fill:var(--accent)}
+  .qfig line.off{stroke:var(--muted); opacity:.35}
+  .qfig circle.off{fill:var(--muted); opacity:.45}
+  .ask{margin-top:14px; font-weight:600}
+  .row{display:flex; gap:9px; margin-top:14px; flex-wrap:wrap}
+  input[type=text]{
+    flex:1 1 190px; min-width:0; padding:11px 13px; font-size:1rem; font-family:inherit;
+    border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--fg);
+  }
+  input[type=text]:focus{outline:2px solid var(--accent); outline-offset:1px}
+  button{
+    padding:11px 17px; font-size:.95rem; font-family:inherit; border-radius:8px;
+    border:1px solid var(--accent); background:var(--accent); color:var(--accent-fg);
+    cursor:pointer; font-weight:600;
+  }
+  button.ghost{background:transparent; color:var(--fg); border-color:var(--line); font-weight:500}
+  button:disabled{opacity:.45; cursor:default}
+  .fb{border-radius:8px; padding:13px 15px; margin-top:15px; border-left:4px solid; font-size:.95rem}
+  .fb.ok{background:var(--ok-bg); border-color:var(--ok-line); color:var(--ok-fg)}
+  .fb.no{background:var(--no-bg); border-color:var(--no-line); color:var(--no-fg)}
+  .fb.hint{background:var(--hint-bg); border-color:var(--hint-line); color:var(--hint-fg)}
+  .fb strong{display:block; margin-bottom:3px}
+  details{margin-top:15px; border-top:1px solid var(--line); padding-top:13px}
+  summary{cursor:pointer; font-size:.9rem; color:var(--muted); font-weight:600}
+  .steps{margin-top:11px; font-size:.92rem}
+  .steps div{padding:5px 0; border-bottom:1px dashed var(--line)}
+  .steps div:last-child{border-bottom:none; font-weight:600}
+  .steps table.eqs{border-collapse:collapse; margin:2px 0}
+  .steps table.eqs td{padding:0; vertical-align:top}
+  .steps table.eqs td:first-child{text-align:right; padding-right:.3em}
+  .steps table.cf{border-collapse:collapse; margin:6px 0}
+  .steps table.cf td,.steps table.cf th{padding:2px 12px 2px 0; text-align:center}
+  .steps table.cf td:first-child,.steps table.cf th:first-child{text-align:left}
+  .steps table.cf th{border-bottom:1px solid var(--line)}
+  code{
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.88em;
+    background:var(--bg); padding:1px 5px; border-radius:4px; border:1px solid var(--line);
+  }
+  .opts{display:flex; flex-direction:column; gap:8px; margin-top:14px}
+  .opt{
+    text-align:left; padding:11px 14px; border:1px solid var(--line); background:var(--bg);
+    color:var(--fg); border-radius:8px; cursor:pointer; font-family:inherit;
+    font-size:.95rem; font-weight:400; line-height:1.55;
+  }
+  .opt:hover:not(:disabled){border-color:var(--accent)}
+  .opt.right{background:var(--ok-bg); border-color:var(--ok-line); border-width:2px}
+  .opt.wrong{background:var(--no-bg); border-color:var(--no-line)}
+  .opt:disabled{cursor:default}
+  .opt sup{font-size:.75em}
+  .stats{display:flex; gap:22px; font-size:.86rem; color:var(--muted); margin-top:22px;
+         border-top:1px solid var(--line); padding-top:14px; flex-wrap:wrap}
+  .stats b{color:var(--fg); font-variant-numeric:tabular-nums}
+  footer{margin-top:26px; font-size:.78rem; color:var(--muted); text-align:center}
+  /* The hidden attribute's UA rule is only [hidden]{display:none}, which loses
+     to author rules like .opts{display:flex} and .row{display:flex}. Without
+     this, hiding those panels silently does nothing. */
+  .modes{display:flex; gap:8px; align-items:center; margin-top:10px;
+         font-size:.84rem; color:var(--muted); flex-wrap:wrap}
+  .modes .chip{font-size:.84rem; padding:5px 12px}
+  .prog{margin-top:18px}
+  .progtop{display:flex; justify-content:space-between; align-items:baseline;
+           font-size:.86rem; color:var(--muted); margin-bottom:6px}
+  .progtop b{color:var(--fg); font-variant-numeric:tabular-nums}
+  .progbar{height:9px; border-radius:999px; background:var(--line); overflow:hidden}
+  .progfill{height:100%; width:0%; border-radius:999px; background:var(--accent);
+            transition:width .35s ease}
+  .progreset{background:none; border:none; color:var(--muted); font-size:.8rem;
+             padding:0; cursor:pointer; text-decoration:underline; font-weight:400}
+  .progreset:hover{color:var(--fg)}
+  .qhead{display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:10px}
+  .qhead .qmeta{margin-bottom:0}
+  .star{background:transparent; color:var(--muted); border:1px solid var(--line); border-radius:999px;
+        padding:3px 11px; font-size:.8rem; font-weight:500; white-space:nowrap; flex:none}
+  .star[aria-pressed="true"]{color:var(--hint-fg); background:var(--hint-bg); border-color:var(--hint-line)}
+  .star:hover{border-color:var(--accent)}
+  [hidden]{display:none !important}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>Note 25 — Options Basics, Part 2 (puts): practice</h1>
+  <div class="sub">Part 2, the put option. Payoff = max(K − S, 0); profit = payoff − premium. One share per option. Answers are matched within 0.25%.</div>
+</header>
+
+<div class="topics" id="topics" role="group" aria-label="Choose topics"></div>
+
+<div class="modes" id="modes" role="group" aria-label="Question order">
+  <span>Order</span>
+  <button class="chip" id="mShuffle" type="button" aria-pressed="true">Shuffle</button>
+  <button class="chip" id="mSeq" type="button" aria-pressed="false">In order</button>
+  <span id="seqPos"></span>
+</div>
+
+<div class="card" id="card">
+  <div class="qhead">
+    <div class="qmeta" id="qmeta">—</div>
+    <button class="star" id="star" type="button" aria-pressed="false"
+            title="Star this question to practise it again under the Starred chip">☆ Star</button>
+  </div>
+  <div class="qtext" id="qtext">Loading…</div>
+  <div class="qfig" id="qfig" hidden></div>
+  <div class="ask" id="qask"></div>
+  <div class="opts" id="opts" hidden></div>
+  <div class="row" id="inputrow">
+    <input type="text" id="ans" autocomplete="off" inputmode="decimal"
+           placeholder="Your answer" aria-label="Your answer">
+    <button id="check">Check</button>
+    <button id="next" class="ghost">New question</button>
+  </div>
+  <div id="fb"></div>
+  <details id="soldetails" hidden>
+    <summary>Show the worked solution</summary>
+    <div class="steps" id="steps"></div>
+  </details>
+</div>
+
+<div class="prog">
+  <div class="progtop">
+    <span>Templates solved unaided <b id="pDone">0</b> of <b id="pTotal">0</b></span>
+    <button class="progreset" id="pReset" type="button">reset</button>
+  </div>
+  <div class="progbar"><div class="progfill" id="progfill"></div></div>
+</div>
+
+<div class="stats">
+  <span>Attempted <b id="sAtt">0</b></span>
+  <span>Correct first try <b id="sFirst">0</b></span>
+  <span>Accuracy <b id="sAcc">—</b></span>
+  <span>Streak <b id="sStreak">0</b></span>
+  <span>Solutions opened <b id="sPeek">0</b></span>
+</div>
+
+<footer>Numbers are randomised, so every attempt is different. Nothing you type leaves this page.<br>Use the &rarr; and &larr; arrow keys to move between questions.</footer>
+
+</div>
+
+<script>
+"use strict";
+
+/* ------------------------------------------------------------------ utils */
+const pick = a => a[Math.floor(Math.random()*a.length)];
+/* stepped range, e.g. range(0.04,0.24,0.0025) -> 81 rates instead of a list of 6 */
+const range = (lo,hi,step) => {
+  const out=[]; for(let v=lo; v<=hi+1e-9; v+=step) out.push(Number(v.toFixed(8)));
+  return out;
+};
+const ORD = n => n + (["th","st","nd","rd"][(n%100-n%10!=10)*(n%10<4)*(n%10)]||"th");
+const money = v => "$" + v.toLocaleString("en-US",{minimumFractionDigits:2, maximumFractionDigits:2});
+const pct   = (v,d=4) => (v*100).toFixed(d).replace(/\.?0+$/,"") + "%";
+const pctS  = (v,d=2) => (v*100).toFixed(d) + "%";
+const REL_SEP  = 0.01;    // distractors must sit >1% from everything else
+const REL_MATCH= 0.0025;  // student answer counts as a match within 0.25%
+
+const near = (a,b,tol) =>
+  Number.isFinite(a) && Number.isFinite(b) &&
+  Math.abs(a-b) / Math.max(Math.abs(a), Math.abs(b), 1e-12) < tol;
+
+/* Drop distractors too close to the answer (or to each other) to diagnose.
+   Templates about small effects (perpetuity timing) pass a tighter `sep`. */
+function usable(correct, cands, sep){
+  const s = sep || REL_SEP;
+  const kept = [];
+  for (const c of cands){
+    if (!Number.isFinite(c.val)) continue;
+    if (near(c.val, correct, s)) continue;
+    if (kept.some(k => near(k.val, c.val, s))) continue;
+    kept.push(c);
+  }
+  return kept;
+}
+
+/* ------------------------------------------------------------- templates */
+/* ---------------------------------------------------------------- Note 25, Part 2 ---
+   Options Basics, Part 2: The Put Option (FIN 577, Lecture 3). Payoff = max(K - S, 0); profit = payoff - p;
+   break-even = K - p. Dominance (a higher strike costs more); expected payoff over two outcomes (convexity);
+   a deep in-the-money European put on a worthless share is a zero (longer = less); protective put; intrinsic
+   value max(K - S, 0) and time value = premium - intrinsic value. One share per option (the note's
+   simplification). Built 27 Oct 2026 from the note and Anh's own practice questions, saved in
+   Notes 25/Draft/Note_25_Part2_Practice_for_templates.tex (rule 5; Anh's past MF exams use puts only in
+   combinations and binomial trees, Part 3 and later):
+     pp2  <- practice 1 (payoff and profit at three prices), one price per draw
+     be2  <- practice 1 (break-even), turned into the fall the share needs from today
+     ev2  <- Section 3.2 (Black Friday / calm and volatile Citi), with unequal probabilities as well
+     arb2 <- practice 2 (the $45 put at $3, the $50 put at $2)
+     pr1  <- practice 4 (own a share at $60, buy a $55 put for $2) and Section 4.2
+     ht1  <- practice 7 (free cancellation as a put: strike = the refundable rate)
+     iv2  <- Section 6 (premium = intrinsic value + time value)
+     dp1  <- Section 3.3 (the bankrupt Citi: one- and two-year European puts as zeros)
+   Practice 3 (volatility) is ev2 here and k-series choice items elsewhere; practices 5 and 6 are choice
+   items k14 and k16. IDs do not repeat Part 1's (n25_num.js / n25_ch.js).                               */
+const keepFar = (correct,cands,sep) => cands.filter(c=>Number.isFinite(c.val) && !near(c.val,correct,sep));
+const smoney = v => (v < 0 ? "&minus;" : "") + money(Math.abs(v));   // −$4.38, not $-4.38
+const tr = (label, now, outs, probs) => probs ? {label, now, outs, probs} : {label, now, outs};   // one tree for q.fig
+const ppay = (S,K) => Math.max(K-S,0);
+const cpay = (S,K) => Math.max(S-K,0);
+const centsTol = v => Math.max(0.0025, 0.0051/Math.abs(v));          // a small dollar key is accepted to the cent
+const centsSep = v => Math.max(REL_SEP, 0.02/Math.abs(v));
+
+const TEMPLATES = [{ id:"pp2", topic:"payoff", name:"A put's profit at expiration", gen(){
+    /* Practice 1. The share ends above the strike, between the break-even and the strike, or below the
+       break-even. The middle zone is the trap: the profit is negative, but you still exercise.          */
+    let K, p, S, zone, correct, cands, tol, sep;
+    do {
+      K=pick(range(20,80,5)); p=pick(range(1.00,6.00,0.25)); zone=pick(["out","between","below"]);
+      S = zone==="out" ? K+pick(range(1,10,1)) : zone==="between" ? K-pick(range(0.25,5.75,0.25)) : K-p-pick(range(1,15,1));
+      correct=ppay(S,K)-p;
+      tol=centsTol(correct); sep=centsSep(correct);
+      cands=keepFar(correct,[
+        {val:ppay(S,K), msg:`That is the payoff. The profit also takes off the ${money(p)} premium you paid: profit = payoff &minus; premium.`},
+        {val:K-S-p, msg:`The payoff never falls below zero. With the share above the strike you walk away: the payoff is $0.00, and you lose only the premium.`},
+        {val:p-ppay(S,K), msg:`That is the writer's profit. The writer keeps the premium and pays out the buyer's payoff; you are the buyer.`},
+        {val:cpay(S,K)-p, msg:`That is a call's profit. A put is the right to sell at the strike, so its payoff is max(K &minus; S, 0), not max(S &minus; K, 0).`},
+        {val:-p, msg:`With the share below the strike you exercise: you sell for ${money(K)} a share worth ${money(S)}. You exercise even when that payoff is less than the premium, because the premium is gone either way.`},
+        {val:0, msg:`You set a loss to zero. The premium is paid up front and is lost whatever happens, so the profit is the payoff minus ${money(p)}, which can be negative.`}
+      ],sep);
+    } while ((zone==="between" && S<=K-p) || S<=0 || Math.abs(correct)<0.25 || usable(correct,cands,sep).length<3);
+    return {
+      unit:"money", tol, sep,
+      text:`You buy a put on a share for a premium of <b>${money(p)}</b>. The put has a strike price of <b>${money(K)}</b>.
+            At expiration the share trades at <b>${money(S)}</b>.`,
+      ask:"What is your profit per share? (Two decimals; enter a negative number for a loss.)",
+      correct, cands,
+      steps:[
+        `Payoff = max(K &minus; S, 0) = max(${money(K)} &minus; ${money(S)}, 0) = ${money(ppay(S,K))}`,
+        `Profit = payoff &minus; premium = ${money(ppay(S,K))} &minus; ${money(p)} = <b>${smoney(correct)}</b>`
+      ]};
+  }},
+
+{ id:"be2", topic:"payoff", name:"How far the share must fall to break even", gen(){
+    /* Practice 1's break-even, K - p, measured against today's share price: the share must first fall to
+       the strike and then far enough below it to cover the premium.                                    */
+    let S0, K, p, correct, cands, tol, sep;
+    do {
+      S0=pick(range(20,100,1)); K=5*Math.round(S0/5)-pick([0,5,10]); p=pick(range(0.50,5.00,0.05));
+      correct=1-(K-p)/S0;
+      tol=Math.max(0.0025, 0.000051/Math.abs(correct)); sep=Math.max(REL_SEP,tol);
+      cands=keepFar(correct,[
+        {val:p/S0, msg:`That covers only the premium. The put pays nothing until the share falls to the ${money(K)} strike, so the break-even share price is K &minus; p, not today's price minus p.`},
+        {val:(S0-K)/S0, msg:`That gets the share to the strike, where the payoff is still zero. To break even, the payoff must also cover the ${money(p)} premium: break-even = K &minus; p.`},
+        {val:(S0-K+p)/(K-p), msg:`You divided by the break-even price. The fall is measured from today's share price: 1 &minus; break-even/S.`},
+        {val:1-(K+p)/S0, msg:`The premium is a cost, so the share must fall further to cover it: a put's break-even is K &minus; p, not K + p (that is a call's).`},
+        {val:p/K, msg:`That is the premium as a share of the strike. The fall is measured from today's share price, and the share must fall below the strike as well as cover the premium.`}
+      ],sep);
+    } while (K-p<0.6*S0 || correct<0.01 || usable(correct,cands,sep).length<3);
+    return {
+      unit:"percent", tol, sep,
+      text:`A share trades at <b>${money(S0)}</b>. A put on it with a strike price of <b>${money(K)}</b> costs <b>${money(p)}</b>.`,
+      ask:`By what percentage must the share price fall from today's ${money(S0)} by expiration for the buyer of the put to break even? (Two decimals.)`,
+      correct, cands,
+      steps:[
+        `The buyer breaks even when the payoff K &minus; S just covers the premium p: break-even = K &minus; p = ${money(K)} &minus; ${money(p)} = ${money(K-p)}`,
+        `Fall needed = 1 &minus; break-even/S = 1 &minus; ${money(K-p)}/${money(S0)} = <b>${pctS(correct)}</b>`
+      ]};
+  }},
+
+{ id:"ev2", topic:"value", name:"A put's expected payoff over two outcomes", gen(){
+    /* Section 3.2: expected payoff = probability-weighted average of the payoffs. The trap is the payoff at the
+       average share price, which ignores the floor at zero. Unequal probabilities as well, so the answer is
+       not always half of the bad outcome's payoff.                                                       */
+    let U, D, K, p, avg, correct, cands, tol, sep;
+    do {
+      D=pick(range(10,60,1)); U=D+pick(range(6,30,2)); K=D+Math.round(pick([0.2,0.3,0.4,0.5,0.6,0.7,0.8])*(U-D));
+      p=pick([0.3,0.4,0.5,0.6,0.7]); avg=p*U+(1-p)*D;
+      correct=p*ppay(U,K)+(1-p)*ppay(D,K);
+      tol=centsTol(correct); sep=centsSep(correct);
+      cands=keepFar(correct,[
+        {val:ppay(avg,K), msg:`That is the payoff at the expected share price, ${money(avg)}. The put's payoff is convex: the expected payoff averages the payoffs themselves, and the good outcome's payoff stops at zero.`},
+        {val:K-avg, msg:`You let the payoff go negative when the share ends at ${money(U)}. There you walk away: the payoff is max(K &minus; S, 0) = $0.00.`},
+        {val:K-D, msg:`That is the payoff if the share ends at ${money(D)}. Weight it by its probability, ${+(1-p).toFixed(1)}.`},
+        {val:p*ppay(D,K), msg:`You swapped the probabilities. The share ends at ${money(D)} with probability ${+(1-p).toFixed(1)}.`},
+        {val:0.5*ppay(D,K), msg:`You used equal probabilities. The share ends at ${money(D)} with probability ${+(1-p).toFixed(1)}.`},
+        {val:p*cpay(U,K), msg:`That is a call's expected payoff. A put pays max(K &minus; S, 0): it pays off when the share ends at ${money(D)}, not at ${money(U)}.`}
+      ],sep);
+    } while (usable(correct,cands,sep).length<3);
+    const q=+(1-p).toFixed(1);
+    return {
+      unit:"money", tol, sep,
+      text:`At the expiration of a put, the share will trade at either <b>${money(U)}</b>, with probability <b>${p}</b>, or <b>${money(D)}</b>,
+            with probability <b>${q}</b>. The put has a strike price of <b>${money(K)}</b>.`,
+      ask:"What is the put's expected payoff? (Two decimals.)",
+      correct, cands,
+      fig:[Object.assign(tr("Share at expiration", "", [money(U), money(D)], [String(p), String(q)]), {when:"at expiration"})],
+      steps:[
+        `Payoff = max(K &minus; S, 0). If the share ends at ${money(U)}: max(${money(K)} &minus; ${money(U)}, 0) = $0.00. If it ends at ${money(D)}: max(${money(K)} &minus; ${money(D)}, 0) = ${money(ppay(D,K))}`,
+        `Expected payoff = probability-weighted average of the payoffs = ${p} &times; $0.00 + ${q} &times; ${money(ppay(D,K))} = <b>${money(correct)}</b>`
+      ]};
+  }},
+
+{ id:"arb2", topic:"arb", name:"Two puts priced the wrong way round", gen(){
+    /* Practice 2: the higher-strike put dominates, so it must cost more. Here it costs less: buy it, sell the
+       lower-strike put, keep the difference, and the put you own always covers the one you sold. Not above
+       both strikes: both puts then expire worthless and the answer is the price gap (as for Part 1's arb1). */
+    let K1, K2, p1, p2, S, zone, X, A, B, correct, cands, tol, sep;
+    do {
+      K1=pick(range(30,70,5)); K2=K1+pick([5,10]); p2=pick(range(2.00,5.00,0.25)); p1=p2+pick([0.25,0.50,0.75,1.00]);
+      zone=pick(["between","below"]);
+      S = zone==="between" ? K1+pick(range(1,9,1)) : K1-pick(range(1,10,1));
+      X=p1-p2; A=ppay(S,K2); B=ppay(S,K1);
+      correct=X+A-B;
+      tol=centsTol(correct); sep=centsSep(correct);
+      cands=keepFar(correct,[
+        {val:X, msg:`That is only today's cash from the two trades. At expiration the put you own pays ${money(A)} and the put you sold costs you ${money(B)}.`},
+        {val:-correct, msg:`You made the trade the wrong way round. The ${money(K2)} put pays at least as much as the ${money(K1)} put whatever happens, yet it is cheaper: buy it and sell the ${money(K1)} put.`},
+        {val:A-B, msg:`You left out the ${money(X)} you receive today from selling the dearer put and buying the cheaper one.`},
+        {val:X+(K2-S)-(K1-S), msg:`A put's payoff never falls below zero: max(K &minus; S, 0). A put that ends out of the money pays nothing.`},
+        {val:X+cpay(S,K2)-cpay(S,K1), msg:`Those are calls' payoffs. A put pays max(K &minus; S, 0), so it pays off when the share ends below its strike.`}
+      ],sep);
+    } while ((zone==="between" && S>=K2) || usable(correct,cands,sep).length<3);
+    return {
+      unit:"money", tol, sep,
+      text:`Two puts on the same share have the same expiration date. The put with a strike price of <b>${money(K1)}</b> costs
+            <b>${money(p1)}</b>; the put with a strike price of <b>${money(K2)}</b> costs <b>${money(p2)}</b>. These prices let you
+            make a guaranteed, riskless profit: buy one of the two puts and sell the other, one put each. At expiration the share trades at <b>${money(S)}</b>.`,
+      ask:"What is this strategy's total profit per share, counting both today's trade and the payoffs at expiration? (Ignore interest. Two decimals.)",
+      correct, cands,
+      steps:[
+        `The ${money(K2)} put pays at least as much as the ${money(K1)} put whatever the share does, so it should cost more. It costs less: buy it and sell the ${money(K1)} put. Cash today = ${money(p1)} &minus; ${money(p2)} = ${money(X)}`,
+        `At expiration, the put you own pays max(${money(K2)} &minus; ${money(S)}, 0) = ${money(A)}, and the put you sold costs you max(${money(K1)} &minus; ${money(S)}, 0) = ${money(B)}`,
+        `Total profit = cash today + payoff received &minus; payoff paid = ${money(X)} + ${money(A)} &minus; ${money(B)} = <b>${money(correct)}</b>`
+      ]};
+  }},
+
+{ id:"pr1", topic:"insure", name:"A protective put's profit", gen(){
+    /* Practice 4 and Section 4.2: share + put is worth max(S, K) at expiration; profit = max(S, K) - S0 - p.
+       Below the strike the profit is the same whatever the share does: the floor. The trap there is the
+       share's own loss.                                                                                  */
+    let S0, K, p, S, zone, correct, cands, tol, sep;
+    do {
+      S0=pick(range(20,80,1)); K=5*Math.floor(S0/5)-pick([0,5]); p=pick(range(0.50,4.00,0.25));
+      zone=pick(["below","below","above"]);
+      S = zone==="below" ? K-pick(range(1,15,1)) : S0+pick(range(-4,20,1));
+      correct=Math.max(S,K)-S0-p;
+      tol=centsTol(correct); sep=centsSep(correct);
+      cands=keepFar(correct,[
+        {val:S-S0, msg:`That is the share's profit on its own. ${S<K?`The put lets you sell the share for ${money(K)}, so you never end with less than ${money(K)}, and`:`The put expires unused, but`} you paid ${money(p)} for it.`},
+        {val:Math.max(S,K)-S0, msg:`You left out the ${money(p)} you paid for the put. The insurance is paid for up front, whatever happens.`},
+        {val:S-S0-p, msg:`With the share below ${money(K)}, you use the put and sell the share for ${money(K)}: the position is worth ${money(K)}, not ${money(S)}.`},
+        {val:ppay(S,K)-p, msg:`That is the put's profit on its own. You also own the share, which you bought for ${money(S0)}.`},
+        {val:Math.max(S,K)-S0+p, msg:`The ${money(p)} premium is a cost: subtract it.`}
+      ],sep);
+    } while (S<=0 || (zone==="above" && S<=K) || Math.abs(correct)<0.25 || usable(correct,cands,sep).length<3);
+    return {
+      unit:"money", tol, sep,
+      text:`You bought a share for <b>${money(S0)}</b>. To protect it, you buy a put on it with a strike price of <b>${money(K)}</b> for <b>${money(p)}</b>.
+            At expiration the share trades at <b>${money(S)}</b>.`,
+      ask:"What is your profit per share on the share and the put together? (Two decimals; enter a negative number for a loss.)",
+      correct, cands,
+      steps:[
+        S<K ? `The share ends below ${money(K)}: you sell it for ${money(K)} through the put. The share and the put together are worth ${money(K)}`
+            : `The share ends above ${money(K)}: you let the put expire and keep the share. The share and the put together are worth ${money(S)}`,
+        `Profit = value at expiration &minus; cost of the share &minus; cost of the put = ${money(Math.max(S,K))} &minus; ${money(S0)} &minus; ${money(p)} = <b>${smoney(correct)}</b>`
+      ]};
+  }},
+
+{ id:"ht1", topic:"payoff", also:["concept"], name:"Free cancellation as a put", gen(){
+    /* Practice 7: free cancellation is the right to sell the room back to the hotel at the refundable rate R
+       (the strike); the premium is R - N over the non-refundable rate N. Rebooking at X pays R - X; profit
+       = (R - X) - (R - N). The trap is taking N as the strike. X is the price at the deadline of a room that can no
+       longer be cancelled, so it is the value of the underlying, not of another option (Anh, 27 Oct 2026). When X is between N and R you still cancel,
+       at a loss.                                                                                         */
+    let R, prem, N, X, zone, correct, cands, tol, sep;
+    do {
+      R=pick(range(150,320,10)); prem=pick(range(10,45,5)); N=R-prem; zone=pick(["below","between"]);
+      X = zone==="below" ? N-pick(range(5,60,5)) : N+pick(range(5,prem-5,5));
+      correct=(R-X)-(R-N);
+      tol=centsTol(correct); sep=centsSep(correct);
+      cands=keepFar(correct,[
+        {val:R-X, msg:`That is the payoff: you cancel, get ${money(R)} back and rebook for ${money(X)}. The profit also takes off what the right cost you, the ${money(prem)} you paid over the non-refundable rate.`},
+        {val:(N-X)-prem, msg:`The strike is ${money(R)}, not ${money(N)}: cancelling returns the full ${money(R)} you paid. The payoff is ${money(R)} &minus; ${money(X)}.`},
+        {val:-prem, msg:`The new rate, ${money(X)}, is below the ${money(R)} you can get back, so you cancel and rebook. You lose only part of the ${money(prem)} premium, or none of it.`},
+        {val:prem, msg:`That is what the free-cancellation right cost you, the premium. The profit is the payoff from cancelling, ${money(R)} &minus; ${money(X)}, minus the premium.`},
+        {val:X-N, msg:`Check the signs. Payoff = strike &minus; new price = ${money(R)} &minus; ${money(X)}; profit = payoff &minus; premium.`}
+      ],sep);
+    } while (X<=0 || (zone==="between" && X>=R) || Math.abs(correct)<1 || usable(correct,cands,sep).length<3);
+    return {
+      unit:"money", tol, sep,
+      text:`A hotel room for a home football weekend costs <b>${money(R)}</b> with free cancellation until 6 PM on the Friday before the game, or <b>${money(N)}</b>
+            non-refundable. You book the ${money(R)} room. At 6 PM on Friday, the cancellation deadline, the hotel's price for the same room is <b>${money(X)}</b>;
+            a room booked that late can no longer be cancelled.`,
+      ask:"Think of free cancellation as an option. What is its profit? (Two decimals; enter a negative number for a loss.)",
+      correct, cands,
+      steps:[
+        `Free cancellation is a put: the right to sell the room back to the hotel for ${money(R)}. Its strike is ${money(R)}, and its premium is what you pay over the non-refundable rate: ${money(R)} &minus; ${money(N)} = ${money(prem)}`,
+        `At the deadline the room costs ${money(X)}, less than the ${money(R)} you get back, so you cancel and rebook. Payoff = max(K &minus; S, 0) = max(${money(R)} &minus; ${money(X)}, 0) = ${money(R-X)}`,
+        `Profit = payoff &minus; premium = ${money(R-X)} &minus; ${money(prem)} = <b>${smoney(correct)}</b>`
+      ]};
+  }},
+
+{ id:"iv2", topic:"tv", name:"Splitting a put's premium into intrinsic value and time value", gen(){
+    /* Section 6: premium = max(K - S, 0) + time value. In the money only: out of the money the answer is the
+       premium itself, printed in the stem (as for Part 1's iv1). The trap is a call's intrinsic value.   */
+    let K, S, p, correct, cands, tol, sep;
+    do {
+      K=pick(range(20,100,5)); S=K-pick([1,2,3,4,5,6,7,8,10,12,15]);
+      p=+(ppay(S,K)+pick(range(0.40,4.00,0.05))).toFixed(2);
+      correct=p-ppay(S,K);
+      tol=centsTol(correct); sep=centsSep(correct);
+      cands=keepFar(correct,[
+        {val:ppay(S,K), msg:`That is the intrinsic value, what exercising now would pay. Time value is the rest of the premium: premium &minus; intrinsic value.`},
+        {val:p+ppay(S,K), msg:`Time value is what is left of the premium after the intrinsic value, K &minus; S = ${money(K-S)}: subtract it, don't add it.`},
+        {val:p, msg:`The put is in the money: the share is below the strike, so exercising now would pay ${money(K-S)}. (A call's intrinsic value, max(S &minus; K, 0), would be zero here; a put's is max(K &minus; S, 0).) Only the rest of the premium is time value.`}
+      ],sep);
+    } while (S<=0 || usable(correct,cands,sep).length<3);
+    return {
+      unit:"money", tol, sep,
+      text:`A share trades at <b>${money(S)}</b>. A put on it with a strike price of <b>${money(K)}</b> costs <b>${money(p)}</b>.`,
+      ask:"How much of the put's premium is time value? (Two decimals.)",
+      correct, cands,
+      steps:[
+        `Intrinsic value is the payoff if you exercised now: max(K &minus; S, 0) = max(${money(K)} &minus; ${money(S)}, 0) = ${money(ppay(S,K))}`,
+        `Time value = premium &minus; intrinsic value = ${money(p)} &minus; ${money(ppay(S,K))} = <b>${money(correct)}</b>`
+      ]};
+  }},
+
+{ id:"dp1", topic:"value", name:"European puts on a worthless share: the longer one is worth less", gen(){
+    /* Section 3.3: the share is worthless and will stay so, so each European put pays K for certain, but only at
+       its expiration: each is a zero. Value = K/(1 + r/2)^(2T); the longer put is worth less.            */
+    let K, r, T1, T2, v1, v2, correct, cands, tol, sep;
+    do {
+      K=pick(range(10,50,5)); r=pick([0.03,0.04,0.05,0.06,0.07,0.08]); T1=pick([1,2]); T2=T1+pick([1,2,3]);
+      v1=K/Math.pow(1+r/2,2*T1); v2=K/Math.pow(1+r/2,2*T2);
+      correct=v1-v2;
+      /* Blind sitting 27 Oct 2026: a student who rounds each put to the cent, as the note does ($19.04, $18.12), can be
+         a cent off, so the key is accepted within $0.0101; every wrong method (annual compounding is the closest) is
+         kept at least $0.025 away so none can score.                                                              */
+      tol=Math.max(0.0025, 0.0101/Math.abs(correct)); sep=Math.max(REL_SEP, 0.025/Math.abs(correct));
+      cands=keepFar(correct,[
+        {val:0, msg:`Both puts pay ${money(K)} for certain, but at different dates. A payoff that arrives later is worth less today: discount each at its own maturity.`},
+        {val:-correct, msg:`The longer put is worth less, not more: it pays the same ${money(K)}, but later. More time is usually worth something; here the payoff is certain, so more time only delays it.`},
+        {val:K/Math.pow(1+r,T1)-K/Math.pow(1+r,T2), msg:`The rate is compounded semiannually: discount with (1 + r/2) raised to twice the number of years.`},
+        {val:K/Math.pow(1+r/2,T1)-K/Math.pow(1+r/2,T2), msg:`With semiannual compounding there are two periods a year: the exponent is 2T, not T.`},
+        {val:K*r*(T2-T1), msg:`That is simple interest on the strike for the extra years. Value each put as a zero: K/(1 + r/2)^(2T).`}
+      ],sep);
+    } while (correct<0.50 || cands.length<5 || usable(correct,cands,sep).length<3);
+    const rs=pctS(r);
+    return {
+      unit:"money", tol, sep,
+      text:`A firm has gone bankrupt: its share is worthless and will stay worthless. Two European puts on the share have a strike price of
+            <b>${money(K)}</b>; one expires in <b>${T1} year${T1>1?"s":""}</b>, the other in <b>${T2} years</b>. The interest rate is <b>${rs} p.a.,
+            compounded semiannually</b>, for every maturity.`,
+      ask:`How much more is the ${T1}-year put worth today than the ${T2}-year put? (Two decimals.)`,
+      correct, cands,
+      steps:[
+        `The share will be worth $0.00, so each put will certainly pay max(K &minus; S, 0) = ${money(K)}, but a European put pays only at its expiration: each put is a zero-coupon bond paying ${money(K)}`,
+        `${T1}-year put = ${money(K)}/(1 + ${rs}/2)<sup>${2*T1}</sup> = $${v1.toFixed(4)}; ${T2}-year put = ${money(K)}/(1 + ${rs}/2)<sup>${2*T2}</sup> = $${v2.toFixed(4)}`,
+        `Difference = $${v1.toFixed(4)} &minus; $${v2.toFixed(4)} = <b>${money(correct)}</b>: the longer put is worth less`
+      ]};
+  }}
+
+];
+
+/* ======================= CHOICE-MODE ITEMS ==============================
+   Auto-graded by which option is clicked, not by a typed number.
+     topic "error"   — a worked solution with one planted mistake
+     topic "concept" — reason about the direction of an effect, no arithmetic
+   Directional items shuffle their own options so position carries no
+   information; spot-the-error items must stay in step order.            */
+
+function shuffle(a){
+  const out = a.slice();
+  for (let i=out.length-1; i>0; i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [out[i],out[j]] = [out[j],out[i]];
+  }
+  return out;
+}
+
+const CHOICE_TEMPLATES = [{ id:"k12", topic:"payoff", name:"The most a put's buyer can make", gen(){
+    /* Section 3.1: "A put's payoff is also capped: the most it can pay is K, if the share becomes worthless."
+       The profit subtracts the premium. The lure is the call's unlimited upside.                          */
+    const K=pick(range(20,80,5)), p=pick(range(1.00,6.00,0.25));
+    const opts=shuffle([
+      {html:`${money(K-p)}, if the share becomes worthless`, correct:true,
+       msg:`Right. The payoff max(K &minus; S, 0) is largest when the share is worth $0.00: you sell for ${money(K)} a share worth nothing. Take off the ${money(p)} premium: ${money(K)} &minus; ${money(p)} = ${money(K-p)}.`},
+      {html:`${money(K)}, if the share becomes worthless`, correct:false,
+       msg:`${money(K)} is the most the put can pay. The profit also takes off the ${money(p)} premium you paid.`},
+      {html:`There is no limit, because the share can keep falling`, correct:false,
+       msg:`A share price cannot fall below zero, so a put's payoff stops at ${money(K)}. It is a call's payoff that has no limit, because the share price has no ceiling.`},
+      {html:`${money(p)}, the premium`, correct:false,
+       msg:`That is the most the put's writer can make, and the most you can lose. Your gain comes from selling the share for ${money(K)} when it is worth less.`}
+    ]);
+    return {mode:"choice",
+      text:`You buy a put with a strike price of ${money(K)} for a premium of ${money(p)}.`,
+      ask:"What is the largest possible profit per share?",
+      options:opts,
+      steps:[
+        `Profit = max(K &minus; S, 0) &minus; p. The lower the share price at expiration, the higher the payoff.`,
+        `A share price cannot fall below $0.00, so the largest payoff is ${money(K)} &minus; $0.00 = ${money(K)}.`,
+        `The most you can make is ${money(K)} &minus; ${money(p)} = ${money(K-p)}.`
+      ]};
+  }},
+
+{ id:"k13", topic:"concept", name:"Which put is deepest in the money?", gen(){
+    /* Section 2.2: moneyness is measured by S/K (the stem says so since the blind sitting of 27 Oct 2026: Part 2 does not say it for puts), and a put is in the money when S/K is below 1: the lower, the
+       deeper. The traps are the dollar gap K - S, the lowest share price, and the call's rule (highest ratio).
+       Built like Part 1's k8: the deepest ratio leads by at least 0.05; the wrong options name both other stocks. */
+    let st, lo, gap, small, bigK;
+    do {
+      st=["A","B","C"].map(n=>{ const K=pick(range(10,150,5)); const r=pick([0.60,0.70,0.75,0.80,0.84,0.88,0.92,0.96]); return {n, K, S:Math.round(K*r)}; });
+      const by=f=>st.reduce((a,b)=>f(b)>f(a)?b:a).n;
+      lo=by(s=>-s.S/s.K); gap=by(s=>s.K-s.S); small=by(s=>-s.S); bigK=by(s=>s.K);
+    } while (gap===lo || small===lo || bigK===lo || new Set([gap,small,bigK]).size<2 || st.some(s=>s.S>=s.K)
+             || new Set(st.map(s=>s.K-s.S)).size<3 || st.filter(s=>s.n!==lo).some(s=>s.S/s.K < st.find(x=>x.n===lo).S/st.find(x=>x.n===lo).K + 0.05));
+    const opts=shuffle([
+      {html:`Stock ${lo}'s put, because its share price is the lowest fraction of its strike price`, correct:true,
+       msg:`Right. Moneyness is measured by S/K. A put is in the money when S/K is below 1, and the further below 1, the deeper. Stock ${lo}'s ratio is the lowest.`},
+      {html:`Stock ${gap}'s put, because its share price is furthest below its strike price in dollars`, correct:false,
+       msg:`A dollar gap grows with the size of the share price, so it does not compare puts on different shares. Moneyness is measured by S/K, and Stock ${lo}'s ratio is the lowest.`},
+      {html:`Stock ${small}'s put, because it is on the share with the lowest price`, correct:false,
+       msg:`The share price alone says nothing about moneyness; what matters is the share price compared with the strike. S/K is lowest for Stock ${lo}.`},
+      {html:`Stock ${bigK}'s put, because it has the highest strike price`, correct:false,
+       msg:`A high strike helps only relative to the share price. Moneyness compares the two: S/K is lowest for Stock ${lo}.`}
+    ]);
+    const S=n=>st.find(s=>s.n===n);
+    return {mode:"choice",
+      text:`Three puts on three different shares: Stock A trades at ${money(S("A").S)} and its put has a strike price of ${money(S("A").K)};
+            Stock B trades at ${money(S("B").S)} and its put has a strike price of ${money(S("B").K)}; Stock C trades at ${money(S("C").S)}
+            and its put has a strike price of ${money(S("C").K)}.`,
+      ask:"Measuring moneyness by S/K, which put is deepest in the money?",
+      options:opts,
+      steps:[
+        `Moneyness is measured by S/K. A put is in the money when S/K is below 1, and the further below 1, the deeper.`,
+        `Stock A: ${money(S("A").S)}/${money(S("A").K)} = ${(S("A").S/S("A").K).toFixed(4)}. Stock B: ${money(S("B").S)}/${money(S("B").K)} = ${(S("B").S/S("B").K).toFixed(4)}. Stock C: ${money(S("C").S)}/${money(S("C").K)} = ${(S("C").S/S("C").K).toFixed(4)}.`,
+        `The lowest ratio is Stock ${lo}'s, so its put is the deepest in the money.`
+      ]};
+  }},
+
+{ id:"k14", topic:"insure", name:"Are put buyers irrational?", gen(){
+    /* Practice 5 and Section 4.3: puts have negative betas and pay off in bad times; a negative average return
+       is the price of protection, as for car insurance. The wrong options: never hold a negative expected
+       return; puts do not really lose on average; buyers are outsmarted by better-informed writers.     */
+    const opts=shuffle([
+      {html:`Disagree: a put pays off in a crash, when money is scarce, and its negative average return is the cost of that insurance`, correct:true,
+       msg:`Right. A put has a negative beta: it pays off in bad times. Investors are willing to pay for that, so its expected return is low, like car insurance, which also loses money on average.`},
+      {html:`Agree: an investment with a negative expected return lowers your average wealth, so no rational investor should hold it`, correct:false,
+       msg:`What matters is when an investment pays, not only how much it pays on average. A put pays off in a crash, exactly when investors most need money, so a rational investor can accept a negative average return for it.`},
+      {html:`Disagree: puts do not really lose on average; the losses in the data come from a few years without a market crash`, correct:false,
+       msg:`The evidence is that average returns on index puts are strongly negative (Coval and Shumway, 2001). The point is not that puts make money, but that their losses are the price of protection.`},
+      {html:`Agree: put writers know more about crash risk than buyers do, so put buyers are systematically outsmarted`, correct:false,
+       msg:`No one needs better information for puts to lose on average. Writers are paid for bearing crash risk that buyers want to shed, as an insurance company is paid for bearing its customers' risks.`}
+    ]);
+    return {mode:"choice",
+      text:`An investor says: "Index puts lose money on average, so anyone who buys them is irrational."`,
+      ask:"Do you agree?",
+      options:opts,
+      steps:[
+        `A put moves against the share and, in percentage terms, by much more: its beta is strongly negative. By the CAPM, a put's expected excess return is &beta; &times; (market risk premium), so it is very negative: with &beta; &asymp; &minus;12 and a 6% market risk premium, about &minus;12 &times; 6% = &minus;72% a year.`,
+        `A negative average return is the price of protection, as for car insurance. The put writer is paid a risk premium for bearing the crash risk.`
+      ]};
+  }},
+
+{ id:"k15", topic:"early", name:"American and European puts on a share with no dividend", gen(){
+    /* Section 5: unlike calls, an American put can be optimally exercised early (the time value of money on K),
+       so p_American >= p_European, strictly whenever early exercise has a real chance to pay. The lures
+       carry over Part 1's call results to puts. The key does not name the conditions (k16's key).       */
+    const K=pick(range(20,80,5)), pA=pick(range(1.50,8.00,0.25)), m=pick([3,6,9,12]);
+    const opts=shuffle([
+      {html:`At most ${money(pA)}, and possibly less: unlike for a call, exercising a put early can be the best choice`, correct:true,
+       msg:`Right. The only extra right the American put gives you is early exercise. For a call on a share with no dividend that right is never used; for a put it can be, because exercising early brings in ${money(K)} sooner. So the European put can cost strictly less.`},
+      {html:`Exactly ${money(pA)}: as for calls, early exercise is never optimal on a share that pays no dividend`, correct:false,
+       msg:`That result is for calls. A put pays you ${money(K)} when you exercise, and receiving it sooner earns interest, so exercising a put early can be optimal even without a dividend.`},
+      {html:`More than ${money(pA)}: waiting is better than exercising early, and the European put makes sure that you wait`, correct:false,
+       msg:`The holder of the American put can wait too whenever waiting is better. Taking away a choice can never add value, so the European put cannot be worth more than ${money(pA)}.`},
+      {html:`Less than ${money(pA)} only if the share pays a dividend before expiration, which makes early exercise pay`, correct:false,
+       msg:`For a put, a dividend is a reason to wait, not to exercise: the holder wants to deliver the share after the dividend has been received. The European put can cost less even with no dividend at all.`}
+    ]);
+    return {mode:"choice",
+      text:`An American put on a share with a strike price of ${money(K)} and ${m} months to expiration costs ${money(pA)}.
+            The share pays no dividend before expiration.`,
+      ask:`What can you say about the price of a European put on the same share, with the same strike price and expiration?`,
+      options:opts,
+      steps:[
+        `The only difference between the two puts is that the American put can be exercised before expiration, so it is worth at least as much: p<sub>American</sub> &ge; p<sub>European</sub>.`,
+        `Exercising a put early brings in ${money(K)} now; waiting brings in max(${money(K)}, S<sub>T</sub>) at expiration, which is never less than ${money(K)} but arrives later.`,
+        `When the time value of money on ${money(K)} wins, early exercise is optimal, and then the American put is worth strictly more: the European put costs at most ${money(pA)}, possibly less.`
+      ]};
+  }},
+
+{ id:"k16", topic:"early", name:"When exercising an American put early can pay", gen(){
+    /* Practice 6 and Section 5: early exercise pays when the put is so deep in the money that there is little
+       chance the share ends above K, and the interest on K is large. Wrong options: a dividend (a reason to
+       wait for a put; the call's answer), a coming swing (volatility argues for waiting), zero interest
+       rates (then early exercise is never optimal).                                                       */
+    const K=pick(range(20,80,5)), m=pick([6,9,12,18,24]);
+    const opts=shuffle([
+      {html:`The share has collapsed to a few cents, and interest rates are high`, correct:true,
+       msg:`Right. The share can hardly fall further, so waiting adds almost nothing, while exercising now brings in ${money(K)} today to earn interest. When that interest outweighs what waiting could add, exercise early.`},
+      {html:`The share will pay a large dividend next week`, correct:false,
+       msg:`That is the call's case. For a put a dividend is a reason to wait: deliver the share after the dividend has been received.`},
+      {html:`The firm will announce its earnings next week, and the share may swing sharply either way`, correct:false,
+       msg:`Bigger swings make waiting worth more: the put pays more if the share falls, and you lose nothing extra if it rises. An announcement is a reason to wait.`},
+      {html:`Interest rates have fallen to zero, so waiting for the payoff costs you nothing`, correct:false,
+       msg:`With no interest, receiving ${money(K)} now is no better than receiving it later, so waiting is never worse and early exercise is never optimal. High rates, not zero rates, argue for exercising early.`}
+    ]);
+    return {mode:"choice",
+      text:`You hold an American put on a share with a strike price of ${money(K)} and ${m} months to expiration.`,
+      ask:"Which of these could make it worth exercising the put before expiration?",
+      options:opts,
+      steps:[
+        `A put lets you sell a share at a price guaranteed to be at least ${money(K)}. At expiration you deliver one share and bring in max(${money(K)}, S<sub>T</sub>): ${money(K)} through the put if the share ends below ${money(K)}, or S<sub>T</sub> in the market if it ends above.`,
+        `Exercising now, you deliver the same one share and bring in ${money(K)} today. Waiting brings in max(${money(K)}, S<sub>T</sub>) at expiration: never less than ${money(K)}, sometimes more, but later.`,
+        `The chance of higher proceeds favours waiting; the time value of money on ${money(K)} favours exercising now.`,
+        `If the share has collapsed, there is little chance it ends above ${money(K)}, so waiting adds almost nothing; with high interest rates, getting ${money(K)} now is worth a lot. Then early exercise is optimal.`
+      ]};
+  }},
+
+{ id:"k17", topic:"payoff", name:"Physical settlement of a put", gen(){
+    /* Section 2.4: "The buyer of the put hands the share to the writer and receives the strike. This trips
+       people up: the buyer of the put is the one who sells the share." Wrong options: the direction
+       reversed; cash settlement; delivering the share for the payoff instead of the strike.             */
+    const K=pick(range(20,80,5)), S=K-pick(range(2,12,1));
+    const opts=shuffle([
+      {html:`You hand one share to the writer and receive ${money(K)}`, correct:true,
+       msg:`Right. A put is the right to sell: you deliver the share and the writer pays you the strike. If you do not own the share, you buy one in the market for ${money(S)} first, so you end up ${money(K-S)} better off.`},
+      {html:`The writer hands you one share and you pay ${money(K)}`, correct:false,
+       msg:`That is what happens when a call is exercised. A put is the right to sell: the buyer of the put delivers the share, and the writer pays the strike.`},
+      {html:`The writer pays you ${money(K-S)} and no shares change hands`, correct:false,
+       msg:`That is cash settlement. With physical settlement the share itself changes hands: you deliver it and receive the strike.`},
+      {html:`You hand one share to the writer and receive ${money(K-S)}`, correct:false,
+       msg:`${money(K-S)} is your gain, not what the writer pays. In exchange for the share, the writer pays the full strike, ${money(K)}.`}
+    ]);
+    return {mode:"choice",
+      text:`You bought a put on a share with a strike price of ${money(K)}. The put is settled physically. At expiration the share trades at
+            ${money(S)}, and you exercise the put.`,
+      ask:"What happens?",
+      options:opts,
+      steps:[
+        `A put is the right to sell the share at the strike price.`,
+        `With physical settlement, the buyer of the put, you, delivers the share to the writer and receives the strike, ${money(K)}.`,
+        `Your gain is ${money(K)} &minus; ${money(S)} = ${money(K-S)}: you sell for ${money(K)} a share worth ${money(S)}.`
+      ]};
+  }}
+];
+
+const TOPICS = [
+  {key:"all", label:"Mixed"},
+  {key:"payoff", label:"Payoff and profit"},
+  {key:"value", label:"What drives value"},
+  {key:"arb", label:"No arbitrage"},
+  {key:"insure", label:"Why buy puts"},
+  {key:"early", label:"Early exercise"},
+  {key:"tv", label:"Intrinsic and time value"},
+  {key:"concept", label:"Reason it out"}
+];
+
+/* ----------------------------------------------------------------- state */
+let active = "all", current = null, tries = 0;
+let peeked = false, solved = false, tallied = false;  // tallied = already counted in `attempted`
+const stats = {att:0, first:0, streak:0, peek:0};
+
+const $ = id => document.getElementById(id);
+
+/* One-period trees for templates that return q.fig = [{label, now, outs:[...], probs:[...]?}, ...]
+   (added 22 Oct 2026 for Note 13, at Anh's request). Values come from the same draw as the text. */
+function figHTML(fig){
+  const txt = s => String(s).replace(/<[^>]+>/g, "");
+  const len = s => txt(s).replace(/&[a-z]+;/g, "x").length;
+  /* A multi-period recombining tree (Notes 16 and 19, 22 Oct 2026): t.lat[k] lists the nodes at
+     date k from the top; a node is a string or an array of lines; t.times labels the dates.      */
+  const latSVG = t => {
+    const L = t.lat.length, lines = v => (Array.isArray(v) ? v : [v]).map(txt);
+    const colW = t.lat.map(col => Math.max(24, ...col.map(v => Math.max(...lines(v).map(len))*8.2)));
+    const nl = Math.max(...t.lat.flat().map(v => lines(v).length)), lh = 17, h = nl > 1 ? 30 : 17, top = 30;
+    const cx = []; let x = 4;
+    colW.forEach((w, k) => { cx.push(x + w/2); x += w + 44; });
+    const W = Math.max(x - 44 + 4, 8.5*len(t.label) + 10);
+    const yOf = (k, i) => top + h*(2*i + (L-1-k)) + (nl-1)*lh/2;
+    const H = top + h*2*(L-1) + nl*lh + (t.times ? 26 : 6);
+    /* t.on (23 Oct 2026, Anh): the nodes the question works at, as "k,i". The rest of the tree is drawn
+       in grey, with a dot for a node that carries no figure, so students see where in the tree they are. */
+    const on = t.on ? new Set(t.on) : null, isOn = (k, i) => !on || on.has(k + "," + i);
+    const half = (k, i) => lines(t.lat[k][i]).join("") ? colW[k]/2 + 4 : 6;
+    let g = `<text class="tl" x="${W/2}" y="14" text-anchor="middle">${txt(t.label)}</text>`;
+    t.lat.forEach((col, k) => col.forEach((v, i) => {
+      const y = yOf(k, i), ls = lines(v);
+      if (ls.join("")) ls.forEach((s, j) => g += `<text x="${cx[k]}" y="${y + 5 + (j - (ls.length-1)/2)*lh}" text-anchor="middle">${s}</text>`);
+      else g += `<circle cx="${cx[k]}" cy="${y}" r="3.2"${isOn(k, i) ? "" : ` class="off"`}/>`;
+      if (k < L-1) [i, i+1].forEach(c => {
+        const y2 = yOf(k+1, c);
+        g += `<line x1="${cx[k] + half(k, i)}" y1="${y}" x2="${cx[k+1] - half(k+1, c)}" y2="${y2}" stroke-width="1.6"${isOn(k, i) && isOn(k+1, c) ? "" : ` class="off"`}/>`;
+      });
+    }));
+    if (t.times) t.times.forEach((s, k) => g += `<text class="tp" x="${cx[k]}" y="${H - 6}" text-anchor="middle">${txt(s)}</text>`);
+    return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${txt(t.label)}: ${t.lat.map(c => c.map(v => lines(v).join(" ")).join(" / ")).join("; then ")}">${g}</svg>`;
+  };
+  return fig.map(t => {
+    if (t.lat) return latSVG(t);
+    const n = t.outs.length, gap = n > 2 ? 30 : 46, top = 34;
+    const x1 = Math.max(40, 12 + 8.5*len(t.now)), x2 = x1 + 56;
+    const wide = Math.max(...t.outs.map((v, i) => 8.4*len(v) + (t.probs ? 6.6*(len(t.probs[i]) + 2) + 6 : 0)));
+    const W = Math.max(x2 + 10 + wide, 8.5*len(t.label) + 10), H = top + gap*(n-1) + 14, mid = top + gap*(n-1)/2;
+    let g = `<text class="tl" x="${(x1 + x2)/2}" y="14" text-anchor="middle">${txt(t.label)}</text>`;
+    g += `<text x="${x1-8}" y="${mid+5}" text-anchor="end">${txt(t.now)}</text>`;
+    t.outs.forEach((v, i) => {
+      const y = top + gap*i, dx = x2-x1, dy = y-mid, L = Math.hypot(dx, dy), ux = dx/L, uy = dy/L;
+      const ex = x2 - 2*ux, ey = y - 2*uy, bx = ex - 9*ux, by = ey - 9*uy;
+      g += `<line x1="${x1}" y1="${mid}" x2="${bx}" y2="${by}" stroke-width="1.8"/>`;
+      g += `<polygon points="${ex},${ey} ${bx-4*uy},${by+4*ux} ${bx+4*uy},${by-4*ux}" stroke-width="0"/>`;
+      g += `<text x="${x2+6}" y="${y+5}">${txt(v)}${t.probs ? `<tspan class="tp" dx="6">(${txt(t.probs[i])})</tspan>` : ""}</text>`;
+    });
+    return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${txt(t.label)}: ${txt(t.now) || "today"}, then ${t.outs.map(txt).join(" or ")}">${g}</svg>`;
+  }).join("");
+}
+
+function buildTopics(){
+  const box = $("topics");
+  TOPICS.forEach(t=>{
+    const b = document.createElement("button");
+    b.className = "chip"; b.textContent = t.label;
+    b.setAttribute("aria-pressed", String(t.key===active));
+    b.onclick = ()=>{
+      active = t.key;
+      [...box.children].forEach(c=>c.setAttribute("aria-pressed","false"));
+      b.setAttribute("aria-pressed","true");
+      seqIdx = 0;                 // a new topic restarts the sequence
+      newQuestion();
+    };
+    box.appendChild(b);
+  });
+  /* the Starred chip: practise only the questions starred on this page */
+  const s = document.createElement("button");
+  s.className = "chip"; s.id = "chipStar";
+  s.setAttribute("aria-pressed", "false");
+  s.onclick = ()=>{
+    active = "starred";
+    [...box.children].forEach(c=>c.setAttribute("aria-pressed","false"));
+    s.setAttribute("aria-pressed","true");
+    seqIdx = 0;
+    newQuestion();
+  };
+  box.appendChild(s);
+  updateStarChip();
+}
+
+const ALL_TEMPLATES = TEMPLATES.concat(CHOICE_TEMPLATES);
+
+/* A template's primary topic is `topic`; it may also list secondary topics in
+   `also`, so one item can appear under several chips. */
+function inTopic(t, key){
+  return t.topic === key || (Array.isArray(t.also) && t.also.includes(key));
+}
+
+/* ---- progress: distinct templates solved without opening the solution ---- */
+const PROG_KEY = "practice-progress:" + document.title;
+let mastered = new Set();
+try { mastered = new Set(JSON.parse(localStorage.getItem(PROG_KEY) || "[]")); }
+catch (e) { mastered = new Set(); }
+
+function saveProgress(){
+  try { localStorage.setItem(PROG_KEY, JSON.stringify([...mastered])); } catch (e) {}
+}
+function markMastered(id){
+  if (!id || mastered.has(id)) return;
+  mastered.add(id);
+  saveProgress();
+}
+
+/* ---- starred questions: kept per template, so a starred question comes back with new
+   numbers. Starred automatically on a wrong answer or on opening the solution before
+   solving; the student can star or unstar any question by hand. ---- */
+const STAR_KEY = "practice-starred:" + document.title;
+let starred = new Set();
+try { starred = new Set(JSON.parse(localStorage.getItem(STAR_KEY) || "[]")); }
+catch (e) { starred = new Set(); }
+starred = new Set([...starred].filter(id => ALL_TEMPLATES.some(t => t.id === id)));
+
+function saveStars(){
+  try { localStorage.setItem(STAR_KEY, JSON.stringify([...starred])); } catch (e) {}
+}
+function updateStarChip(){
+  const c = document.getElementById("chipStar");   // made by buildTopics, not in the markup
+  if (c) c.textContent = "★ Starred (" + starred.size + ")";
+}
+function showStar(){
+  const on = !!(current && starred.has(current.id));
+  $("star").hidden = !current;
+  $("star").setAttribute("aria-pressed", String(on));
+  $("star").textContent = on ? "★ Starred" : "☆ Star";
+}
+function setStar(id, on){
+  if (!id) return;
+  if (on) starred.add(id); else starred.delete(id);
+  saveStars(); updateStarChip(); showStar();
+}
+function autoStar(){ if (current && !starred.has(current.id)) setStar(current.id, true); }
+
+function poolFor(key){
+  if (key === "all") return ALL_TEMPLATES;
+  if (key === "starred") return ALL_TEMPLATES.filter(t => starred.has(t.id));
+  return ALL_TEMPLATES.filter(t => inTopic(t, key));
+}
+
+/* Templates are drawn WITHOUT immediate repeats. Sampling with replacement
+   looks fine on the full bank, but a topic holding only three or four
+   templates repeats roughly one press in three, which reads as the button
+   being broken. Hold the most recent half of the pool out of the draw. */
+let recentIds = [];
+/* Questions seen this session, so the arrow keys can step back and forth through them. */
+let history = [], histIdx = -1;
+let navKey = false;      // true while an arrow key is doing the rendering
+let order = "shuffle";   // "shuffle" | "seq"
+let seqIdx = 0;
+
+function newQuestion(replay){
+  let q;
+  if (replay){ q = replay.q; }
+  else {
+  const pool = poolFor(active);
+  if (!pool.length){
+    current = null;
+    $("qmeta").textContent = "Starred";
+    $("qtext").innerHTML = "No starred questions yet. A question is starred when you answer it " +
+      "wrongly or open its solution before solving it, and you can star any question yourself with " +
+      "<b>☆ Star</b>. Pick another chip to practise.";
+    $("qask").innerHTML = "";
+    $("opts").hidden = true; $("opts").innerHTML = "";
+    $("ans").hidden = true; $("check").hidden = true; $("next").hidden = true;
+    $("fb").innerHTML = ""; $("soldetails").hidden = true; $("seqPos").textContent = "";
+    showStar();
+    return;
+  }
+  let tpl;
+  if (order === "seq"){
+    /* walk the bank in order, wrapping at the end */
+    if (seqIdx >= pool.length) seqIdx = 0;
+    tpl = pool[seqIdx];
+    seqIdx = (seqIdx + 1) % pool.length;
+    $("seqPos").textContent = `${seqIdx === 0 ? pool.length : seqIdx} of ${pool.length}`;
+  } else {
+    const hold = Math.max(1, Math.floor(pool.length / 2));
+    let choices = pool.filter(t => !recentIds.slice(0, hold).includes(t.id));
+    if (!choices.length) choices = pool;        // pool of one, or all held out
+    tpl = pick(choices);
+    recentIds.unshift(tpl.id);
+    if (recentIds.length > 40) recentIds.length = 40;
+    $("seqPos").textContent = "";
+  }
+  q = tpl.gen();
+  q.name = tpl.name;
+  q.id   = tpl.id;
+  q.seqPos = $("seqPos").textContent;   // carried so stepping back shows its own position
+  if (q.mode !== "choice") q.distractors = usable(q.correct, q.cands, q.sep);
+  }
+  current = q;
+  if (replay){
+    tries = replay.tries; peeked = replay.peeked; solved = replay.solved; tallied = replay.tallied;
+  } else {
+    tries = 0; peeked = false; solved = false; tallied = false;
+    history = history.slice(0, histIdx + 1);           // a new draw discards anything ahead
+    history.push({q, tries:0, peeked:false, solved:false, tallied:false, fb:"", ans:""});
+    if (history.length > 50){ history.shift(); }
+    histIdx = history.length - 1;
+  }
+
+  const isChoice = q.mode === "choice";
+  $("qmeta").textContent = q.name;
+  $("qtext").innerHTML   = q.text;
+  $("qfig").innerHTML    = q.fig ? figHTML(q.fig) : "";
+  $("qfig").hidden       = !q.fig;
+  $("qask").innerHTML    = q.ask;
+  /* Hide the input and Check individually, NOT the whole row -- the
+     "New question" button lives in that row and must stay reachable
+     on choice questions. */
+  $("ans").hidden   = isChoice;
+  $("check").hidden = isChoice;
+  $("next").hidden  = false;
+  showStar();
+  $("opts").hidden     = !isChoice;
+  const box = $("opts");
+  box.innerHTML = "";              // always clear, even when the panel is hidden
+  if (isChoice){
+    q.options.forEach((o,k)=>{
+      const btn = document.createElement("button");
+      btn.className = "opt"; btn.innerHTML = o.html;
+      btn.onclick = () => pickOption(k);
+      box.appendChild(btn);
+    });
+  }
+  $("ans").value = "";
+  $("ans").placeholder = q.unit==="money" ? "e.g. 1234.56"
+                     : q.unit==="percent" ? "e.g. 12.34  (percent)"
+                     : "e.g. 18";
+  $("ans").disabled = false;
+  $("check").disabled = false;
+  $("fb").innerHTML = "";
+  $("steps").innerHTML = q.steps.map(s=>`<div>${s}</div>`).join("");
+  const d = $("soldetails"); d.hidden = false; d.open = false;
+  if (replay){
+    /* Put the question back exactly as it was left --- the feedback, what was typed, and
+       whether it had already been answered. The tallied/solved flags come back with it,
+       so revisiting a question never re-counts an attempt or re-awards mastery. */
+    $("fb").innerHTML = replay.fb || "";
+    $("ans").value    = replay.ans || "";
+    $("seqPos").textContent = q.seqPos || "";
+    if (isChoice && q.wrong){
+      [...$("opts").children].forEach((b,j)=>{
+        if (q.wrong.indexOf(j) >= 0){ b.classList.add("wrong"); b.disabled = true; }
+      });
+    }
+    if (solved || q.done){
+      if (isChoice){
+        [...$("opts").children].forEach((b,j)=>{ b.disabled = true;
+          if (q.options[j].correct) b.classList.add("right"); });
+      } else { $("ans").disabled = true; $("check").disabled = true; }
+    }
+    d.open = peeked || solved;
+  }
+  /* Arriving by arrow key must not park the cursor in the answer box: a restored answer
+     sitting there would swallow the next arrow press and strand the student. */
+  if (navKey) $("ans").blur();
+  else if (!isChoice && !$("ans").disabled) $("ans").focus();
+}
+
+function parseInput(raw){
+  const cleaned = raw.replace(/[$,%\s,]/g,"");
+  if (cleaned === "" ) return NaN;
+  return Number(cleaned);
+}
+
+function say(kind, title, body){
+  $("fb").innerHTML = `<div class="fb ${kind}"><strong>${title}</strong>${body}</div>`;
+}
+
+function pickOption(k){
+  const q = current;
+  if (q.done) return;
+  const o    = q.options[k];
+  const btns = [...$("opts").children];
+
+  tries++;
+  if (!tallied){ tallied = true; stats.att++; }
+
+  if (o.correct){
+    q.done = true; solved = true;
+    btns.forEach((b2,j)=>{ b2.disabled = true; if (q.options[j].correct) b2.classList.add("right"); });
+    if (peeked){
+      stats.streak = 0;
+      say("ok","Correct — but you read the solution first.",
+          "It still counts as attempted, just not toward first-try accuracy or your streak. " + o.msg);
+    } else {
+      stats.streak++;
+      if (tries === 1) stats.first++;
+      markMastered(q.id);
+      say("ok", tries===1 ? "Correct — first try." : "Correct.", o.msg);
+    }
+    $("soldetails").open = true;
+  } else {
+    stats.streak = 0;
+    btns[k].classList.add("wrong");
+    btns[k].disabled = true;
+    (q.wrong || (q.wrong = [])).push(k);   // remembered so a revisit keeps it eliminated
+    autoStar();
+    say("no","Not that one.", o.msg);
+  }
+  render();
+}
+
+function check(){
+  const raw = $("ans").value;
+  const parsed = parseInput(raw);
+  if (!Number.isFinite(parsed)){
+    say("hint","Enter a number","Type your answer as a number — you can include $ , or % and it will be ignored.");
+    return;
+  }
+  const q = current;
+  const val = q.unit==="percent" ? parsed/100 : parsed;
+  const TOL = q.tol || REL_MATCH;
+
+  /* Unit slips are formatting mistakes, not wrong answers, so they cost
+     neither an attempt nor first-try credit. Guarded so a genuinely
+     correct entry can never be mistaken for one. */
+  if (!near(val, q.correct, TOL)){
+    if (q.unit==="percent" && near(parsed, q.correct, TOL)){
+      say("hint","Right number, wrong units.",
+          `You entered <code>${raw}</code> as a decimal. This box wants a percent — enter <code>${(q.correct*100).toFixed(4).replace(/\.?0+$/,"")}</code> instead.`);
+      return;
+    }
+    if (near(val*100, q.correct, TOL) || near(val/100, q.correct, TOL)){
+      say("hint","Check your units.","Your figure is off by a factor of 100. Re-read what the box is asking for.");
+      return;
+    }
+  }
+
+  tries++;
+  if (!tallied){ tallied = true; stats.att++; }   // count each question once, right or wrong
+
+  if (near(val, q.correct, TOL)){
+    solved = true;
+    if (peeked){
+      stats.streak = 0;
+      say("ok","Correct — but you read the solution first.",
+          "That is a perfectly good way to learn, and it still counts as attempted. It does " +
+          "not count toward first-try accuracy or your streak, so those numbers stay honest. " +
+          "Try the next one before opening the solution.");
+    } else {
+      stats.streak++;
+      if (tries === 1) stats.first++;
+      markMastered(q.id);
+      say("ok","Correct.", tries===1 ? "First try — well done." : "Got there.");
+    }
+    $("check").disabled = true; $("ans").disabled = true;
+    $("soldetails").open = true;
+    render(); return;
+  }
+
+  stats.streak = 0;
+  autoStar();
+  const hit = q.distractors.find(d => near(val, d.val, TOL));
+  say("no", hit ? "Not quite — and I can see why." : "Not quite.",
+      hit ? hit.msg
+          : "That does not match any of the usual slips, so it may be an arithmetic error. Try again, or open the worked solution below.");
+  render();
+}
+
+function render(){
+  $("sAtt").textContent    = stats.att;
+  $("sFirst").textContent  = stats.first;
+  $("sAcc").textContent    = stats.att ? Math.round(stats.first/stats.att*100)+"%" : "—";
+  $("sStreak").textContent = stats.streak;
+  $("sPeek").textContent   = stats.peek;
+  const total = ALL_TEMPLATES.length;
+  $("pTotal").textContent  = total;
+  $("pDone").textContent   = mastered.size;
+  $("progfill").style.width = (total ? 100*mastered.size/total : 0).toFixed(1) + "%";
+}
+
+$("check").onclick = () => { if (current) check(); };
+$("star").onclick  = () => { if (current) setStar(current.id, !starred.has(current.id)); };
+$("next").onclick  = () => newQuestion();   // arrow fn: never pass the click Event as `replay`
+
+/* ---- arrow keys: right for the next question, left for the previous one -------------
+   Ignored while the answer box is being typed in, where the arrows move the caret, and
+   ignored with a modifier held so the browser's own shortcuts still work.            */
+function snapshotQuestion(){
+  const h = history[histIdx];
+  if (!h) return;
+  h.tries = tries; h.peeked = peeked; h.solved = solved; h.tallied = tallied;
+  h.fb = $("fb").innerHTML; h.ans = $("ans").value;
+}
+function goBack(){
+  if (histIdx <= 0) return;
+  snapshotQuestion(); histIdx--;
+  navKey = true; newQuestion(history[histIdx]); navKey = false;
+}
+function goForward(){
+  snapshotQuestion();
+  navKey = true;
+  if (histIdx < history.length - 1){ histIdx++; newQuestion(history[histIdx]); }
+  else newQuestion();
+  navKey = false;
+}
+document.addEventListener("keydown", e => {
+  if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+  if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
+  const t = e.target;
+  if (t && (t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+  /* Inside the answer box the arrows belong to the caret --- but only while it still has
+     somewhere to go. Once it sits at the end you are pressing toward, the press is free,
+     so a half-typed answer never traps a student in the field. */
+  if (t && t.tagName === "INPUT" && !t.disabled){
+    const at = t.selectionStart, to = t.selectionEnd, n = String(t.value).length;
+    if (at === null || at !== to) return;                       // a selection: leave it alone
+    if (e.key === "ArrowRight" ? at < n : at > 0) return;
+  }
+  e.preventDefault();
+  if (e.key === "ArrowRight") goForward(); else goBack();
+});
+$("ans").addEventListener("keydown", e=>{ if(e.key==="Enter" && !$("check").disabled) check(); });
+$("soldetails").addEventListener("toggle", ()=>{
+  if ($("soldetails").open && !solved && !peeked){
+    peeked = true;
+    stats.peek++;
+    autoStar();
+    if (!tallied){ tallied = true; stats.att++; }  // opening it counts as engaging with the question
+    render();
+  }
+});
+
+function setOrder(o){
+  order = o; seqIdx = 0;
+  $("mShuffle").setAttribute("aria-pressed", String(o === "shuffle"));
+  $("mSeq").setAttribute("aria-pressed",     String(o === "seq"));
+  newQuestion();
+}
+$("mShuffle").onclick = () => setOrder("shuffle");
+$("mSeq").onclick     = () => setOrder("seq");
+
+$("pReset").onclick = () => {
+  if (!mastered.size) return;
+  mastered.clear(); saveProgress(); render();
+};
+
+buildTopics();
+newQuestion();
+render();
+</script>
+</body>
+</html>
