@@ -288,8 +288,10 @@ const TEMPLATES = [{ id:"p1", topic:"price", also:["div","lend"], name:"The futu
         {val:S-F, msg:`You compared F with S directly. F is paid at maturity and S today, so take F back to today first: S &minus; F/(1 + y/2)<sup>n</sup>.`},
         {val:S-F*Math.pow(1+y/2,n), msg:`You grew F instead of discounting it. F is paid at maturity; to compare it with S, divide by (1 + y/2)<sup>n</sup>.`},
         {val:S*Math.pow(1+y/2,n)-F, msg:`That is the dividend's value at the futures' maturity, Fv(d). The question asks for its value today, Pv(d).`},
-        {val:F/Math.pow(1+y/2,n)-S, msg:`Sign reversed. The dividend lowers the futures price: Pv(d) = S &minus; F/(1 + y/2)<sup>n</sup>, which is positive here.`}
-      ],sep);
+        {val:F/Math.pow(1+y/2,n)-S, msg:`Sign reversed. The dividend lowers the futures price: Pv(d) = S &minus; F/(1 + y/2)<sup>n</sup>, which is positive here.`},
+        {val:S-F/Math.pow(1+y,n), msg:`The zero yield is p.a. with semiannual compounding, so each six-month period is discounted at y/2, not y: divide by (1 + y/2)<sup>n</sup>.`},
+        {val:S-F/Math.pow(1+y/2,m/12), msg:`You counted the time in years (${m}/12 = ${m/12}) instead of in six-month periods. With semiannual compounding, n = ${m}/6 = ${n}.`}
+      ],sep);   // 29 Oct 2026: two positive mistakes added for quiz papers (mkquiz577_1.js drops negative options)
     } while (usable(correct,cands,sep).length<3 || correct<0.25);
     return {
       unit:"money", tol, sep,
@@ -352,8 +354,9 @@ const TEMPLATES = [{ id:"p1", topic:"price", also:["div","lend"], name:"The futu
         {val:-2*(root-1), msg:`You left out the interest rate. The lending fee offsets the interest cost, so the futures price grows at y &minus; l: l = y &minus; 2[(F/S)<sup>1/n</sup> &minus; 1].`},
         {val:y+2*(root-1), msg:`Sign slip. The futures price grows at y &minus; l, so (F/S)<sup>1/n</sup> &minus; 1 = (y &minus; l)/2 and l = y &minus; 2[(F/S)<sup>1/n</sup> &minus; 1].`},
         {val:y-(root-1), msg:`(F/S)<sup>1/n</sup> &minus; 1 is the six-month rate. Quoted p.a. with semiannual compounding it is twice that: multiply by 2.`},
-        {val:y-2*(Math.pow(F/S,n)-1), msg:`n is the number of six-month periods, so take the n-th root of F/S, i.e. raise it to 1/n, not to n.`}
-      ],Math.max(REL_SEP,tol));
+        {val:y-2*(Math.pow(F/S,n)-1), msg:`n is the number of six-month periods, so take the n-th root of F/S, i.e. raise it to 1/n, not to n.`},
+        {val:y-2*(Math.pow(F/S,12/m)-1), msg:`You counted the time in years (${m}/12) instead of in six-month periods. With semiannual compounding, n = ${m}/6 = ${n}.`}
+      ],Math.max(REL_SEP,tol));   // 29 Oct 2026: years-for-periods mistake added for quiz papers
     } while (usable(correct,cands,Math.max(REL_SEP,tol)).length<3);
     return {
       unit:"percent", tol, sep:Math.max(REL_SEP,tol),
@@ -381,6 +384,8 @@ const TEMPLATES = [{ id:"p1", topic:"price", also:["div","lend"], name:"The futu
         {val:S-F, msg:`You left out the interest. The ${money(S)} from the short sale sits in the bank until the futures mature and earns interest: it grows to S &times; (1 + y/2)<sup>n</sup>.`},
         {val:S*Math.pow(1+y/2,n)-S, msg:`That is only the interest on the short-sale proceeds. You also gain because the futures lets you buy the share back for ${money(F)}, less than the ${money(S)} you sold it for.`},
         {val:F-S*Math.pow(1+y/2,n), msg:`Sign reversed. You receive S &times; (1 + y/2)<sup>n</sup> from the bank and pay F for the share, so the profit is the bank balance minus F.`},
+        /* 29 Oct 2026: a positive mistake added; quiz papers drop the negative one (Anh: a riskless profit is never negative) */
+        {val:S*Math.pow(1+y/2,m/12)-F, msg:`You counted the time in years (${m}/12 = ${m/12}) instead of in six-month periods. With semiannual compounding, n = ${m}/6 = ${n}.`},
         {val:(S-F)*Math.pow(1+y/2,n), msg:`You grew the price gap S &minus; F, but F is paid at maturity and earns no interest. Only the ${money(S)} from the short sale is in the bank.`}
       ],sep);
     } while (usable(correct,cands,sep).length<3);
