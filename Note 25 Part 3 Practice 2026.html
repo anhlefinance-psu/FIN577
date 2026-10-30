@@ -1,0 +1,1854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Note 25 — Options Basics, Part 3 (combinations): practice</title>
+<style>
+  :root{
+    --bg:#ffffff; --fg:#1a1a1a; --muted:#5f6672; --line:#e2e5ea;
+    --card:#f7f8fa; --accent:#00205b; --accent-fg:#ffffff;
+    --ok-bg:#e8f5ec; --ok-line:#2e7d47; --ok-fg:#17532c;
+    --no-bg:#fdeceb; --no-line:#c0392b; --no-fg:#8e2b20;
+    --hint-bg:#fff8e6; --hint-line:#b8860b; --hint-fg:#6b4e00;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#14161a; --fg:#e8eaed; --muted:#9aa3af; --line:#2b2f36;
+      --card:#1b1e24; --accent:#7f9cd4; --accent-fg:#0d1015;
+      --ok-bg:#132a1c; --ok-line:#4caf70; --ok-fg:#9fdcb4;
+      --no-bg:#2c1614; --no-line:#e06c5d; --no-fg:#f0a99f;
+      --hint-bg:#2a2313; --hint-line:#d4a017; --hint-fg:#e5c976;
+    }
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:0; background:var(--bg); color:var(--fg);
+    font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  .wrap{max-width:760px; margin:0 auto; padding:24px 18px 64px}
+  header{border-bottom:1px solid var(--line); padding-bottom:14px; margin-bottom:20px}
+  h1{font-size:1.35rem; margin:0 0 4px}
+  .sub{color:var(--muted); font-size:.9rem}
+  .topics{display:flex; flex-wrap:wrap; gap:7px; margin:18px 0}
+  .chip{
+    border:1px solid var(--line); background:var(--card); color:var(--fg);
+    padding:6px 12px; border-radius:999px; cursor:pointer; font-size:.85rem;
+    font-family:inherit;
+  }
+  .chip[aria-pressed="true"]{background:var(--accent); color:var(--accent-fg); border-color:var(--accent)}
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:10px;
+    padding:20px; margin-bottom:16px;
+  }
+  .qmeta{font-size:.75rem; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin-bottom:10px}
+  .qtext{font-size:1.05rem; margin-bottom:6px}
+  .qtext b{font-variant-numeric:tabular-nums}
+  .qfig{display:flex; flex-wrap:wrap; gap:6px 26px; margin:10px 0 2px}
+  .qfig svg{max-width:100%; height:auto; overflow:visible}
+  .qfig text{fill:var(--fg); font-family:inherit; font-variant-numeric:tabular-nums}
+  .qfig .tl{font-weight:600}
+  .qfig .tp{fill:var(--muted); font-size:13px}
+  .qfig line, .qfig polygon{stroke:var(--accent); fill:var(--accent)}
+  .qfig circle{fill:var(--accent)}
+  .qfig line.off{stroke:var(--muted); opacity:.35}
+  .qfig circle.off{fill:var(--muted); opacity:.45}
+  .qfig line.ax{stroke:var(--fg); opacity:.55; stroke-width:1.2}
+  .qfig line.gd{stroke:var(--muted); opacity:.7; stroke-width:1; stroke-dasharray:3 3}
+  .qfig polyline.pl{fill:none; stroke:var(--accent); stroke-width:2.4; stroke-linejoin:round}
+  .qfig .tk{font-size:13px}
+  .ask{margin-top:14px; font-weight:600}
+  .row{display:flex; gap:9px; margin-top:14px; flex-wrap:wrap}
+  input[type=text]{
+    flex:1 1 190px; min-width:0; padding:11px 13px; font-size:1rem; font-family:inherit;
+    border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--fg);
+  }
+  input[type=text]:focus{outline:2px solid var(--accent); outline-offset:1px}
+  button{
+    padding:11px 17px; font-size:.95rem; font-family:inherit; border-radius:8px;
+    border:1px solid var(--accent); background:var(--accent); color:var(--accent-fg);
+    cursor:pointer; font-weight:600;
+  }
+  button.ghost{background:transparent; color:var(--fg); border-color:var(--line); font-weight:500}
+  button:disabled{opacity:.45; cursor:default}
+  .fb{border-radius:8px; padding:13px 15px; margin-top:15px; border-left:4px solid; font-size:.95rem}
+  .fb.ok{background:var(--ok-bg); border-color:var(--ok-line); color:var(--ok-fg)}
+  .fb.no{background:var(--no-bg); border-color:var(--no-line); color:var(--no-fg)}
+  .fb.hint{background:var(--hint-bg); border-color:var(--hint-line); color:var(--hint-fg)}
+  .fb strong{display:block; margin-bottom:3px}
+  details{margin-top:15px; border-top:1px solid var(--line); padding-top:13px}
+  summary{cursor:pointer; font-size:.9rem; color:var(--muted); font-weight:600}
+  .steps{margin-top:11px; font-size:.92rem}
+  .steps div{padding:5px 0; border-bottom:1px dashed var(--line)}
+  .steps div:last-child{border-bottom:none; font-weight:600}
+  .steps table.eqs{border-collapse:collapse; margin:2px 0}
+  .steps table.eqs td{padding:0; vertical-align:top}
+  .steps table.eqs td:first-child{text-align:right; padding-right:.3em}
+  .steps table.cf{border-collapse:collapse; margin:6px 0}
+  .steps table.cf td,.steps table.cf th{padding:2px 12px 2px 0; text-align:center}
+  .steps table.cf td:first-child,.steps table.cf th:first-child{text-align:left}
+  .steps table.cf th{border-bottom:1px solid var(--line)}
+  code{
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.88em;
+    background:var(--bg); padding:1px 5px; border-radius:4px; border:1px solid var(--line);
+  }
+  .opts{display:flex; flex-direction:column; gap:8px; margin-top:14px}
+  .opt{
+    text-align:left; padding:11px 14px; border:1px solid var(--line); background:var(--bg);
+    color:var(--fg); border-radius:8px; cursor:pointer; font-family:inherit;
+    font-size:.95rem; font-weight:400; line-height:1.55;
+  }
+  .opt:hover:not(:disabled){border-color:var(--accent)}
+  .opt.right{background:var(--ok-bg); border-color:var(--ok-line); border-width:2px}
+  .opt.wrong{background:var(--no-bg); border-color:var(--no-line)}
+  .opt:disabled{cursor:default}
+  .opt sup{font-size:.75em}
+  .stats{display:flex; gap:22px; font-size:.86rem; color:var(--muted); margin-top:22px;
+         border-top:1px solid var(--line); padding-top:14px; flex-wrap:wrap}
+  .stats b{color:var(--fg); font-variant-numeric:tabular-nums}
+  footer{margin-top:26px; font-size:.78rem; color:var(--muted); text-align:center}
+  /* The hidden attribute's UA rule is only [hidden]{display:none}, which loses
+     to author rules like .opts{display:flex} and .row{display:flex}. Without
+     this, hiding those panels silently does nothing. */
+  .modes{display:flex; gap:8px; align-items:center; margin-top:10px;
+         font-size:.84rem; color:var(--muted); flex-wrap:wrap}
+  .modes .chip{font-size:.84rem; padding:5px 12px}
+  .prog{margin-top:18px}
+  .progtop{display:flex; justify-content:space-between; align-items:baseline;
+           font-size:.86rem; color:var(--muted); margin-bottom:6px}
+  .progtop b{color:var(--fg); font-variant-numeric:tabular-nums}
+  .progbar{height:9px; border-radius:999px; background:var(--line); overflow:hidden}
+  .progfill{height:100%; width:0%; border-radius:999px; background:var(--accent);
+            transition:width .35s ease}
+  .progreset{background:none; border:none; color:var(--muted); font-size:.8rem;
+             padding:0; cursor:pointer; text-decoration:underline; font-weight:400}
+  .progreset:hover{color:var(--fg)}
+  .qhead{display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:10px}
+  .qhead .qmeta{margin-bottom:0}
+  .star{background:transparent; color:var(--muted); border:1px solid var(--line); border-radius:999px;
+        padding:3px 11px; font-size:.8rem; font-weight:500; white-space:nowrap; flex:none}
+  .star[aria-pressed="true"]{color:var(--hint-fg); background:var(--hint-bg); border-color:var(--hint-line)}
+  .star:hover{border-color:var(--accent)}
+  [hidden]{display:none !important}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>Note 25 — Options Basics, Part 3 (combinations): practice</h1>
+  <div class="sub">Part 3, combining options and shares. Add the payoffs of the pieces; profit = payoff at expiration &minus; cost today (ignore interest). One share per option. Answers are matched within 0.25%.</div>
+</header>
+
+<div class="topics" id="topics" role="group" aria-label="Choose topics"></div>
+
+<div class="modes" id="modes" role="group" aria-label="Question order">
+  <span>Order</span>
+  <button class="chip" id="mShuffle" type="button" aria-pressed="true">Shuffle</button>
+  <button class="chip" id="mSeq" type="button" aria-pressed="false">In order</button>
+  <span id="seqPos"></span>
+</div>
+
+<div class="card" id="card">
+  <div class="qhead">
+    <div class="qmeta" id="qmeta">—</div>
+    <button class="star" id="star" type="button" aria-pressed="false"
+            title="Star this question to practise it again under the Starred chip">☆ Star</button>
+  </div>
+  <div class="qtext" id="qtext">Loading…</div>
+  <div class="qfig" id="qfig" hidden></div>
+  <div class="ask" id="qask"></div>
+  <div class="opts" id="opts" hidden></div>
+  <div class="row" id="inputrow">
+    <input type="text" id="ans" autocomplete="off" inputmode="decimal"
+           placeholder="Your answer" aria-label="Your answer">
+    <button id="check">Check</button>
+    <button id="next" class="ghost">New question</button>
+  </div>
+  <div id="fb"></div>
+  <details id="soldetails" hidden>
+    <summary>Show the worked solution</summary>
+    <div class="steps" id="steps"></div>
+  </details>
+</div>
+
+<div class="prog">
+  <div class="progtop">
+    <span>Templates solved unaided <b id="pDone">0</b> of <b id="pTotal">0</b></span>
+    <button class="progreset" id="pReset" type="button">reset</button>
+  </div>
+  <div class="progbar"><div class="progfill" id="progfill"></div></div>
+</div>
+
+<div class="stats">
+  <span>Attempted <b id="sAtt">0</b></span>
+  <span>Correct first try <b id="sFirst">0</b></span>
+  <span>Accuracy <b id="sAcc">—</b></span>
+  <span>Streak <b id="sStreak">0</b></span>
+  <span>Solutions opened <b id="sPeek">0</b></span>
+</div>
+
+<footer>Numbers are randomised, so every attempt is different. Nothing you type leaves this page.<br>Use the &rarr; and &larr; arrow keys to move between questions.</footer>
+
+</div>
+
+<script>
+"use strict";
+
+/* ------------------------------------------------------------------ utils */
+const pick = a => a[Math.floor(Math.random()*a.length)];
+/* stepped range, e.g. range(0.04,0.24,0.0025) -> 81 rates instead of a list of 6 */
+const range = (lo,hi,step) => {
+  const out=[]; for(let v=lo; v<=hi+1e-9; v+=step) out.push(Number(v.toFixed(8)));
+  return out;
+};
+const ORD = n => n + (["th","st","nd","rd"][(n%100-n%10!=10)*(n%10<4)*(n%10)]||"th");
+const money = v => "$" + v.toLocaleString("en-US",{minimumFractionDigits:2, maximumFractionDigits:2});
+const pct   = (v,d=4) => (v*100).toFixed(d).replace(/\.?0+$/,"") + "%";
+const pctS  = (v,d=2) => (v*100).toFixed(d) + "%";
+const REL_SEP  = 0.01;    // distractors must sit >1% from everything else
+const REL_MATCH= 0.0025;  // student answer counts as a match within 0.25%
+
+const near = (a,b,tol) =>
+  Number.isFinite(a) && Number.isFinite(b) &&
+  Math.abs(a-b) / Math.max(Math.abs(a), Math.abs(b), 1e-12) < tol;
+
+/* Drop distractors too close to the answer (or to each other) to diagnose.
+   Templates about small effects (perpetuity timing) pass a tighter `sep`. */
+function usable(correct, cands, sep){
+  const s = sep || REL_SEP;
+  const kept = [];
+  for (const c of cands){
+    if (!Number.isFinite(c.val)) continue;
+    if (near(c.val, correct, s)) continue;
+    if (kept.some(k => near(k.val, c.val, s))) continue;
+    kept.push(c);
+  }
+  return kept;
+}
+
+/* ------------------------------------------------------------- templates */
+/* ---------------------------------------------------------------- Note 25, Part 3 ---
+   Options Basics, Part 3: Combining Options (FIN 577, Lecture 4). Every position is a sum of pieces: add the
+   payoffs at expiration, and the cost today is what you pay for the options you buy minus what you receive
+   for the ones you sell. Profit = payoff - cost today (interest ignored, as in the note). One share per
+   option. Built 28 Oct 2026 from the note and Anh's own practice questions, cut from it and saved in
+   Notes 25/Draft/Note_25_Part3_Practice_for_html.tex (rule 5):
+     cc1  <- Section 2 (the covered call: a cap at the strike, paid for by the call's price)
+     col1 <- practice 1 (the collar: share + $15 put - $25 call, worth between $15 and $25)
+     sp1  <- Section 3 (bull call spread; its mirror, the bear put spread)
+     st1  <- Section 4 and practice 2 (straddle and strangle, bought or sold)
+     bf1  <- Section 5 (the butterfly, checked by adding the payoffs)
+   Widened 28 Oct 2026 at Anh's request ("every question asks for profit"): each of the five draws one of
+   several questions about its position (profit at a price, the most or least profit, a break-even, ...), and
+   four templates ask what the five do not:
+     pt1  <- Section 1 (the protective put's floor and break-even; its profit at a price is Part 2's pr1)
+     dd1  <- Section 1 (the car, its deductible, and what the insurer pays)
+     rs1  <- Section 3 (a spread's missing price, from its most profit or its break-even)
+     bft1 <- Section 5's table (the column for the two short calls)
+   Practices 3, 4 and 5 are choice items k23, k18 and k22. Past MF exams have one combination question
+   (2025 final Q3: a payoff that is convex, then concave, then convex), the source of k24. IDs do not
+   repeat Parts 1 and 2.                                                                                */
+const keepFar = (correct,cands,sep) => cands.filter(c=>Number.isFinite(c.val) && !near(c.val,correct,sep));
+const smoney = v => (v < 0 ? "&minus;" : "") + money(Math.abs(v));   // −$4.38, not $-4.38
+const ppay = (S,K) => Math.max(K-S,0);
+const cpay = (S,K) => Math.max(S-K,0);
+const clamp = (S,lo,hi) => Math.min(Math.max(S,lo),hi);
+const centsTol = v => Math.max(0.0025, 0.0051/Math.abs(v));          // a small dollar key is accepted to the cent
+const centsSep = v => Math.max(REL_SEP, 0.02/Math.abs(v));
+const posOnly = cands => cands.filter(c=>c.val>0);                   // a price or a share price is never negative
+const ASK_PROFIT = "(Ignore interest. Two decimals; enter a negative number for a loss.)";
+const ASK_PRICE  = "(Ignore interest. Two decimals.)";
+
+/* 29 Oct 2026 (Anh): "at most 2 variants" per template, and the variants "fundamentally almost the same in terms of
+   wording", differing only in the numbers or a simple change of direction (rises / falls). Reason: "the students
+   spend time going through each template once and then in the actual quiz find themselves in perceivably
+   completely foreign terrain." So each question the widened templates asked is now its own template, and calls
+   and puts are separate templates (Anh). The generators below are the 28 Oct ones unchanged, except that the
+   question (and, for spreads, straddles and missing prices, the position) is passed in by the template. */
+function GEN_CC1(F){
+    /* Section 2: share - call is worth min(S, K) at expiration; profit = min(S, K) - S0 + c. Above the strike
+       the share is called away: the trap is the share's own gain. The call is out of the money today, as in
+       the note ($25 call on a $20 share). Four questions: profit at S; the most profit, K - S0 + c; the
+       break-even, S0 - c; the price above which the share alone does better, K + c.                       */
+    let ask, S0, K, c, S, zone, correct, cands, tol, sep;
+    do {
+      ask=pick(F.ask);
+      S0=pick(range(20,80,1)); K=5*Math.ceil((S0+1)/5)+pick([0,5]); c=pick(range(0.50,4.00,0.25)); S=null;
+      if (ask==="profit") {
+        zone=pick(["below","between","above","above","above"]);
+        S = zone==="below" ? S0-pick(range(1,12,1)) : zone==="between" ? pick(range(S0,K-1,1)) : K+pick(range(1,15,1));
+        correct=Math.min(S,K)-S0+c;
+      } else correct = ask==="max" ? K-S0+c : ask==="be" ? S0-c : K+c;
+      tol=centsTol(correct); sep=centsSep(correct);
+      cands = ask==="profit" ? keepFar(correct,[
+        {val:S-S0+c, msg:`With the share above ${money(K)}, the buyer of the call takes your share for ${money(K)}. You give up everything above the strike: the position is worth ${money(K)}, not ${money(S)}.`},
+        {val:Math.min(S,K)-S0, msg:`You left out the ${money(c)} you received today for selling the call. That income is what you get for giving up the upside.`},
+        {val:Math.min(S,K)-S0-c, msg:`You sold the call, so the ${money(c)} is money you receive, not money you pay: add it.`},
+        {val:S-S0, msg:`That is the share's profit on its own. You also sold a call: you received ${money(c)} for it${S>K?`, and it takes your share at ${money(K)}`:""}.`},
+        {val:c-cpay(S,K), msg:`That is the call's profit on its own, for you as its writer. You also own the share, which you bought for ${money(S0)}.`},
+        {val:K-S0+c, msg:`The call is exercised only if the share ends above ${money(K)}. Here it ends at ${money(S)}: the call expires unused, and you keep the share.`}
+      ],sep)
+      : ask==="max" ? keepFar(correct,posOnly([
+        {val:K-S0, msg:`You left out the ${money(c)} you received today for selling the call. You keep it whatever happens.`},
+        {val:K-S0-c, msg:`You sold the call, so the ${money(c)} is money you receive, not money you pay: add it.`},
+        {val:K+c, msg:`At best the position is worth ${money(K)} at expiration, and you received ${money(c)} today. But the share cost you ${money(S0)}: subtract it.`},
+        {val:c, msg:`That is what the call alone earns you as its writer. You also own the share, and it can rise from ${money(S0)} to ${money(K)} before the cap stops it.`}
+      ]),sep)
+      : ask==="be" ? keepFar(correct,[
+        {val:S0+c, msg:`You received the ${money(c)}, so it lowers what the position cost you: the share can fall by ${money(c)} before you lose money. Subtract it.`},
+        {val:K+c, msg:`That is where the buyer of the call breaks even. You sold the call, and you own the share.`},
+        {val:S0, msg:`You left out the ${money(c)} you received for the call. It covers a fall of up to ${money(c)} in the share.`},
+        {val:K-c, msg:`The break-even starts from what you paid for the share, ${money(S0)}, not from the strike. Below ${money(K)} the call expires unused.`}
+      ],sep)
+      : keepFar(correct,[
+        {val:K, msg:`At ${money(K)} the covered call is still ahead by the ${money(c)} you received. The share alone catches up only when it ends ${money(c)} above the strike.`},
+        {val:K-c, msg:`The ${money(c)} is extra for the covered call, so the share alone must end ${money(c)} above ${money(K)}, not below it, to catch up.`},
+        {val:S0+c, msg:`Below ${money(K)} the share is not called away, so the covered call stays ahead by the ${money(c)} you received. The gap closes only above the strike.`},
+        {val:S0-c, msg:`That is the covered call's break-even. The question compares the covered call with holding the share alone.`}
+      ],sep);
+    } while ((S!==null && S<=0) || Math.abs(correct)<0.25 || usable(correct,cands,sep).length<3);
+    const stem = `You bought a share for <b>${money(S0)}</b>. You sell a call on it with a strike price of <b>${money(K)}</b> for <b>${money(c)}</b>. This position is called a covered call.`;
+    if (ask==="profit") return {
+      unit:"money", tol, sep,
+      text:`${stem}
+            At expiration the share trades at <b>${money(S)}</b>.`,
+      ask:`What is your profit per share on the share and the call together? ${ASK_PROFIT}`,
+      correct, cands,
+      steps:[
+        S>K ? `The share ends above ${money(K)}: the buyer of the call takes your share and pays you ${money(K)}. The share and the short call together are worth ${money(K)}`
+            : `The share ends at or below ${money(K)}: the call expires unused, and you keep the share. The share and the short call together are worth ${money(S)}`,
+        `Profit = value at expiration &minus; cost of the share + price received for the call = ${money(Math.min(S,K))} &minus; ${money(S0)} + ${money(c)} = <b>${smoney(correct)}</b>`
+      ]};
+    if (ask==="max") return {
+      unit:"money", tol, sep, text:stem,
+      ask:`What is the most profit per share you can make on the share and the call together, however high the share rises? ${ASK_PRICE}`,
+      correct, cands,
+      steps:[
+        `Above ${money(K)} the buyer of the call takes your share for ${money(K)}: at expiration the share and the short call are worth at most ${money(K)}`,
+        `Most profit = ${money(K)} &minus; ${money(S0)} + ${money(c)} = <b>${money(correct)}</b>`
+      ]};
+    if (ask==="be") return {
+      unit:"money", tol, sep, text:stem,
+      ask:`At what share price at expiration do you break even on the share and the call together? ${ASK_PRICE}`,
+      correct, cands,
+      steps:[
+        `Above ${money(K)} the buyer of the call takes your share for ${money(K)}: profit = ${money(K)} &minus; ${money(S0)} + ${money(c)} = ${smoney(K-S0+c)}, a fixed amount above zero. So the break-even is below ${money(K)}`,
+        `Below ${money(K)} the call expires unused, and you keep the share: profit = S &minus; ${money(S0)} + ${money(c)}`,
+        `This is zero when S = ${money(S0)} &minus; ${money(c)} = <b>${money(correct)}</b>`
+      ]};
+    return {
+      unit:"money", tol, sep, text:stem,
+      ask:`Compare this with simply holding the share. Above what share price at expiration does the covered call give you a lower profit than the share alone? ${ASK_PRICE}`,
+      correct, cands,
+      steps:[
+        `Up to ${money(K)} you keep the share either way, and the covered call is ahead by the ${money(c)} you received`,
+        `Above ${money(K)} the covered call's profit stays at ${money(K)} &minus; ${money(S0)} + ${money(c)} = ${smoney(K-S0+c)}, while the share alone earns S &minus; ${money(S0)}`,
+        `The share alone does better once S is above ${money(K)} + ${money(c)} = <b>${money(correct)}</b>`
+      ]};
+  }
+function GEN_COL1(F){
+    /* Practice 1: share + put at K1 - call at K2 is worth S held between K1 and K2 at expiration; profit =
+       clamp(S, K1, K2) - S0 - p + c. Three questions: profit at S; the lowest profit, K1 - S0 - p + c; the
+       highest, K2 - S0 - p + c. Each trap drops the floor, the cap or a premium, or turns a premium's sign. */
+    let ask, S0, K1, K2, p, c, S, zone, correct, cands, tol, sep;
+    do {
+      ask=pick(F.ask);
+      S0=pick(range(20,80,1)); K1=5*Math.floor((S0-1)/5)-pick([0,5]); K2=5*Math.ceil((S0+1)/5)+pick([0,5]);
+      p=pick(range(0.50,4.00,0.25)); c=pick(range(0.50,4.00,0.25)); S=null;
+      const cost=S0+p-c;
+      if (ask==="profit") {
+        zone=pick(["below","between","above"]);
+        S = zone==="below" ? K1-pick(range(1,12,1)) : zone==="between" ? pick(range(K1+1,K2-1,1)) : K2+pick(range(1,15,1));
+        const v=clamp(S,K1,K2);
+        correct=v-S0-p+c;
+        tol=centsTol(correct); sep=centsSep(correct);
+        cands=keepFar(correct,[
+          {val:S-S0-p+c, msg:`You left out what the two options pay at expiration. The put lets you sell for no less than ${money(K1)}; the call you sold takes the share at ${money(K2)}. The position is worth ${money(v)}.`},
+          {val:v-S0, msg:`You left out the two option prices: you paid ${money(p)} for the put and received ${money(c)} for the call.`},
+          {val:v-S0+p-c, msg:`The signs of the option prices are reversed. You pay ${money(p)} for the put you buy and receive ${money(c)} for the call you sell.`},
+          {val:S-S0, msg:`That is the share's profit on its own. The put and the call hold its value between ${money(K1)} and ${money(K2)}, and their prices count too.`}
+        ],sep);
+      } else if (ask==="worst") {
+        correct=K1-cost;
+        tol=centsTol(correct); sep=centsSep(correct);
+        cands=keepFar(correct,[
+          {val:K1-S0, msg:`You left out the two option prices: you paid ${money(p)} for the put and received ${money(c)} for the call.`},
+          {val:K1-S0-p, msg:`You left out the ${money(c)} you received for the call. You keep it whatever the share does.`},
+          {val:K1-S0+p-c, msg:`The signs of the option prices are reversed. You pay ${money(p)} for the put you buy and receive ${money(c)} for the call you sell.`},
+          {val:-cost, msg:`The share can fall to zero, but the put still lets you sell it for ${money(K1)}. The position is never worth less than ${money(K1)}.`},
+          {val:K2-cost, msg:`That is the highest profit, when the call you sold takes the share at ${money(K2)}. The lowest comes when the share falls and you sell it through the put.`}
+        ],sep);
+      } else {
+        correct=K2-cost;
+        tol=centsTol(correct); sep=centsSep(correct);
+        cands=keepFar(correct,[
+          {val:K2-S0, msg:`You left out the two option prices: you paid ${money(p)} for the put and received ${money(c)} for the call.`},
+          {val:K2-S0+c, msg:`You left out the ${money(p)} you paid for the put. You pay it whatever the share does.`},
+          {val:K2-S0+p-c, msg:`The signs of the option prices are reversed. You pay ${money(p)} for the put you buy and receive ${money(c)} for the call you sell.`},
+          {val:K1-cost, msg:`That is the lowest profit, when you sell the share through the put at ${money(K1)}. The highest comes when the share rises and the call takes it at ${money(K2)}.`}
+        ],sep);
+      }
+    } while ((S!==null && S<=0) || Math.abs(correct)<0.25 || usable(correct,cands,sep).length<3
+             || (S0-K1 > K2-S0 && p > c+0.50) || (K2-S0 > S0-K1 && c > p+0.50));   /* no far put dearer than a near call (blind sitting 28 Oct 2026) */
+    const stem = `You bought a share for <b>${money(S0)}</b>. You buy a put on it with a strike price of <b>${money(K1)}</b> for <b>${money(p)}</b>, and sell
+            a call on it with a strike price of <b>${money(K2)}</b> for <b>${money(c)}</b>. Both options expire on the same date. This position is called a collar.`;
+    const costStep = `Cost today = cost of the share + put price &minus; call price = ${money(S0)} + ${money(p)} &minus; ${money(c)} = ${money(S0+p-c)}`;
+    if (ask==="profit") {
+      const v=clamp(S,K1,K2);
+      return {
+        unit:"money", tol, sep,
+        text:`${stem}
+            At expiration the share trades at <b>${money(S)}</b>.`,
+        ask:`What is your profit per share on the collar? ${ASK_PROFIT}`,
+        correct, cands,
+        steps:[
+          S<K1 ? `The share ends below ${money(K1)}: you sell it for ${money(K1)} through the put, and the call expires unused. The position is worth ${money(K1)}`
+          : S>K2 ? `The share ends above ${money(K2)}: the buyer of the call takes your share for ${money(K2)}, and the put expires unused. The position is worth ${money(K2)}`
+          : `The share ends between ${money(K1)} and ${money(K2)}: both options expire unused, and you keep the share. The position is worth ${money(S)}`,
+          costStep,
+          `Profit = ${money(v)} &minus; ${money(S0+p-c)} = <b>${smoney(correct)}</b>`
+        ]};
+    }
+    const w = ask==="worst";
+    return {
+      unit:"money", tol, sep, text:stem,
+      ask: w ? `What is the lowest profit per share you can end with on the collar, however far the share falls? ${ASK_PROFIT}`
+             : `What is the highest profit per share you can make on the collar, however high the share rises? ${ASK_PROFIT}`,
+      correct, cands,
+      steps:[
+        w ? `However far the share falls, you can sell it for ${money(K1)} through the put: at expiration the collar is worth at least ${money(K1)}`
+          : `However high the share rises, the buyer of the call takes it for ${money(K2)}: at expiration the collar is worth at most ${money(K2)}`,
+        costStep,
+        `${w?"Lowest":"Highest"} profit = ${money(w?K1:K2)} &minus; ${money(S0+p-c)} = <b>${smoney(correct)}</b>`,
+        w ? `The highest profit works the same way at the other end: however high the share rises, the buyer of the call takes it for ${money(K2)}, so highest profit = ${money(K2)} &minus; ${money(S0+p-c)} = ${smoney(K2-(S0+p-c))}`
+          : `The lowest profit works the same way at the other end: however far the share falls, the put lets you sell it for ${money(K1)}, so lowest profit = ${money(K1)} &minus; ${money(S0+p-c)} = ${smoney(K1-(S0+p-c))}`
+      ]};
+  }
+function GEN_SP1(F){
+    /* Section 3: bull call spread (buy the K1 call, sell the K2 call), or its mirror, the bear put spread (buy the
+       K2 put, sell the K1 put). Payoff: zero on one side, rises one for one between the strikes, capped at
+       K2 - K1. Profit = payoff - net cost D. Three questions: profit at S; the most profit, (K2 - K1) - D;
+       the break-even, K1 + D (bull) or K2 - D (bear). The trap is the option bought, on its own (no cap). */
+    let ask, type, K1, K2, h, lo, hi, D, S, zone, pay, alone, both, correct, cands, tol, sep;
+    do {
+      ask=pick(F.ask);
+      type=pick(F.type); K1=pick(range(20,70,5)); h=pick([5,10]); K2=K1+h;
+      D=pick(range(1.00,h-1,0.25)); lo=pick(range(0.50,3.00,0.25)); hi=lo+D; S=null;
+      const kind=type==="bull"?"call":"put", kb=type==="bull"?K1:K2, ks=type==="bull"?K2:K1;
+      if (ask==="profit") {
+        zone=pick(type==="bull" ? ["between","between","above"] : ["between","between","below"]);   /* never the side where both expire unused: blind sitting 28 Oct 2026 */
+        S = zone==="below" ? K1-pick(range(1,10,1)) : zone==="between" ? pick(range(K1+1,K2-1,1)) : K2+pick(range(1,10,1));
+        if (type==="bull") { pay=cpay(S,K1)-cpay(S,K2); alone=cpay(S,K1); both=cpay(S,K1)+cpay(S,K2); }
+        else               { pay=ppay(S,K2)-ppay(S,K1); alone=ppay(S,K2); both=ppay(S,K2)+ppay(S,K1); }
+        correct=pay-D;
+        tol=centsTol(correct); sep=centsSep(correct);
+        cands=keepFar(correct,[
+          {val:alone-hi, msg:`That is the ${money(kb)} ${kind} on its own. The ${money(ks)} ${kind} you sold brought in ${money(lo)} today, and it ${type==="bull"?`takes away everything above ${money(K2)}`:`takes away everything below ${money(K1)}`}.`},
+          {val:pay, msg:`That is the payoff. The profit also takes off the net cost today: ${money(hi)} paid &minus; ${money(lo)} received = ${money(D)}.`},
+          {val:pay-(hi+lo), msg:`You sold the ${money(ks)} ${kind}, so its ${money(lo)} is money you receive. The net cost is ${money(hi)} &minus; ${money(lo)} = ${money(D)}.`},
+          {val:pay+D, msg:`The spread costs ${money(D)} today: you pay ${money(hi)} for the ${kind} you buy and receive only ${money(lo)} for the one you sell. Subtract it.`},
+          {val:both-(hi+lo), msg:`You bought both ${kind}s. In a spread you buy one and sell the other: the ${money(ks)} ${kind} is sold.`},
+          {val:-correct, msg:`That is the profit of the other side of the trade. You bought the ${money(kb)} ${kind} and sold the ${money(ks)} ${kind}.`}
+        ],sep);
+      } else if (ask==="max") {
+        correct=h-D;
+        tol=centsTol(correct); sep=centsSep(correct);
+        cands=keepFar(correct,posOnly([
+          {val:h, msg:`That is the most the spread pays at expiration. The profit also takes off the net cost today: ${money(hi)} &minus; ${money(lo)} = ${money(D)}.`},
+          {val:h-(hi+lo), msg:`You sold the ${money(ks)} ${kind}, so its ${money(lo)} is money you receive. The net cost is ${money(hi)} &minus; ${money(lo)} = ${money(D)}.`},
+          {val:h+D, msg:`The spread costs ${money(D)} today: you pay more for the ${kind} you buy than you receive for the one you sell. Subtract it.`},
+          {val:D, msg:`That is the most you can lose: the net cost, if the spread pays nothing. The most you can make is the most it pays, ${money(h)}, minus that cost.`}
+        ]),sep);
+      } else {
+        correct = type==="bull" ? K1+D : K2-D;
+        tol=centsTol(correct); sep=centsSep(correct);
+        cands=keepFar(correct, type==="bull" ? [
+          {val:K1+hi, msg:`That is where the ${money(K1)} call alone breaks even. The ${money(lo)} you received for the ${money(K2)} call lowers the cost to ${money(D)}.`},
+          {val:K2-D, msg:`You counted down from ${money(K2)}. The spread starts to pay at ${money(K1)}, so it must rise ${money(D)} above ${money(K1)} to earn back its cost.`},
+          {val:K1-D, msg:`Below ${money(K1)} the spread pays nothing. It breaks even only once the share is ${money(D)} above ${money(K1)}.`},
+          {val:K2, msg:`At ${money(K2)} the spread already pays its most, ${money(h)}, which is more than its ${money(D)} cost. It breaks even lower down.`}
+        ] : [
+          {val:K2-hi, msg:`That is where the ${money(K2)} put alone breaks even. The ${money(lo)} you received for the ${money(K1)} put lowers the cost to ${money(D)}.`},
+          {val:K1+D, msg:`You counted up from ${money(K1)}. The spread starts to pay below ${money(K2)}, so the share must end ${money(D)} below ${money(K2)} to earn back its cost.`},
+          {val:K2+D, msg:`Above ${money(K2)} the spread pays nothing. It breaks even only once the share is ${money(D)} below ${money(K2)}.`},
+          {val:K1, msg:`At ${money(K1)} the spread already pays its most, ${money(h)}, which is more than its ${money(D)} cost. It breaks even higher up.`}
+        ],sep);
+      }
+    } while ((S!==null && S<=0) || Math.abs(correct)<0.25 || usable(correct,cands,sep).length<3);
+    const kind=type==="bull"?"call":"put", kb=type==="bull"?K1:K2, ks=type==="bull"?K2:K1;
+    const stem = `You buy a ${kind} on a share with a strike price of <b>${money(kb)}</b> for <b>${money(hi)}</b>, and sell a ${kind} on the same share
+            with a strike price of <b>${money(ks)}</b> for <b>${money(lo)}</b>. Both options expire on the same date. This position is called a ${type==="bull"?"bull call spread":"bear put spread"}.`;
+    const costStep = `Cost today = price paid &minus; price received = ${money(hi)} &minus; ${money(lo)} = ${money(D)}`;
+    if (ask==="profit") return {
+      unit:"money", tol, sep,
+      text:`${stem} At expiration the share trades at <b>${money(S)}</b>.`,
+      ask:`What is your profit per share? ${ASK_PROFIT}`,
+      correct, cands,
+      steps:[
+        type==="bull"
+          ? `Payoff = max(S &minus; ${money(K1)}, 0) &minus; max(S &minus; ${money(K2)}, 0) = ${money(cpay(S,K1))} &minus; ${money(cpay(S,K2))} = ${money(pay)}`
+          : `Payoff = max(${money(K2)} &minus; S, 0) &minus; max(${money(K1)} &minus; S, 0) = ${money(ppay(S,K2))} &minus; ${money(ppay(S,K1))} = ${money(pay)}`,
+        costStep,
+        `Profit = payoff &minus; cost today = ${money(pay)} &minus; ${money(D)} = <b>${smoney(correct)}</b>`
+      ]};
+    if (ask==="max") return {
+      unit:"money", tol, sep, text:stem,
+      ask:`What is the most profit per share you can make, whatever the share does? ${ASK_PRICE}`,
+      correct, cands,
+      steps:[
+        `The spread pays at most ${money(K2)} &minus; ${money(K1)} = ${money(h)}, when the share ends ${type==="bull"?`above ${money(K2)}`:`below ${money(K1)}`}`,
+        costStep,
+        `Most profit = ${money(h)} &minus; ${money(D)} = <b>${money(correct)}</b>`
+      ]};
+    return {
+      unit:"money", tol, sep, text:stem,
+      ask:`At what share price at expiration do you break even? ${ASK_PRICE}`,
+      correct, cands,
+      steps:[
+        costStep,
+        type==="bull"
+          ? `Above ${money(K1)} the payoff rises one for one with the share, so it covers the cost ${money(D)} above ${money(K1)}: ${money(K1)} + ${money(D)} = <b>${money(correct)}</b>`
+          : `Below ${money(K2)} the payoff rises one for one as the share falls, so it covers the cost ${money(D)} below ${money(K2)}: ${money(K2)} &minus; ${money(D)} = <b>${money(correct)}</b>`
+      ]};
+  }
+function GEN_ST1(F){
+    /* Section 4 and practice 2: straddle = call + put at one strike; strangle = higher-strike call + lower-strike
+       put. The buyer pays both prices and gets the payoff; the seller the reverse. Questions: profit at S;
+       the higher break-even, Kc + c + p; the lower, Kp - c - p (the same for buyer and seller); for a
+       strangle, the width of the band where the buyer loses, (Kc - Kp) + 2(c + p). Traps: one premium, no
+       premium, the other side, only one leg's payoff, the cost split between the two sides.                */
+    let ask, type, role, Kp, Kc, c, p, S, pay, correct, cands, tol, sep;
+    do {
+      type=pick(F.type); role=pick(F.role);
+      ask=pick(F.ask);
+      if (type==="straddle") { Kp=Kc=pick(range(20,80,5)); p=pick(range(1.00,6.00,0.25)); c=p+pick([0,0.25,0.50]);   /* same strike: the call costs at least the put (rates are not negative) */ }
+      else { Kp=pick(range(20,70,5)); Kc=Kp+pick([5,10]); c=pick(range(0.50,3.00,0.25)); p=pick(range(0.50,3.00,0.25)); }
+      const P=c+p, sg = role==="buy" ? 1 : -1;
+      S=null;
+      if (ask==="profit") {
+        S = pick([Kp-pick(range(1,15,1)), Kc+pick(range(1,15,1))]);
+        pay=ppay(S,Kp)+cpay(S,Kc);
+        correct=sg*(pay-c-p);
+        tol=centsTol(correct); sep=centsSep(correct);
+        const lone = S<Kp ? "put" : "call";
+        cands=keepFar(correct,[
+          {val:sg*pay, msg:`That is the payoff. The profit also counts the two option prices, ${money(c)} for the call and ${money(p)} for the put, ${role==="buy"?"which you paid":"which you received"} today.`},
+          {val:sg*(pay-c), msg:`You counted only the call's price. ${role==="buy"?"You paid":"You received"} ${money(p)} for the put as well.`},
+          {val:sg*(pay-p), msg:`You counted only the put's price. ${role==="buy"?"You paid":"You received"} ${money(c)} for the call as well.`},
+          {val:-correct, msg:role==="buy" ? `That is the seller's profit. You bought the two options: you paid for them today and receive the payoff.`
+                                         : `That is the buyer's profit. You sold the two options: you received their prices today and owe the payoff.`},
+          {val:sg*(Math.abs(S-(Kp+Kc)/2)-c-p), msg:`The ${lone} pays the gap between the share and its own strike, ${money(lone==="put"?Kp:Kc)}, not the gap from the midpoint of the two strikes.`}
+        ],sep);
+      } else if (ask==="up") {
+        correct=Kc+P;
+        tol=centsTol(correct); sep=centsSep(correct);
+        cands=keepFar(correct,[
+          {val:Kc+c, msg:`You counted only the call's price. Up here only the call pays, but it must cover both prices, ${money(c)} + ${money(p)} = ${money(P)}.`},
+          {val:Kc+P/2, msg:`You split the ${money(P)} between the two sides. Whichever way the share moves, only one option pays, and it must cover the whole ${money(P)}.`},
+          {val:Kc-P, msg:type==="straddle" ? `That is the lower break-even. The question asks for the higher one.`
+                                           : `Above ${money(Kc)} the call pays more as the share rises, so the break-even is above ${money(Kc)}: add the ${money(P)}.`},
+          {val:Kp+P, msg:`The call pays the gap above its own strike, ${money(Kc)}, not above the put's strike, ${money(Kp)}.`},
+          {val:Kp-P, msg:`That is the lower break-even. The question asks for the higher one.`}
+        ],sep);
+      } else if (ask==="down") {
+        correct=Kp-P;
+        tol=centsTol(correct); sep=centsSep(correct);
+        cands=keepFar(correct,[
+          {val:Kp-p, msg:`You counted only the put's price. Down here only the put pays, but it must cover both prices, ${money(c)} + ${money(p)} = ${money(P)}.`},
+          {val:Kp-P/2, msg:`You split the ${money(P)} between the two sides. Whichever way the share moves, only one option pays, and it must cover the whole ${money(P)}.`},
+          {val:Kp+P, msg:type==="straddle" ? `That is the higher break-even. The question asks for the lower one.`
+                                           : `Below ${money(Kp)} the put pays more as the share falls, so the break-even is below ${money(Kp)}: subtract the ${money(P)}.`},
+          {val:Kc-P, msg:`The put pays the gap below its own strike, ${money(Kp)}, not below the call's strike, ${money(Kc)}.`},
+          {val:Kc+P, msg:`That is the higher break-even. The question asks for the lower one.`}
+        ],sep);
+      } else {
+        correct=(Kc-Kp)+2*P;
+        tol=centsTol(correct); sep=centsSep(correct);
+        cands=keepFar(correct,[
+          {val:(Kc-Kp)+P, msg:`You counted the ${money(P)} once. The share must get ${money(P)} past each strike, on both sides, before the payoff covers the cost.`},
+          {val:2*P, msg:`You left out the gap between the strikes. Between ${money(Kp)} and ${money(Kc)} neither option pays.`},
+          {val:Kc-Kp, msg:`Between ${money(Kp)} and ${money(Kc)} neither option pays. But the band goes further: the share must get ${money(P)} past each strike before the payoff covers the cost.`},
+          {val:P, msg:`That is the cost of the strangle, ${money(c)} + ${money(p)}. The question asks how wide the band of share prices is.`}
+        ],sep);
+      }
+    } while ((S!==null && S<=0) || correct<=0 && ask!=="profit" || Math.abs(correct)<0.25 || usable(correct,cands,sep).length<3
+             || c > 0.12*Kc);   /* a $6.50 call on a $20 strike is not believable (blind sitting 28 Oct 2026) */
+    const verb = role==="buy" ? "buy" : "sell";
+    const legs = type==="straddle"
+      ? `a call and a put on the same share, both with a strike price of <b>${money(Kc)}</b>, ${role==="buy"?"paying":"receiving"} <b>${money(c)}</b> for the call and <b>${money(p)}</b> for the put`
+      : `a call on a share with a strike price of <b>${money(Kc)}</b> for <b>${money(c)}</b> and a put on the same share with a strike price of <b>${money(Kp)}</b> for <b>${money(p)}</b>`;
+    const stem = `You ${verb} ${legs}. Both options expire on the same date. ${role==="buy" ? `This position is called a ${type}.` : `This is called selling a ${type}.`}`;
+    const P=c+p;
+    if (ask==="profit") return {
+      unit:"money", tol, sep,
+      text:`${stem} At expiration the share trades at <b>${money(S)}</b>.`,
+      ask:`What is your profit per share? ${ASK_PROFIT}`,
+      correct, cands,
+      steps:[
+        `Payoff of the two options = max(${money(Kp)} &minus; S, 0) + max(S &minus; ${money(Kc)}, 0) = ${money(ppay(S,Kp))} + ${money(cpay(S,Kc))} = ${money(pay)}`,
+        role==="buy"
+          ? `You bought them: you paid ${money(c)} + ${money(p)} = ${money(c+p)} today and receive ${money(pay)}. Profit = ${money(pay)} &minus; ${money(c+p)} = <b>${smoney(correct)}</b>`
+          : `You sold them: you received ${money(c)} + ${money(p)} = ${money(c+p)} today and owe ${money(pay)}. Profit = ${money(c+p)} &minus; ${money(pay)} = <b>${smoney(correct)}</b>`,
+        role==="buy"
+          ? `Had you sold them instead, you would receive the ${money(c+p)} today and owe the ${money(pay)}: profit = ${money(c+p)} &minus; ${money(pay)} = ${smoney(-correct)}. The seller's profit is the buyer's with the sign flipped`
+          : `Had you bought them instead, you would pay the ${money(c+p)} today and receive the ${money(pay)}: profit = ${money(pay)} &minus; ${money(c+p)} = ${smoney(-correct)}. The buyer's profit is the seller's with the sign flipped`
+      ]};
+    const both = role==="buy" ? `The payoff covers the ${money(P)} you paid` : `The payoff you owe equals the ${money(P)} you received`;
+    if (ask==="up" || ask==="down") return {
+      unit:"money", tol, sep, text:stem,
+      ask:`There are two share prices at expiration at which you break even. What is the ${ask==="up"?"higher":"lower"} one? ${ASK_PRICE}`,
+      correct, cands,
+      steps:[
+        `The two options cost ${money(c)} + ${money(p)} = ${money(P)} in total`,
+        ask==="up"
+          ? `Above ${money(Kc)} only the call pays, S &minus; ${money(Kc)}. ${both} when S = ${money(Kc)} + ${money(P)} = <b>${money(correct)}</b>`
+          : `Below ${money(Kp)} only the put pays, ${money(Kp)} &minus; S. ${both} when S = ${money(Kp)} &minus; ${money(P)} = <b>${money(correct)}</b>`,
+        ask==="up"
+          ? `The lower break-even works the same way on the other side: below ${money(Kp)} only the put pays, ${money(Kp)} &minus; S, and the payoff covers the ${money(P)} when S = ${money(Kp)} &minus; ${money(P)} = ${money(Kp-P)}`
+          : `The higher break-even works the same way on the other side: above ${money(Kc)} only the call pays, S &minus; ${money(Kc)}, and the payoff covers the ${money(P)} when S = ${money(Kc)} + ${money(P)} = ${money(Kc+P)}`
+      ]};
+    return {
+      unit:"money", tol, sep, text:stem,
+      ask:`You ${role==="buy"?"lose":"make"} money if the share ends between two prices at expiration. How far apart are those two prices? ${ASK_PRICE}`,
+      correct, cands,
+      steps:[
+        `The two options cost ${money(c)} + ${money(p)} = ${money(P)} in total`,
+        `Higher break-even = ${money(Kc)} + ${money(P)} = ${money(Kc+P)}; lower break-even = ${money(Kp)} &minus; ${money(P)} = ${money(Kp-P)}`,
+        `Between them you ${role==="buy"?"lose":"make"} money: ${money(Kc+P)} &minus; ${money(Kp-P)} = <b>${money(correct)}</b>`
+      ]};
+  }
+function GEN_BF1(F){
+    /* Section 5: buy the K1 call, sell two K2 calls, buy the K3 call (equal spacing h). Payoff peaks at h when the
+       share ends at K2 and is zero outside K1-K3. Cost today = c1 - 2c2 + c3, kept positive by drawing
+       c1 - c2 > c2 - c3 (call prices fall with the strike, and by less and less). Questions: profit at S;
+       the most profit, h - B; the lower break-even, K1 + B; the higher, K3 - B. Traps: one short call, no
+       cost, the cost's signs.                                                                              */
+    let ask, h, K1, K2, K3, c1, c2, c3, B, S, pay, correct, cands, tol, sep;
+    do {
+      ask=pick(F.ask);
+      h=pick([5,10]); K1=pick(range(20,70,5)); K2=K1+h; K3=K2+h;
+      c3=pick(range(0.50,2.00,0.25)); const d2=pick(range(1.00,h-1.5,0.25)); const d1=d2+pick(range(0.25,1.50,0.25));
+      c2=c3+d2; c1=c2+d1; B=c1-2*c2+c3; S=null;
+      if (ask==="profit") {
+        S = pick([K1+pick(range(1,h-1,1)), K2+pick(range(1,h-1,1)), K3+pick(range(1,8,1))]);   /* not below K1, where every call expires unused: blind sitting 28 Oct 2026 */
+        pay=cpay(S,K1)-2*cpay(S,K2)+cpay(S,K3);
+        correct=pay-B;
+        tol=centsTol(correct); sep=centsSep(correct);
+        cands=keepFar(correct,[
+          {val:pay, msg:`That is the payoff. The profit also takes off the butterfly's cost today: ${money(c1)} &minus; 2 &times; ${money(c2)} + ${money(c3)} = ${money(B)}.`},
+          {val:cpay(S,K1)-cpay(S,K2)+cpay(S,K3)-(c1-c2+c3), msg:`You sold one ${money(K2)} call, not two. The second one is what turns the payoff down above ${money(K2)}.`},
+          {val:pay-(c1+2*c2+c3), msg:`You sold the two ${money(K2)} calls, so their ${money(2*c2)} is money you receive. Cost today = ${money(c1)} &minus; 2 &times; ${money(c2)} + ${money(c3)}.`},
+          {val:pay+B, msg:`The butterfly costs ${money(B)} today: the two calls you buy cost more than the two you sell bring in. Subtract it.`},
+          {val:cpay(S,K1)-2*cpay(S,K2)-(c1-2*c2), msg:`You left out the ${money(K3)} call you bought. It stops the payoff falling above ${money(K3)}, and it cost ${money(c3)}.`},
+          {val:-correct, msg:`That is the profit of the other side of the trade. You bought the ${money(K1)} and ${money(K3)} calls and sold the two ${money(K2)} calls.`}
+        ],sep);
+      } else if (ask==="max") {
+        correct=h-B;
+        tol=centsTol(correct); sep=centsSep(correct);
+        cands=keepFar(correct,posOnly([
+          {val:h, msg:`That is the most the butterfly pays, at ${money(K2)}. The profit also takes off its cost today: ${money(c1)} &minus; 2 &times; ${money(c2)} + ${money(c3)} = ${money(B)}.`},
+          {val:h+B, msg:`The butterfly costs ${money(B)} today: the two calls you buy cost more than the two you sell bring in. Subtract it.`},
+          {val:h-(c1+2*c2+c3), msg:`You sold the two ${money(K2)} calls, so their ${money(2*c2)} is money you receive. Cost today = ${money(c1)} &minus; 2 &times; ${money(c2)} + ${money(c3)}.`},
+          {val:h-(c1-c2+c3), msg:`You sold two ${money(K2)} calls, not one: they bring in 2 &times; ${money(c2)}. Cost today = ${money(c1)} &minus; 2 &times; ${money(c2)} + ${money(c3)}.`},
+          {val:2*h-B, msg:`At ${money(K2)} only the ${money(K1)} call pays: ${money(K2)} &minus; ${money(K1)} = ${money(h)}. The ${money(K3)} call pays nothing there.`}
+        ]),sep);
+      } else if (ask==="down") {
+        correct=K1+B;
+        tol=centsTol(correct); sep=centsSep(correct);
+        cands=keepFar(correct,[
+          {val:K1+c1, msg:`You counted only the ${money(K1)} call's price. The butterfly's cost today is ${money(c1)} &minus; 2 &times; ${money(c2)} + ${money(c3)} = ${money(B)}.`},
+          {val:K1-B, msg:`Below ${money(K1)} the butterfly pays nothing. It breaks even once the share is ${money(B)} above ${money(K1)}.`},
+          {val:K2-B, msg:`You counted down from the peak at ${money(K2)}. Coming up from ${money(K1)}, the payoff reaches the cost ${money(B)} at ${money(K1)} + ${money(B)}.`},
+          {val:K3-B, msg:`That is the higher break-even. The question asks for the lower one.`}
+        ],sep);
+      } else {
+        correct=K3-B;
+        tol=centsTol(correct); sep=centsSep(correct);
+        cands=keepFar(correct,[
+          {val:K3-c3, msg:`You counted only the ${money(K3)} call's price. The butterfly's cost today is ${money(c1)} &minus; 2 &times; ${money(c2)} + ${money(c3)} = ${money(B)}.`},
+          {val:K3+B, msg:`Above ${money(K3)} the butterfly pays nothing. It breaks even ${money(B)} below ${money(K3)}, where its payoff is falling to zero.`},
+          {val:K2+B, msg:`You counted up from the peak at ${money(K2)}. Going down to zero at ${money(K3)}, the payoff equals the cost ${money(B)} at ${money(K3)} &minus; ${money(B)}.`},
+          {val:K1+B, msg:`That is the lower break-even. The question asks for the higher one.`}
+        ],sep);
+      }
+    } while (B<0.25 || c1-c2>h-0.25 || Math.abs(correct)<0.25 || usable(correct,cands,sep).length<3);
+    const stem = `You buy one call on a share with a strike price of <b>${money(K1)}</b> for <b>${money(c1)}</b>, sell two calls with a strike price of
+            <b>${money(K2)}</b> for <b>${money(c2)}</b> each, and buy one call with a strike price of <b>${money(K3)}</b> for <b>${money(c3)}</b>.
+            All the calls are on the same share and expire on the same date. This position is called a butterfly.`;
+    const costStep = `Cost today = ${money(c1)} &minus; 2 &times; ${money(c2)} + ${money(c3)} = ${money(B)}`;
+    if (ask==="profit") return {
+      unit:"money", tol, sep,
+      text:`${stem} At expiration the share trades at <b>${money(S)}</b>.`,
+      ask:`What is your profit per share? ${ASK_PROFIT}`,
+      correct, cands,
+      steps:[
+        `Payoff = max(S &minus; ${money(K1)}, 0) &minus; 2 &times; max(S &minus; ${money(K2)}, 0) + max(S &minus; ${money(K3)}, 0)<br>&emsp;&emsp;= ${money(cpay(S,K1))} &minus; ${money(2*cpay(S,K2))} + ${money(cpay(S,K3))} = ${money(pay)}`,
+        costStep,
+        `Profit = payoff &minus; cost today = ${money(pay)} &minus; ${money(B)} = <b>${smoney(correct)}</b>`
+      ]};
+    if (ask==="max") return {
+      unit:"money", tol, sep, text:stem,
+      ask:`What is the most profit per share you can make at expiration? ${ASK_PRICE}`,
+      correct, cands,
+      steps:[
+        `The payoff peaks when the share ends at ${money(K2)}: only the ${money(K1)} call pays, ${money(K2)} &minus; ${money(K1)} = ${money(h)}`,
+        costStep,
+        `Most profit = ${money(h)} &minus; ${money(B)} = <b>${money(correct)}</b>`
+      ]};
+    return {
+      unit:"money", tol, sep, text:stem,
+      ask:`There are two share prices at expiration at which you break even. What is the ${ask==="up"?"higher":"lower"} one? ${ASK_PRICE}`,
+      correct, cands,
+      steps:[
+        costStep,
+        ask==="down"
+          ? `From ${money(K1)} up to ${money(K2)} only the ${money(K1)} call pays, and its payoff rises one for one. It equals the cost at ${money(K1)} + ${money(B)} = <b>${money(correct)}</b>`
+          : `From ${money(K2)} up to ${money(K3)} the payoff falls one for one, to zero at ${money(K3)}. It equals the cost at ${money(K3)} &minus; ${money(B)} = <b>${money(correct)}</b>`
+      ]};
+  }
+function GEN_PT1(F){
+    /* Section 1: share + put at K is worth max(S, K) at expiration. Two questions: the lowest profit, K - S0 - p
+       (the floor); the break-even, S0 + p (above K the put expires unused). The put is at or out of the money
+       today, as in the note. Profit at a given price is Part 2's pr1, not asked here.                      */
+    let ask, S0, K, p, correct, cands, tol, sep;
+    do {
+      ask=pick(F.ask);
+      S0=pick(range(20,80,1)); K=5*Math.floor(S0/5)-pick([0,5]); p=pick(range(0.50,4.00,0.25));
+      if (ask==="floor") {
+        correct=K-S0-p;
+        tol=centsTol(correct); sep=centsSep(correct);
+        cands=keepFar(correct,[
+          {val:K-S0, msg:`You left out the ${money(p)} you paid for the put. The insurance is paid for up front, whatever happens.`},
+          {val:K-S0+p, msg:`The ${money(p)} you paid for the put is a cost: subtract it.`},
+          {val:-S0-p, msg:`The share can fall to zero, but the put lets you sell it for ${money(K)}. You never end with less than ${money(K)}.`},
+          {val:-p, msg:`The put protects you only below its strike, ${money(K)}. You bought the share for ${money(S0)}, so you can still lose the fall from ${money(S0)} to ${money(K)}.`},
+          {val:K-p, msg:`${money(K)} is what the share and the put are worth at worst. The profit also takes off the ${money(S0)} you paid for the share.`}
+        ],sep);
+      } else {
+        correct=S0+p;
+        tol=centsTol(correct); sep=centsSep(correct);
+        cands=keepFar(correct,[
+          {val:K+p, msg:`The break-even starts from what you paid for the share, ${money(S0)}, not from the strike. Above ${money(K)} the put expires unused.`},
+          {val:K-p, msg:`That is where the put alone breaks even. You also own the share, which you bought for ${money(S0)}.`},
+          {val:S0-p, msg:`The ${money(p)} you paid for the put is a cost, so the share must rise to cover it: add it.`},
+          {val:S0, msg:`You left out the ${money(p)} you paid for the put. The share must rise that much before you break even.`}
+        ],sep);
+      }
+    } while (K<=0 || Math.abs(correct)<0.25 || usable(correct,cands,sep).length<3);
+    return {
+      unit:"money", tol, sep,
+      text:`You bought a share for <b>${money(S0)}</b>. To protect it, you buy a put on it with a strike price of <b>${money(K)}</b> for <b>${money(p)}</b>. This position is called a protective put.`,
+      ask: ask==="floor"
+        ? `However far the share falls, what is the lowest profit per share you can end with on the share and the put together? ${ASK_PROFIT}`
+        : `At what share price at expiration do you break even on the share and the put together? ${ASK_PRICE}`,
+      correct, cands,
+      steps: ask==="floor" ? [
+        `Below ${money(K)} you sell the share for ${money(K)} through the put: at expiration the share and the put are worth at least ${money(K)}`,
+        `Lowest profit = ${money(K)} &minus; ${money(S0)} &minus; ${money(p)} = <b>${smoney(correct)}</b>`
+      ] : [
+        `Above ${money(K)} the put expires unused, and you keep the share: profit = S &minus; ${money(S0)} &minus; ${money(p)}`,
+        `This is zero when S = ${money(S0)} + ${money(p)} = <b>${money(correct)}</b>`
+      ]};
+  }
+function GEN_RS1(F){
+    /* Section 3, run backwards: the most profit (K2 - K1) - D, or the break-even (K1 + D for a bull call spread,
+       K2 - D for a bear put spread), gives the net cost D; the option sold then brings in hi - D. Traps: the
+       most profit taken for the cost, the cost added, the break-even counted from the wrong strike.       */
+    let type, given, K1, K2, h, lo, hi, D, M, BE, correct, cands, tol, sep;
+    do {
+      type=pick(F.type); given=pick(F.given);
+      K1=pick(range(20,70,5)); h=pick([5,10]); K2=K1+h;
+      D=pick(range(1.00,h-1,0.25)); lo=pick(range(0.50,3.00,0.25)); hi=lo+D; M=h-D; BE = type==="bull" ? K1+D : K2-D;
+      correct=lo;
+      tol=centsTol(correct); sep=centsSep(correct);
+      const kind=type==="bull"?"call":"put", Dwrong = type==="bull" ? K2-BE : BE-K1;
+      cands=keepFar(correct, posOnly(given==="max" ? [
+        {val:hi-M, msg:`${money(M)} is the most the spread can make, not its cost. It pays at most ${money(K2)} &minus; ${money(K1)} = ${money(h)}, so it costs ${money(h)} &minus; ${money(M)} = ${money(D)}.`},
+        {val:D, msg:`That is the spread's net cost today: the price paid minus the price received. The ${kind} you sold brings in ${money(hi)} &minus; ${money(D)}.`},
+        {val:hi+D, msg:`The ${kind} you sold brings money in, so it lowers the cost: price received = ${money(hi)} &minus; ${money(D)}, not plus.`},
+        {val:hi-h, msg:`The spread's cost is not the gap between the strikes. That gap, ${money(h)}, is the most it pays; the cost is ${money(h)} &minus; ${money(M)} = ${money(D)}.`}
+      ] : [
+        {val:hi-Dwrong, msg:type==="bull" ? `You counted the break-even from ${money(K2)}. The spread starts to pay at ${money(K1)}, so its cost is ${money(BE)} &minus; ${money(K1)} = ${money(D)}.`
+                                          : `You counted the break-even from ${money(K1)}. The spread starts to pay below ${money(K2)}, so its cost is ${money(K2)} &minus; ${money(BE)} = ${money(D)}.`},
+        {val:D, msg:`That is the spread's net cost today: the price paid minus the price received. The ${kind} you sold brings in ${money(hi)} &minus; ${money(D)}.`},
+        {val:hi+D, msg:`The ${kind} you sold brings money in, so it lowers the cost: price received = ${money(hi)} &minus; ${money(D)}, not plus.`},
+        {val:Dwrong, msg:type==="bull" ? `That is ${money(K2)} &minus; ${money(BE)}, the gap from the break-even up to the higher strike. The spread's cost is the gap from ${money(K1)}, where it starts to pay, to the break-even; the call you sold brings in ${money(hi)} minus that cost.`
+                                     : `That is ${money(BE)} &minus; ${money(K1)}, the gap from the lower strike up to the break-even. The spread's cost is the gap from the break-even up to ${money(K2)}, where it starts to pay; the put you sold brings in ${money(hi)} minus that cost.`}
+      ]),sep);
+    } while (lo<0.25 || usable(correct,cands,sep).length<3);
+    const kind=type==="bull"?"call":"put", kb=type==="bull"?K1:K2, ks=type==="bull"?K2:K1;
+    return {
+      unit:"money", tol, sep,
+      text:`You buy a ${kind} on a share with a strike price of <b>${money(kb)}</b> for <b>${money(hi)}</b>, and sell a ${kind} on the same share
+            with a strike price of <b>${money(ks)}</b>. Both options expire on the same date. This position is called a ${type==="bull"?"bull call spread":"bear put spread"}. ${given==="max"
+              ? `The most this spread can make at expiration is a profit of <b>${money(M)}</b> per share.`
+              : `The spread breaks even if the share ends at <b>${money(BE)}</b> at expiration.`}`,
+      ask:`What price do you receive for the ${money(ks)} ${kind}? ${ASK_PRICE}`,
+      correct, cands,
+      steps:[
+        given==="max"
+          ? `The spread pays at most ${money(K2)} &minus; ${money(K1)} = ${money(h)}. Most profit = ${money(h)} &minus; cost today, so cost today = ${money(h)} &minus; ${money(M)} = ${money(D)}`
+          : type==="bull"
+            ? `Above ${money(K1)} the payoff rises one for one, so the break-even is ${money(K1)} + cost today. Cost today = ${money(BE)} &minus; ${money(K1)} = ${money(D)}`
+            : `Below ${money(K2)} the payoff rises one for one as the share falls, so the break-even is ${money(K2)} &minus; cost today. Cost today = ${money(K2)} &minus; ${money(BE)} = ${money(D)}`,
+        `Cost today = price paid &minus; price received, so price received = ${money(hi)} &minus; ${money(D)} = <b>${money(correct)}</b>`
+      ]};
+  }
+
+function STRIKE_DIAG(o){
+    /* Reading a payoff diagram (29 Oct 2026, Anh: "teach students to recognize different patterns of payoffs"):
+       the strikes sit at the kinks, and the student says which kink belongs to which option. Two kinks give
+       only two natural wrong answers, so these are choice items; the fourth option is the payoff/profit mix-up,
+       that the option prices are needed. o: {text, ask, pts, kinks:[lo, hi], ybase, yt, key:"lo"|"hi", why, other, gap}. */
+    const [lo, hi] = o.kinks, right = o.key==="lo" ? lo : hi, wrong = o.key==="lo" ? hi : lo;
+    const opts = shuffle([
+      {html:money(right), correct:true, msg:`Right. ${o.why}`},
+      {html:money(wrong), correct:false, msg:o.other},
+      {html:money(hi-lo), correct:false, msg:o.gap},
+      {html:`It cannot be read from a payoff diagram without the option prices`, correct:false,
+       msg:`The prices paid and received shift the profit up or down, but they do not move the kinks. A payoff diagram shows the strikes directly: each kink is at one.`}
+    ]);
+    return {mode:"choice", text:o.text,
+      fig:[{label:"Payoff diagram", xlab:"Share price at expiration", ylab:"Payoff at expiration", pts:o.pts, ybase:o.ybase,
+            dots:o.kinks.map(k => o.pts.find(p => p[0]===k)), xt:o.kinks.map(k => [k, money(k)]), yt:o.yt||[],
+            aria:o.pts.map(([x,y]) => `${money(y)} at ${money(x)}`).join(", ")}],
+      ask:o.ask, options:opts, steps:o.steps};
+  }
+
+const TEMPLATES = [{ id:"cc1", topic:"cap", name:"A covered call's profit at expiration", gen(){ return GEN_CC1({ask:["profit"]}); }},
+{ id:"cc3", topic:"cap", name:"A covered call's break-even", gen(){ return GEN_CC1({ask:["be"]}); }},
+
+{ id:"col2", topic:"cap", name:"A collar's lowest or highest profit", gen(){ return GEN_COL1({ask:["worst","best"]}); }},
+
+{ id:"bcs3", topic:"spread", name:"A bull call spread's break-even", gen(){ return GEN_SP1({type:["bull"], ask:["be"]}); }},
+{ id:"bps2", topic:"spread", name:"A bear put spread's most profit", gen(){ return GEN_SP1({type:["bear"], ask:["max"]}); }},
+
+{ id:"std1", topic:"vol", name:"A straddle's profit, bought or sold", gen(){ return GEN_ST1({type:["straddle"], role:["buy","sell"], ask:["profit"]}); }},
+{ id:"stg2", topic:"vol", name:"A strangle's break-evens", gen(){ return GEN_ST1({type:["strangle"], role:["buy"], ask:["up","down"]}); }},
+
+{ id:"bf2", topic:"vol", name:"A butterfly's most profit", gen(){ return GEN_BF1({ask:["max"]}); }},
+
+{ id:"pt1", topic:"cap", name:"A protective put's floor", gen(){ return GEN_PT1({ask:["floor"]}); }},
+
+{ id:"dd1", topic:"cap", name:"A car policy as a put: the car and the payment together", gen(){
+    /* Section 1, the car and its insurance: after an accident the insurer pays the loss minus the deductible,
+       or nothing if the loss is below it. Asks for the car and the payment together, max(W, V - d), after a
+       large or a small accident (the payment alone was the note's own example; dropped 28 Oct 2026). The note's case: $20,000 car, $1,000
+       deductible, car worth $5,000 after the accident.                                                     */
+    const m = x => "$"+x.toLocaleString("en-US");
+    let ask, V, d, W, big, correct, cands, tol, sep;
+    do {
+      ask="total"; big=pick([true,false]);   /* "How much does the insurer pay" was the note's own worked example: dropped after the blind sitting, 28 Oct 2026 */
+      V=pick(range(15000,40000,1000)); d=pick([500,1000,1500,2000,2500]);
+      W = big ? pick(range(1000,V-d-1000,500)) : V-pick(range(100,d-100,100));
+      tol=0.0025; sep=REL_SEP;
+      if (ask==="pay") {
+        correct=V-W-d;
+        cands=keepFar(correct,[
+          {val:V-W, msg:`That is your whole loss. With a deductible you bear the first ${m(d)} of it yourself: the insurer pays the loss minus ${m(d)}.`},
+          {val:V-W+d, msg:`The deductible is the part of the loss you bear yourself, so it comes off what the insurer pays: subtract it.`},
+          {val:V-d, msg:`That is what the car and the payment are worth together. The insurer pays only your loss minus the deductible; you still have the car, worth ${m(W)}.`}
+        ],sep);
+      } else {
+        correct = big ? V-d : W;
+        cands=keepFar(correct, big ? [
+          {val:V, msg:`With a deductible you never get back the full ${m(V)}: you bear the first ${m(d)} of the loss yourself.`},
+          {val:W, msg:`You left out the insurer's payment. The loss is above the deductible, so the insurer pays it minus ${m(d)}.`},
+          {val:V-W-d, msg:`That is the insurer's payment alone. You still have the car, worth ${m(W)}: add it.`}
+        ] : [
+          {val:V-d, msg:`The loss, ${m(V-W)}, is below the deductible, so the insurer pays nothing. Like a put that ends out of the money, the policy pays nothing here.`},
+          {val:V, msg:`The loss, ${m(V-W)}, is below the deductible, so the insurer pays nothing: you bear the whole loss yourself.`},
+          {val:W-d, msg:`You do not pay the deductible to the insurer. It is the part of the loss you bear yourself, and here the whole loss is below it, so the insurer simply pays nothing.`}
+        ],sep);
+      }
+    } while (usable(correct,cands,sep).length<3);
+    return {
+      unit:"money", tol, sep,
+      text:`Your car is worth <b>${m(V)}</b>. Its comprehensive insurance has a deductible of <b>${m(d)}</b>. An accident leaves the car worth <b>${m(W)}</b>. The policy works like a put on your car.`,
+      ask: ask==="pay" ? "How much does the insurer pay you?"
+                       : "After the insurer pays (if it pays anything), what are the car and the insurer's payment worth together?",
+      correct, cands,
+      steps: ask==="pay" ? [
+        `Your loss = ${m(V)} &minus; ${m(W)} = ${m(V-W)}. It is above the deductible`,
+        `The insurer pays the loss minus the deductible: ${m(V-W)} &minus; ${m(d)} = <b>${m(correct)}</b>`
+      ] : big ? [
+        `Your loss = ${m(V)} &minus; ${m(W)} = ${m(V-W)}. It is above the deductible, so the insurer pays ${m(V-W)} &minus; ${m(d)} = ${m(V-W-d)}`,
+        `Car + payment = ${m(W)} + ${m(V-W-d)} = <b>${m(correct)}</b>: the car's value minus the deductible. Like the strike of a put, you never end with less`,
+        `Had the accident been small, leaving the car worth more than ${m(V)} &minus; ${m(d)} = ${m(V-d)}, the loss would be below the deductible: the insurer pays nothing, and car + payment = the car alone. Like a put that ends out of the money`
+      ] : [
+        `Your loss = ${m(V)} &minus; ${m(W)} = ${m(V-W)}. It is below the deductible of ${m(d)}, so the insurer pays nothing`,
+        `Car + payment = the car alone = <b>${m(correct)}</b>. Like a put that ends out of the money: the car is worth more than ${m(V)} &minus; ${m(d)} = ${m(V-d)}`,
+        `Had the accident been large, leaving the car worth less than ${m(V-d)}, the loss would be above the deductible: the insurer pays the loss minus ${m(d)}, and car + payment = ${m(V)} &minus; ${m(d)} = ${m(V-d)}, whatever the car is worth. That is the put's strike`
+      ]};
+  }},
+
+{ id:"rsc2", topic:"spread", name:"A call spread's missing price, from its break-even", gen(){ return GEN_RS1({type:["bull"], given:["be"]}); }},
+
+{ id:"bft1", topic:"build", name:"The butterfly's table: the two short calls", gen(){
+    /* Section 5's table: one column per leg. The column for the two short K2 calls is -2 max(S - K2, 0), what
+       you owe on them; the note's row at $40 has -$40. Traps: one call, the sign, the wrong strike, the long
+       K3 call folded in.                                                                                  */
+    let h, K1, K2, K3, S, correct, cands, tol, sep;
+    do {
+      h=pick([5,10]); K1=pick(range(20,70,5)); K2=K1+h; K3=K2+h;
+      S=K2+pick(range(1,h+15,1));
+      correct=-2*(S-K2);
+      tol=centsTol(correct); sep=centsSep(correct);
+      cands=keepFar(correct,[
+        {val:-(S-K2), msg:`That is one short call. You sold two ${money(K2)} calls, and you owe on each of them.`},
+        {val:2*(S-K2), msg:`You sold these calls, so when the share ends above ${money(K2)} their buyers exercise them and you pay: the entry is negative.`},
+        {val:-2*(S-K1), msg:`Each ${money(K2)} call pays its buyer the gap above its own strike, ${money(K2)}, not above ${money(K1)}.`},
+        {val:-2*(S-K2)+cpay(S,K3), msg:`You added in the ${money(K3)} call you bought. It has its own column; this one is for the two short ${money(K2)} calls only.`},
+        {val:-2*(S-K2)+(S-K1), msg:`You added in the ${money(K1)} call you bought. It has its own column; this one is for the two short ${money(K2)} calls only.`}
+      ],sep);
+    } while (usable(correct,cands,sep).length<3);
+    return {
+      unit:"money", tol, sep,
+      text:`You buy one call on a share with a strike price of <b>${money(K1)}</b>, sell two calls with a strike price of <b>${money(K2)}</b>, and buy one
+            call with a strike price of <b>${money(K3)}</b>. All the calls are on the same share and expire on the same date. You check the payoff at
+            expiration in a table, with one column for each leg and a column for the total. This position is called a butterfly.`,
+      ask:`In the row where the share ends at ${money(S)}, what goes in the column for the two short ${money(K2)} calls? (Two decimals; enter a negative number for an amount you owe.)`,
+      correct, cands,
+      steps:[
+        `The share ends above ${money(K2)}, so the buyers exercise both calls. On each one you owe ${money(S)} &minus; ${money(K2)} = ${money(S-K2)}`,
+        `For the two calls: 2 &times; ${money(S-K2)} = ${money(2*(S-K2))} owed, so the entry is <b>${smoney(correct)}</b>`
+      ]};
+  }},
+
+{ id:"sh1", topic:"build", name:"Reading a profit diagram: the price a share was bought or sold short at", gen(){
+    /* 29 Oct 2026, Anh: "mix in the payoff pattern of a short position, and then ask for the price the share was
+       sold short at". Note 25 Part 2: a short sale's profit is S0 - S, a bought share's S - S0. The diagram marks
+       one point (S1, P1) on the line; the price is where the line crosses zero, S1 + P1 short or S1 - P1 bought.
+       Traps: the other direction, the marked price, the marked profit.                                      */
+    let role, S0, S1, P1, correct, cands, tol, sep;
+    do {
+      role=pick(["short","long"]); S0=pick(range(20,60,1)); S1=S0+pick([-1,1])*pick(range(4,15,1));
+      P1 = role==="short" ? S0-S1 : S1-S0;
+      correct=S0; tol=centsTol(correct); sep=centsSep(correct);
+      const other = role==="short" ? S1-P1 : S1+P1;
+      cands=keepFar(correct, posOnly([
+        {val:other, msg: role==="short"
+          ? `That reads the line as a bought share. A short sale gains when the share falls: profit = price sold at &minus; S, so price sold at = S + profit.`
+          : `That reads the line as a short sale. A bought share gains when the share rises: profit = S &minus; price paid, so price paid = S &minus; profit.`},
+        {val:S1, msg:`That is the share price at the marked point, where the profit is ${smoney(P1)}, not zero. The price ${role==="short"?"you sold at":"you paid"} is where the line crosses zero.`},
+        {val:Math.abs(P1), msg:`That is the profit at the marked point, not a share price. The price ${role==="short"?"you sold at":"you paid"} is where the line crosses zero.`}
+      ]),sep);
+    } while (2*S1-S0<=0 || usable(correct,cands,sep).length<3);
+    const A=Math.min(S0,S1)-10, Z=Math.max(S0,S1)+10;   // a window around the marked point and the zero crossing
+    const pts = role==="short" ? [[A,S0-A],[Z,S0-Z]] : [[A,A-S0],[Z,Z-S0]];
+    return {
+      unit:"money", tol, sep,
+      text: role==="short"
+        ? `You sell a share short today: you borrow it and sell it, and you will buy it back at a later date. This position is called a short sale.
+           The diagram shows your profit per share against the share's price on the day you buy it back. The marked point on the line is a profit of <b>${smoney(P1)}</b> at a share price of <b>${money(S1)}</b>.`
+        : `You buy a share today, and you will sell it at a later date. This position is called a long position in the share.
+           The diagram shows your profit per share against the share's price on the day you sell it. The marked point on the line is a profit of <b>${smoney(P1)}</b> at a share price of <b>${money(S1)}</b>.`,
+      fig:[{label:"Profit diagram", xlab:"Share price on that day", ylab:"Profit", pts, dots:[[S1,P1]], xt:[[S1,money(S1)]], yt:[[P1,smoney(P1)]],
+            aria:`a straight line through ${smoney(P1)} at ${money(S1)}, ${role==="short"?"falling":"rising"} one for one`}],
+      ask: role==="short" ? `At what price did you sell the share short? (Ignore interest and fees. Two decimals.)`
+                          : `At what price did you buy the share? (Ignore interest and fees. Two decimals.)`,
+      correct, cands,
+      steps: role==="short" ? [
+        `A short sale's profit is the price you sold at minus the price you buy back at: profit = S<sub>0</sub> &minus; S. The line falls one for one`,
+        `At the marked point ${smoney(P1)} = S<sub>0</sub> &minus; ${money(S1)}, so S<sub>0</sub> = ${money(S1)} ${P1>=0?"+":"&minus;"} ${money(Math.abs(P1))} = <b>${money(correct)}</b>: where the line crosses zero`,
+        `Had the line risen one for one through the same point, it would be a share you bought: profit = S &minus; S<sub>0</sub>, so S<sub>0</sub> = ${money(S1)} ${P1>=0?"&minus;":"+"} ${money(Math.abs(P1))} = ${money(S1-P1)}. Either way the price is where the line crosses zero`
+      ] : [
+        `A bought share's profit is the price you sell at minus the price you paid: profit = S &minus; S<sub>0</sub>. The line rises one for one`,
+        `At the marked point ${smoney(P1)} = ${money(S1)} &minus; S<sub>0</sub>, so S<sub>0</sub> = ${money(S1)} ${P1>=0?"&minus;":"+"} ${money(Math.abs(P1))} = <b>${money(correct)}</b>: where the line crosses zero`,
+        `Had the line fallen one for one through the same point, it would be a short sale: profit = S<sub>0</sub> &minus; S, so S<sub>0</sub> = ${money(S1)} ${P1>=0?"+":"&minus;"} ${money(Math.abs(P1))} = ${money(S1+P1)}. Either way the price is where the line crosses zero`
+      ]};
+  }}
+
+];
+
+/* ======================= CHOICE-MODE ITEMS ==============================
+   Auto-graded by which option is clicked, not by a typed number.
+     topic "error"   — a worked solution with one planted mistake
+     topic "concept" — reason about the direction of an effect, no arithmetic
+   Directional items shuffle their own options so position carries no
+   information; spot-the-error items must stay in step order.            */
+
+function shuffle(a){
+  const out = a.slice();
+  for (let i=out.length-1; i>0; i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [out[i],out[j]] = [out[j],out[i]];
+  }
+  return out;
+}
+
+const CHOICE_TEMPLATES = [{ id:"k18", topic:"build", also:["concept"], name:"Which position fits the view? Owning the share", gen(){
+    /* Practice 4 and the summary table: match a view to a position. One view per draw; the wrong options are
+       three of the other positions, each with feedback on the view it does express.                     */
+    const K=pick(range(20,80,5)), h=pick([5,10]), T=pick(["three months","six months","nine months"]);   // the view's horizon; the options expire then
+    const GIST = {pp:`you own the share and pay today to be sure of getting no less than ${money(K)}`,
+                  cc:`you own the share and are paid today for accepting no more than ${money(K+h)}`,
+                  bull:`a cheaper bet that the share rises, but not above ${money(K+h)}`,
+                  bear:`a cheaper bet that the share falls, but not below ${money(K)}`,
+                  st:`the share ends far from ${money(K)}, either way, with a limited loss`,
+                  bf:`the share ends close to ${money(K)}, with a limited loss`};   // the mirror view, for the closing step (29 Oct 2026)
+    const P = {
+      pp:{html:`Own the share and buy the ${money(K)} put`,
+          view:`You own the share. In exchange for paying some money today, you want to be sure you will get no less than ${money(K)} for it in ${T}.`,
+          why:`A share plus a put is a protective put: it puts a floor at the strike and keeps the upside.`},
+      cc:{html:`Own the share and sell the ${money(K+h)} call`,
+          view:`You own the share. In exchange for receiving some money today, you accept that you will get no more than ${money(K+h)} for it in ${T}.`,
+          why:`A share minus a call is a covered call: it earns the call's price today and gives up everything above the strike.`},
+      bull:{html:`Buy the ${money(K)} call and sell the ${money(K+h)} call`,
+          view:`You expect the share to rise over the next ${T}, but not above ${money(K+h)}, and you want a cheaper bet than buying a call on its own.`,
+          why:`That is a bull call spread: a bet that the share rises, with the upside above the higher strike sold to make the bet cheaper.`},
+      bear:{html:`Buy the ${money(K+h)} put and sell the ${money(K)} put`,
+          view:`You expect the share to fall over the next ${T}, but not below ${money(K)}, and you want a cheaper bet than buying a put on its own.`,
+          why:`That is a bear put spread: a bet that the share falls, with the downside below the lower strike sold to make the bet cheaper.`},
+      st:{html:`Buy the ${money(K)} call and the ${money(K)} put`,
+          view:`You expect the share to be far from ${money(K)} in ${T}, in one direction or the other, and you want your loss to be limited if you are wrong.`,
+          why:`That is a straddle: it pays the distance between the share and the strike, whichever way the share moves.`},
+      bf:{html:`Buy the ${money(K-h)} call, sell two ${money(K)} calls and buy the ${money(K+h)} call`,
+          view:`You expect the share to be close to ${money(K)} in ${T}, and you want your loss to be limited if you are wrong.`,
+          why:`That is a butterfly: it pays most if the share ends near the middle strike and nothing if it moves far.`}
+    };
+    const keys=Object.keys(P), key=pick(["pp","cc"]), wrong=shuffle(keys.filter(k=>k!==key)).slice(0,3);   // you own the share: a floor or extra income (29 Oct 2026: two views per template, Anh)
+    const opts=shuffle([
+      {html:P[key].html, correct:true, msg:`Right. ${P[key].why}`},
+      ...wrong.map(k=>({html:P[k].html, correct:false, msg:`${P[k].why} It does not fit this view.`}))
+    ]);
+    return {mode:"choice",
+      text:P[key].view,
+      ask:`Which position fits this view best? All options are on the same share and expire in ${T}.`,
+      options:opts,
+      steps:[
+        `Ask what the view needs: a floor, a cap, a bet on direction, a bet on a big move, or a bet on a quiet share.`,
+        `${P[key].why}`,
+        (o => `The mirror view: ${GIST[o]}. That calls for the other position of the pair: ${P[o].html.charAt(0).toLowerCase() + P[o].html.slice(1)}. ${P[o].why}`)({pp:"cc",cc:"pp",bull:"bear",bear:"bull",st:"bf",bf:"st"}[key])
+      ]};
+  }},
+
+{ id:"k25", topic:"build", also:["concept"], name:"Which position fits the view? A cheap bet on the direction", gen(){
+    /* Practice 4 and the summary table: match a view to a position. One view per draw; the wrong options are
+       three of the other positions, each with feedback on the view it does express.                     */
+    const K=pick(range(20,80,5)), h=pick([5,10]), T=pick(["three months","six months","nine months"]);   // the view's horizon; the options expire then
+    const GIST = {pp:`you own the share and pay today to be sure of getting no less than ${money(K)}`,
+                  cc:`you own the share and are paid today for accepting no more than ${money(K+h)}`,
+                  bull:`a cheaper bet that the share rises, but not above ${money(K+h)}`,
+                  bear:`a cheaper bet that the share falls, but not below ${money(K)}`,
+                  st:`the share ends far from ${money(K)}, either way, with a limited loss`,
+                  bf:`the share ends close to ${money(K)}, with a limited loss`};   // the mirror view, for the closing step (29 Oct 2026)
+    const P = {
+      pp:{html:`Own the share and buy the ${money(K)} put`,
+          view:`You own the share. In exchange for paying some money today, you want to be sure you will get no less than ${money(K)} for it in ${T}.`,
+          why:`A share plus a put is a protective put: it puts a floor at the strike and keeps the upside.`},
+      cc:{html:`Own the share and sell the ${money(K+h)} call`,
+          view:`You own the share. In exchange for receiving some money today, you accept that you will get no more than ${money(K+h)} for it in ${T}.`,
+          why:`A share minus a call is a covered call: it earns the call's price today and gives up everything above the strike.`},
+      bull:{html:`Buy the ${money(K)} call and sell the ${money(K+h)} call`,
+          view:`You expect the share to rise over the next ${T}, but not above ${money(K+h)}, and you want a cheaper bet than buying a call on its own.`,
+          why:`That is a bull call spread: a bet that the share rises, with the upside above the higher strike sold to make the bet cheaper.`},
+      bear:{html:`Buy the ${money(K+h)} put and sell the ${money(K)} put`,
+          view:`You expect the share to fall over the next ${T}, but not below ${money(K)}, and you want a cheaper bet than buying a put on its own.`,
+          why:`That is a bear put spread: a bet that the share falls, with the downside below the lower strike sold to make the bet cheaper.`},
+      st:{html:`Buy the ${money(K)} call and the ${money(K)} put`,
+          view:`You expect the share to be far from ${money(K)} in ${T}, in one direction or the other, and you want your loss to be limited if you are wrong.`,
+          why:`That is a straddle: it pays the distance between the share and the strike, whichever way the share moves.`},
+      bf:{html:`Buy the ${money(K-h)} call, sell two ${money(K)} calls and buy the ${money(K+h)} call`,
+          view:`You expect the share to be close to ${money(K)} in ${T}, and you want your loss to be limited if you are wrong.`,
+          why:`That is a butterfly: it pays most if the share ends near the middle strike and nothing if it moves far.`}
+    };
+    const keys=Object.keys(P), key=pick(["bull","bear"]), wrong=shuffle(keys.filter(k=>k!==key)).slice(0,3);   // a cheap bet that the share rises or falls
+    const opts=shuffle([
+      {html:P[key].html, correct:true, msg:`Right. ${P[key].why}`},
+      ...wrong.map(k=>({html:P[k].html, correct:false, msg:`${P[k].why} It does not fit this view.`}))
+    ]);
+    return {mode:"choice",
+      text:P[key].view,
+      ask:`Which position fits this view best? All options are on the same share and expire in ${T}.`,
+      options:opts,
+      steps:[
+        `Ask what the view needs: a floor, a cap, a bet on direction, a bet on a big move, or a bet on a quiet share.`,
+        `${P[key].why}`,
+        (o => `The mirror view: ${GIST[o]}. That calls for the other position of the pair: ${P[o].html.charAt(0).toLowerCase() + P[o].html.slice(1)}. ${P[o].why}`)({pp:"cc",cc:"pp",bull:"bear",bear:"bull",st:"bf",bf:"st"}[key])
+      ]};
+  }},
+
+{ id:"k26", topic:"build", also:["concept"], name:"Which position fits the view? A bet on how far the share moves", gen(){
+    /* Practice 4 and the summary table: match a view to a position. One view per draw; the wrong options are
+       three of the other positions, each with feedback on the view it does express.                     */
+    const K=pick(range(20,80,5)), h=pick([5,10]), T=pick(["three months","six months","nine months"]);   // the view's horizon; the options expire then
+    const GIST = {pp:`you own the share and pay today to be sure of getting no less than ${money(K)}`,
+                  cc:`you own the share and are paid today for accepting no more than ${money(K+h)}`,
+                  bull:`a cheaper bet that the share rises, but not above ${money(K+h)}`,
+                  bear:`a cheaper bet that the share falls, but not below ${money(K)}`,
+                  st:`the share ends far from ${money(K)}, either way, with a limited loss`,
+                  bf:`the share ends close to ${money(K)}, with a limited loss`};   // the mirror view, for the closing step (29 Oct 2026)
+    const P = {
+      pp:{html:`Own the share and buy the ${money(K)} put`,
+          view:`You own the share. In exchange for paying some money today, you want to be sure you will get no less than ${money(K)} for it in ${T}.`,
+          why:`A share plus a put is a protective put: it puts a floor at the strike and keeps the upside.`},
+      cc:{html:`Own the share and sell the ${money(K+h)} call`,
+          view:`You own the share. In exchange for receiving some money today, you accept that you will get no more than ${money(K+h)} for it in ${T}.`,
+          why:`A share minus a call is a covered call: it earns the call's price today and gives up everything above the strike.`},
+      bull:{html:`Buy the ${money(K)} call and sell the ${money(K+h)} call`,
+          view:`You expect the share to rise over the next ${T}, but not above ${money(K+h)}, and you want a cheaper bet than buying a call on its own.`,
+          why:`That is a bull call spread: a bet that the share rises, with the upside above the higher strike sold to make the bet cheaper.`},
+      bear:{html:`Buy the ${money(K+h)} put and sell the ${money(K)} put`,
+          view:`You expect the share to fall over the next ${T}, but not below ${money(K)}, and you want a cheaper bet than buying a put on its own.`,
+          why:`That is a bear put spread: a bet that the share falls, with the downside below the lower strike sold to make the bet cheaper.`},
+      st:{html:`Buy the ${money(K)} call and the ${money(K)} put`,
+          view:`You expect the share to be far from ${money(K)} in ${T}, in one direction or the other, and you want your loss to be limited if you are wrong.`,
+          why:`That is a straddle: it pays the distance between the share and the strike, whichever way the share moves.`},
+      bf:{html:`Buy the ${money(K-h)} call, sell two ${money(K)} calls and buy the ${money(K+h)} call`,
+          view:`You expect the share to be close to ${money(K)} in ${T}, and you want your loss to be limited if you are wrong.`,
+          why:`That is a butterfly: it pays most if the share ends near the middle strike and nothing if it moves far.`}
+    };
+    const keys=Object.keys(P), key=pick(["st","bf"]), wrong=shuffle(keys.filter(k=>k!==key)).slice(0,3);   // a bet that the share moves a lot or stays put
+    const opts=shuffle([
+      {html:P[key].html, correct:true, msg:`Right. ${P[key].why}`},
+      ...wrong.map(k=>({html:P[k].html, correct:false, msg:`${P[k].why} It does not fit this view.`}))
+    ]);
+    return {mode:"choice",
+      text:P[key].view,
+      ask:`Which position fits this view best? All options are on the same share and expire in ${T}.`,
+      options:opts,
+      steps:[
+        `Ask what the view needs: a floor, a cap, a bet on direction, a bet on a big move, or a bet on a quiet share.`,
+        `${P[key].why}`,
+        (o => `The mirror view: ${GIST[o]}. That calls for the other position of the pair: ${P[o].html.charAt(0).toLowerCase() + P[o].html.slice(1)}. ${P[o].why}`)({pp:"cc",cc:"pp",bull:"bear",bear:"bull",st:"bf",bf:"st"}[key])
+      ]};
+  }},
+
+{ id:"k19", topic:"build", name:"Building a payoff from its shape: rising or falling", gen(){
+    /* Section 5: read the shape from left to right; each kink is a strike, and the change of slope says how many
+       options to buy (slope up) or sell (slope down) there. One shape per draw: bull call spread, bear put spread,
+       butterfly or straddle. Each wrong option is a near miss whose payoff is described in its feedback.  */
+    const h=pick([5,10]), K2=pick(range(25,75,5)), K1=K2-h, K3=K2+h, T=pick(["three months","six months","nine months"]);
+    const shape=pick(["bull","bear"]);   // 29 Oct 2026: two shapes per template (Anh): rising or falling
+    const ALL = {
+      bull:{desc:`is $0.00 if the share ends at ${money(K1)} or below, rises one for one to ${money(h)} at ${money(K2)}, and stays at ${money(h)} above ${money(K2)}`,
+            key:`Buy the ${money(K1)} call and sell the ${money(K2)} call`,
+            why:`At ${money(K1)} the payoff starts rising one for one: buy the ${money(K1)} call. At ${money(K2)} it stops rising: sell the ${money(K2)} call to cancel the rise.`,
+            wrong:[[`Buy the ${money(K1)} call and buy the ${money(K2)} call`, `Buying the ${money(K2)} call makes the payoff rise faster above ${money(K2)}, two for one, instead of levelling off.`],
+                   [`Sell the ${money(K1)} call and buy the ${money(K2)} call`, `That is the other side of the trade: its payoff falls to &minus;${money(h)} instead of rising to ${money(h)}.`],
+                   [`Buy the ${money(K1)} call and sell two ${money(K2)} calls`, `Selling two ${money(K2)} calls makes the payoff fall above ${money(K2)}. One is enough to level it off.`]]},
+      bear:{desc:`is ${money(h)} if the share ends at ${money(K1)} or below, falls one for one to $0.00 at ${money(K2)}, and stays at $0.00 above ${money(K2)}`,
+            key:`Buy the ${money(K2)} put and sell the ${money(K1)} put`,
+            why:`Reading from the right: at ${money(K2)} the payoff starts rising as the share falls: buy the ${money(K2)} put. At ${money(K1)} it stops rising: sell the ${money(K1)} put to cancel the rise.`,
+            wrong:[[`Buy the ${money(K1)} put and sell the ${money(K2)} put`, `That is the other side of the trade: its payoff falls to &minus;${money(h)} as the share falls, instead of rising to ${money(h)}.`],
+                   [`Buy the ${money(K2)} put and buy the ${money(K1)} put`, `Buying the ${money(K1)} put makes the payoff rise faster below ${money(K1)}, two for one, instead of levelling off.`],
+                   [`Buy the ${money(K2)} put and sell the ${money(K1)} call`, `Selling the ${money(K1)} call pulls the payoff down one for one above ${money(K1)}, on top of the put's fall, and does nothing below ${money(K1)}, where the put keeps paying more. The payoff never levels off at ${money(h)}.`]]},
+      bf:{desc:`is $0.00 if the share ends at ${money(K1)} or below, rises one for one to a peak of ${money(h)} at ${money(K2)}, falls one for one back to $0.00 at ${money(K3)}, and stays at $0.00 above ${money(K3)}`,
+            key:`Buy the ${money(K1)} call, sell two ${money(K2)} calls and buy the ${money(K3)} call`,
+            why:`At ${money(K1)} the payoff starts rising: buy the ${money(K1)} call. At ${money(K2)} it turns from rising to falling: sell two ${money(K2)} calls, one to cancel the rise and one to make it fall. At ${money(K3)} it stops falling: buy the ${money(K3)} call.`,
+            wrong:[[`Buy the ${money(K1)} call, sell one ${money(K2)} call and buy the ${money(K3)} call`, `With one ${money(K2)} call sold, the payoff only levels off at ${money(K2)}, and it starts rising again above ${money(K3)}.`],
+                   [`Sell the ${money(K1)} call, buy two ${money(K2)} calls and sell the ${money(K3)} call`, `That is the other side of the trade: an upside-down peak, &minus;${money(h)} at ${money(K2)}.`],
+                   [`Buy the ${money(K1)} call and sell the ${money(K3)} call`, `That is a bull call spread: it rises from ${money(K1)} to ${money(K3)} and stays at ${money(2*h)}. It never falls back to zero.`]]},
+      st:{desc:`is ${money(h)} if the share ends at ${money(K1)}, falls one for one to $0.00 at ${money(K2)}, and rises one for one to ${money(h)} at ${money(K3)}, carrying on in a V in both directions`,
+            key:`Buy the ${money(K2)} call and buy the ${money(K2)} put`,
+            why:`A V with its point at ${money(K2)} is a straddle: the put pays below ${money(K2)}, the call above.`,
+            wrong:[[`Sell the ${money(K2)} call and sell the ${money(K2)} put`, `That is the other side of the trade: an upside-down V, which loses more the further the share moves.`],
+                   [`Buy the ${money(K2)} call and sell the ${money(K2)} put`, `Selling the put makes the payoff fall below ${money(K2)} instead of rising: the result is a straight line, like owning the share.`],
+                   [`Buy the ${money(K1)} put and buy the ${money(K3)} call`, `That is a strangle: its payoff is flat at $0.00 between ${money(K1)} and ${money(K3)}, not a V with its point at ${money(K2)}.`]]}
+    }, S = ALL[shape], O = ALL[{bull:"bear",bear:"bull",bf:"st",st:"bf"}[shape]];   // O: the other shape of the pair
+    const opts=shuffle([
+      {html:S.key, correct:true, msg:`Right. ${S.why}`},
+      ...S.wrong.map(([html,msg])=>({html, correct:false, msg}))
+    ]);
+    return {mode:"choice",
+      text:`You want a position whose payoff in ${T} ${S.desc}.`,
+      ask:`Which position gives this payoff? All options are on the same share and expire in ${T}.`,
+      options:opts,
+      steps:[
+        shape==="bear"
+          ? `A payoff that rises as the share falls is built from puts: read the shape from right to left. Each kink is at a strike. Where the payoff starts rising as the share falls, buy a put; where it stops rising, sell one.`
+          : `Read the shape from left to right. Each kink is at a strike. Where the slope goes up, buy a call there; where it goes down, sell one; the size of the change says how many.${shape==="st"?" A V is also a call plus a put at the same strike.":""}`,
+        S.why,
+        `Suppose instead the payoff ${O.desc}. ${O.why}`
+      ]};
+  }},
+
+{ id:"k27", topic:"build", name:"Building a payoff from its shape: a peak or a V", gen(){
+    /* Section 5: read the shape from left to right; each kink is a strike, and the change of slope says how many
+       options to buy (slope up) or sell (slope down) there. One shape per draw: bull call spread, bear put spread,
+       butterfly or straddle. Each wrong option is a near miss whose payoff is described in its feedback.  */
+    const h=pick([5,10]), K2=pick(range(25,75,5)), K1=K2-h, K3=K2+h, T=pick(["three months","six months","nine months"]);
+    const shape=pick(["bf","st"]);   // 29 Oct 2026: two shapes per template (Anh): a peak or a V
+    const ALL = {
+      bull:{desc:`is $0.00 if the share ends at ${money(K1)} or below, rises one for one to ${money(h)} at ${money(K2)}, and stays at ${money(h)} above ${money(K2)}`,
+            key:`Buy the ${money(K1)} call and sell the ${money(K2)} call`,
+            why:`At ${money(K1)} the payoff starts rising one for one: buy the ${money(K1)} call. At ${money(K2)} it stops rising: sell the ${money(K2)} call to cancel the rise.`,
+            wrong:[[`Buy the ${money(K1)} call and buy the ${money(K2)} call`, `Buying the ${money(K2)} call makes the payoff rise faster above ${money(K2)}, two for one, instead of levelling off.`],
+                   [`Sell the ${money(K1)} call and buy the ${money(K2)} call`, `That is the other side of the trade: its payoff falls to &minus;${money(h)} instead of rising to ${money(h)}.`],
+                   [`Buy the ${money(K1)} call and sell two ${money(K2)} calls`, `Selling two ${money(K2)} calls makes the payoff fall above ${money(K2)}. One is enough to level it off.`]]},
+      bear:{desc:`is ${money(h)} if the share ends at ${money(K1)} or below, falls one for one to $0.00 at ${money(K2)}, and stays at $0.00 above ${money(K2)}`,
+            key:`Buy the ${money(K2)} put and sell the ${money(K1)} put`,
+            why:`Reading from the right: at ${money(K2)} the payoff starts rising as the share falls: buy the ${money(K2)} put. At ${money(K1)} it stops rising: sell the ${money(K1)} put to cancel the rise.`,
+            wrong:[[`Buy the ${money(K1)} put and sell the ${money(K2)} put`, `That is the other side of the trade: its payoff falls to &minus;${money(h)} as the share falls, instead of rising to ${money(h)}.`],
+                   [`Buy the ${money(K2)} put and buy the ${money(K1)} put`, `Buying the ${money(K1)} put makes the payoff rise faster below ${money(K1)}, two for one, instead of levelling off.`],
+                   [`Buy the ${money(K2)} put and sell the ${money(K1)} call`, `Selling the ${money(K1)} call pulls the payoff down one for one above ${money(K1)}, on top of the put's fall, and does nothing below ${money(K1)}, where the put keeps paying more. The payoff never levels off at ${money(h)}.`]]},
+      bf:{desc:`is $0.00 if the share ends at ${money(K1)} or below, rises one for one to a peak of ${money(h)} at ${money(K2)}, falls one for one back to $0.00 at ${money(K3)}, and stays at $0.00 above ${money(K3)}`,
+            key:`Buy the ${money(K1)} call, sell two ${money(K2)} calls and buy the ${money(K3)} call`,
+            why:`At ${money(K1)} the payoff starts rising: buy the ${money(K1)} call. At ${money(K2)} it turns from rising to falling: sell two ${money(K2)} calls, one to cancel the rise and one to make it fall. At ${money(K3)} it stops falling: buy the ${money(K3)} call.`,
+            wrong:[[`Buy the ${money(K1)} call, sell one ${money(K2)} call and buy the ${money(K3)} call`, `With one ${money(K2)} call sold, the payoff only levels off at ${money(K2)}, and it starts rising again above ${money(K3)}.`],
+                   [`Sell the ${money(K1)} call, buy two ${money(K2)} calls and sell the ${money(K3)} call`, `That is the other side of the trade: an upside-down peak, &minus;${money(h)} at ${money(K2)}.`],
+                   [`Buy the ${money(K1)} call and sell the ${money(K3)} call`, `That is a bull call spread: it rises from ${money(K1)} to ${money(K3)} and stays at ${money(2*h)}. It never falls back to zero.`]]},
+      st:{desc:`is ${money(h)} if the share ends at ${money(K1)}, falls one for one to $0.00 at ${money(K2)}, and rises one for one to ${money(h)} at ${money(K3)}, carrying on in a V in both directions`,
+            key:`Buy the ${money(K2)} call and buy the ${money(K2)} put`,
+            why:`A V with its point at ${money(K2)} is a straddle: the put pays below ${money(K2)}, the call above.`,
+            wrong:[[`Sell the ${money(K2)} call and sell the ${money(K2)} put`, `That is the other side of the trade: an upside-down V, which loses more the further the share moves.`],
+                   [`Buy the ${money(K2)} call and sell the ${money(K2)} put`, `Selling the put makes the payoff fall below ${money(K2)} instead of rising: the result is a straight line, like owning the share.`],
+                   [`Buy the ${money(K1)} put and buy the ${money(K3)} call`, `That is a strangle: its payoff is flat at $0.00 between ${money(K1)} and ${money(K3)}, not a V with its point at ${money(K2)}.`]]}
+    }, S = ALL[shape], O = ALL[{bull:"bear",bear:"bull",bf:"st",st:"bf"}[shape]];   // O: the other shape of the pair
+    const opts=shuffle([
+      {html:S.key, correct:true, msg:`Right. ${S.why}`},
+      ...S.wrong.map(([html,msg])=>({html, correct:false, msg}))
+    ]);
+    return {mode:"choice",
+      text:`You want a position whose payoff in ${T} ${S.desc}.`,
+      ask:`Which position gives this payoff? All options are on the same share and expire in ${T}.`,
+      options:opts,
+      steps:[
+        shape==="bear"
+          ? `A payoff that rises as the share falls is built from puts: read the shape from right to left. Each kink is at a strike. Where the payoff starts rising as the share falls, buy a put; where it stops rising, sell one.`
+          : `Read the shape from left to right. Each kink is at a strike. Where the slope goes up, buy a call there; where it goes down, sell one; the size of the change says how many.${shape==="st"?" A V is also a call plus a put at the same strike.":""}`,
+        S.why,
+        `Suppose instead the payoff ${O.desc}. ${O.why}`
+      ]};
+  }},
+
+{ id:"k28", topic:"build", also:["concept"], name:"Reading a collar's payoff diagram: the strikes", gen(){
+    const K1=pick(range(20,60,5)), h=pick([5,10]), K2=K1+h, m=Math.max(h,10), key=pick(["hi","lo"]);   // hi: the call; lo: the put
+    return STRIKE_DIAG({key, kinks:[K1,K2], pts:[[K1-m,K1],[K1,K1],[K2,K2],[K2+m,K2]], ybase:K1-h, yt:[[K1,money(K1)],[K2,money(K2)]],
+      text:`You own a share, buy a put on it and sell a call on it. Both options expire on the same date, and the put has the lower strike price. This position is called a collar. The diagram shows its payoff at expiration.`,
+      ask: key==="hi" ? "What is the strike price of the call?" : "What is the strike price of the put?",
+      why: key==="hi" ? `Above ${money(K2)} the payoff stops rising: the buyer of the call you sold takes the share for ${money(K2)}. The call's strike is where the payoff is capped.`
+                      : `Below ${money(K1)} the payoff stops falling: the put lets you sell the share for ${money(K1)}. The put's strike is where the payoff has its floor.`,
+      other: key==="hi" ? `That is the put's strike: below ${money(K1)} the payoff stops falling, because the put lets you sell the share for ${money(K1)}. The call caps the payoff, at the upper kink.`
+                        : `That is the call's strike: above ${money(K2)} the payoff stops rising, because the call you sold takes the share away. The put sets the floor, at the lower kink.`,
+      gap:`That is the gap between the two kinks, how far the payoff can move between its floor and its cap. Each strike is at a kink.`,
+      steps:[`Read the kinks from left to right. Below ${money(K1)} the payoff is flat at ${money(K1)}: the put's floor. Between the kinks it rises one for one with the share. Above ${money(K2)} it is flat at ${money(K2)}: the call's cap.`,
+             key==="hi" ? `The call's strike is the upper kink, <b>${money(K2)}</b>; the put's is the lower kink, ${money(K1)}.`
+                        : `The put's strike is the lower kink, <b>${money(K1)}</b>; the call's is the upper kink, ${money(K2)}.`]});
+  }},
+
+{ id:"k29", topic:"build", also:["concept"], name:"Reading a bull call spread's payoff diagram: the strikes", gen(){
+    const K1=pick(range(20,60,5)), h=pick([5,10]), K2=K1+h, m=Math.max(h,10), key=pick(["hi","lo"]);   // hi: the call sold; lo: the call bought
+    return STRIKE_DIAG({key, kinks:[K1,K2], pts:[[K1-m,0],[K1,0],[K2,h],[K2+m,h]], yt:[[h,money(h)]],
+      text:`You buy a call on a share and sell a call on the same share with a higher strike price. Both expire on the same date. This position is called a bull call spread. The diagram shows its payoff at expiration.`,
+      ask: key==="hi" ? "What is the strike price of the call you sold?" : "What is the strike price of the call you bought?",
+      why: key==="hi" ? `Above ${money(K2)} the payoff stops rising: from there the call you sold costs you one for one what the call you bought pays. Its strike is the upper kink.`
+                      : `Above ${money(K1)} the payoff starts rising one for one: the call you bought starts to pay there. Its strike is the lower kink.`,
+      other: key==="hi" ? `That is the strike of the call you bought: the payoff starts rising there. The call you sold stops the rise, at the upper kink.`
+                        : `That is the strike of the call you sold: the payoff stops rising there. The call you bought starts the rise, at the lower kink.`,
+      gap:`That is the gap between the two kinks, which is also the most the spread pays, ${money(h)}. Each strike is at a kink.`,
+      steps:[`Read the kinks from left to right. Up to ${money(K1)} the payoff is zero. From ${money(K1)} it rises one for one: the call you bought starts to pay. From ${money(K2)} it is flat at ${money(h)}: the call you sold cancels the rise.`,
+             key==="hi" ? `The strike of the call you sold is the upper kink, <b>${money(K2)}</b>; the strike of the call you bought is the lower kink, ${money(K1)}.`
+                        : `The strike of the call you bought is the lower kink, <b>${money(K1)}</b>; the strike of the call you sold is the upper kink, ${money(K2)}.`]});
+  }},
+
+{ id:"k30", topic:"build", also:["concept"], name:"Reading a strangle's payoff diagram: the strikes", gen(){
+    const Kp=pick(range(15,50,5)), g=pick([5,10]), Kc=Kp+g, m=Math.max(g,10), key=pick(["hi","lo"]);   // hi: the call; lo: the put
+    return STRIKE_DIAG({key, kinks:[Kp,Kc], pts:[[Kp-m,m],[Kp,0],[Kc,0],[Kc+m,m]], yt:[[m,money(m)]],
+      text:`You buy a call and a put on the same share. Both expire on the same date, and the put has the lower strike price. This position is called a strangle. The diagram shows its payoff at expiration.`,
+      ask: key==="hi" ? "What is the strike price of the call?" : "What is the strike price of the put?",
+      why: key==="hi" ? `Above ${money(Kc)} the payoff rises one for one: the call starts to pay there. Its strike is the right-hand kink.`
+                      : `Below ${money(Kp)} the payoff rises one for one as the share falls: the put starts to pay there. Its strike is the left-hand kink.`,
+      other: key==="hi" ? `That is the put's strike: below ${money(Kp)} the put pays as the share falls. The call pays above the right-hand kink.`
+                        : `That is the call's strike: above ${money(Kc)} the call pays as the share rises. The put pays below the left-hand kink.`,
+      gap:`That is the width of the flat stretch between the kinks, where neither option pays. Each strike is at a kink.`,
+      steps:[`Read the kinks from left to right. Below ${money(Kp)} the payoff rises as the share falls: the put pays. Between ${money(Kp)} and ${money(Kc)} it is zero: neither option pays. Above ${money(Kc)} it rises with the share: the call pays.`,
+             key==="hi" ? `The call's strike is the right-hand kink, <b>${money(Kc)}</b>; the put's is the left-hand kink, ${money(Kp)}.`
+                        : `The put's strike is the left-hand kink, <b>${money(Kp)}</b>; the call's is the right-hand kink, ${money(Kc)}.`]});
+  }},
+
+{ id:"k20", topic:"vol", also:["concept"], name:"Why a straddle before earnings is no sure thing", gen(){
+    /* Section 4, "The catch": everyone knows when earnings come out and expects a bigger move, so the options
+       already cost more; the straddle pays only if the share moves more than the market expects.         */
+    const K=pick(range(20,80,5)), p=pick(range(1.50,5.00,0.25)), c=p+pick([0,0.25,0.50]), T=c+p;   // same strike: the call costs at least the put
+    const opts=shuffle([
+      {html:`The options already price in a big move: you profit only if the share moves more than ${money(T)}`, correct:true,
+       msg:`Right. The straddle costs ${money(T)}, so the share must end below ${money(K-T)} or above ${money(K+T)}. The prices already reflect the move the market expects; you make money only if the move is bigger.`},
+      {html:`A big move makes one of the two options worthless, and that loss cancels the other option's gain`, correct:false,
+       msg:`One option does expire unused, but the other pays the full distance from ${money(K)}. The bigger the move, the bigger the payoff; what can eat it is the ${money(T)} you paid for the two options.`},
+      {html:`The share must rise by more than the call's price, ${money(c)}; a fall does not help you`, correct:false,
+       msg:`A fall helps too: the put pays if the share ends below ${money(K)}. But the share must move more than the cost of both options, ${money(T)}, in either direction.`},
+      {html:`A straddle pays the most if the share ends at ${money(K)}, and a big move takes it away from there`, correct:false,
+       msg:`That is the worst outcome for a straddle: at ${money(K)} both options expire unused. It is the butterfly that pays most near the strike.`}
+    ]);
+    return {mode:"choice",
+      text:`A firm announces its earnings next week, and you expect its share, now at ${money(K)}, to move a lot. A call with a strike price of ${money(K)} costs ${money(c)}, and a put with the same strike costs ${money(p)},
+            both expiring after the announcement. You buy both. This position is called a straddle.`,
+      ask:"Why is a profit not assured, even if the share moves a lot?",
+      options:opts,
+      steps:[
+        `The straddle costs ${money(c)} + ${money(p)} = ${money(T)}, so it makes money only if the share ends below ${money(K)} &minus; ${money(T)} = ${money(K-T)} or above ${money(K)} + ${money(T)} = ${money(K+T)}.`,
+        `Everyone knows when the earnings come out and expects a bigger move, so the options cost more that week. The straddle makes money only if the share moves more than the market already expects.`
+      ]};
+  }},
+
+{ id:"k21", topic:"vol", also:["concept"], name:"Butterfly or short straddle?", gen(){
+    /* Section 5, last paragraph: both bet on a quiet share; the short straddle's losses grow without limit, the
+       butterfly's payoff never goes below zero (its long wings are insurance).                            */
+    const h=pick([5,10]), K=pick(range(25,75,5));
+    const opts=shuffle([
+      {html:`At expiration the butterfly's payoff never falls below zero; the short straddle's has no floor`, correct:true,
+       msg:`Right. The ${money(K-h)} and ${money(K+h)} calls you buy in the butterfly are its insurance: once the share is past either one, the payoff stays at zero. The short straddle owes the full distance from ${money(K)}.`},
+      {html:`The short straddle cannot lose money overall, because you receive both option prices today`, correct:false,
+       msg:`You receive the two prices today, but you owe the distance from ${money(K)} at expiration. A big move costs more than the prices you received, and there is no limit to it.`},
+      {html:`The butterfly pays most if the share moves far from ${money(K)}, so it is the safer bet`, correct:false,
+       msg:`The butterfly pays most if the share ends near ${money(K)} and nothing if it moves far. Both positions are bets on a quiet share.`},
+      {html:`They have the same payoff at expiration; the butterfly is only a cheaper way to build it`, correct:false,
+       msg:`The payoffs differ where the share moves far. Past ${money(K-h)} or ${money(K+h)}, the butterfly's payoff stays at zero, while the short straddle's keeps falling.`}
+    ]);
+    return {mode:"choice",
+      text:`You expect a share to stay close to ${money(K)} over the next six months. You could sell the ${money(K)} call and the ${money(K)} put (a short straddle), or buy a butterfly:
+            buy the ${money(K-h)} call, sell two ${money(K)} calls and buy the ${money(K+h)} call. All the options expire in six months.`,
+      ask:"Which statement about the two positions is right?",
+      options:opts,
+      steps:[
+        `Both positions pay most if the share ends at ${money(K)}: they are bets on a quiet share.`,
+        `The short straddle owes the distance between the share and ${money(K)}, with no limit. The butterfly's payoff is zero below ${money(K-h)} and above ${money(K+h)}: the two calls you buy cap the loss.`
+      ]};
+  }},
+
+{ id:"k22", topic:"cap", also:["concept"], name:"The deductible and the strike", gen(){
+    /* Section 1 and practice 5: a car policy is a put on the car with strike = the car's value minus the
+       deductible; a higher deductible is a lower strike, so a cheaper policy.                           */
+    const V=pick(range(15000,40000,1000)), dA=pick([250,500,1000]), dB=dA+pick([500,1000,1500]);
+    const m = x => "$"+x.toLocaleString("en-US");
+    const opts=shuffle([
+      {html:`A is like a put with a strike of ${m(V-dA)}, B with a strike of ${m(V-dB)}; A should cost more`, correct:true,
+       msg:`Right. Whatever happens, you never end up with less than the car's value minus the deductible: that is the strike. A's strike is higher, so it gives more protection, and a higher-strike put costs more.`},
+      {html:`A is like a put with a strike of ${m(dA)}, B with a strike of ${m(dB)}; B should cost more`, correct:false,
+       msg:`The deductible is not the strike. It is the gap between the car's value today and the strike: the strike is ${m(V)} minus the deductible.`},
+      {html:`Both are like puts with a strike of ${m(V)}; they should cost the same, since they insure the same car`, correct:false,
+       msg:`With a deductible you never get back the full ${m(V)}. After an accident you end up with the car's value minus the deductible, so the strike is lower, and different for the two policies.`},
+      {html:`A is like a put with a strike of ${m(V-dA)}, B with a strike of ${m(V-dB)}; B should cost more`, correct:false,
+       msg:`The strikes are right, but a lower-strike put protects less and costs less. B, with the higher deductible, should be the cheaper policy.`}
+    ]);
+    return {mode:"choice",
+      text:`Your car is worth ${m(V)}. Insurer A offers comprehensive insurance with a deductible of ${m(dA)}; insurer B offers it with a deductible of ${m(dB)}.
+            Think of each policy as a put on your car.`,
+      ask:"Which statement is right?",
+      options:opts,
+      steps:[
+        `After an accident the insurer pays your loss minus the deductible, so the car and the payment together are worth the car's value minus the deductible, whatever happens: that is the strike.`,
+        `A: ${m(V)} &minus; ${m(dA)} = ${m(V-dA)}. B: ${m(V)} &minus; ${m(dB)} = ${m(V-dB)}. A's put has the higher strike, so it costs more: a higher deductible means a lower premium.`
+      ]};
+  }},
+
+{ id:"k24", topic:"vol", also:["concept"], name:"Which position gains when swings get bigger?", gen(){
+    /* Section 4 ("More expected swing means higher option prices"; the straddle is "a pure bet on volatility")
+       and the 2025 MF final Q3 (Shubh's portfolio). Bigger expected swings raise every option's price; a position
+       gains only if it is long options on net in that sense: the straddle. The butterfly, short straddle and
+       covered call lose.                                                                                 */
+    const K=pick(range(25,75,5)), h=pick([5,10]);
+    const opts=shuffle([
+      {html:`A straddle: you bought the ${money(K)} call and the ${money(K)} put`, correct:true,
+       msg:`Right. Bigger expected swings raise the prices of both the call and the put, and you own both. A straddle is a pure bet on volatility.`},
+      {html:`A butterfly: you bought the ${money(K-h)} call, sold two ${money(K)} calls and bought the ${money(K+h)} call`, correct:false,
+       msg:`A butterfly pays most if the share stays near ${money(K)}. Bigger swings make that less likely: it is a bet on a quiet share, and it loses value.`},
+      {html:`A short straddle: you sold the ${money(K)} call and the ${money(K)} put`, correct:false,
+       msg:`Bigger swings raise the prices of the call and the put you sold, so buying them back costs more. A short straddle is a bet on a quiet share.`},
+      {html:`A covered call: you own the share and sold the ${money(K+h)} call`, correct:false,
+       msg:`The call you sold becomes more valuable, and that is a loss to you as its writer. The covered call gives up the upside, which is worth more when the share swings more.`}
+    ]);
+    return {mode:"choice",
+      text:`A share trades at ${money(K)}, and options on it expire in six months. Investors come to expect much bigger swings in the share price than before. Nothing else changes.`,
+      ask:"Which of these positions gains value?",
+      options:opts,
+      steps:[
+        `More expected swing means higher option prices, for calls and for puts.`,
+        `A position gains if it owns the options whose prices rise and has sold none. The straddle owns a call and a put; the others have sold options (and the butterfly's payoff needs a quiet share).`
+      ]};
+  }}
+];
+
+const TOPICS = [
+  {key:"all", label:"Mixed"},
+  {key:"cap", label:"Floors and caps"},
+  {key:"spread", label:"Spreads"},
+  {key:"vol", label:"Straddles and butterflies"},
+  {key:"build", label:"Reading a payoff"},
+  {key:"concept", label:"Reason it out"}
+];
+
+/* ----------------------------------------------------------------- state */
+let active = "all", current = null, tries = 0;
+let peeked = false, solved = false, tallied = false;  // tallied = already counted in `attempted`
+const stats = {att:0, first:0, streak:0, peek:0};
+
+const $ = id => document.getElementById(id);
+
+/* One-period trees for templates that return q.fig = [{label, now, outs:[...], probs:[...]?}, ...]
+   (added 22 Oct 2026 for Note 13, at Anh's request). Values come from the same draw as the text. */
+function figHTML(fig){
+  const txt = s => String(s).replace(/<[^>]+>/g, "");
+  const len = s => txt(s).replace(/&[a-z]+;/g, "x").length;
+  /* A multi-period recombining tree (Notes 16 and 19, 22 Oct 2026): t.lat[k] lists the nodes at
+     date k from the top; a node is a string or an array of lines; t.times labels the dates.      */
+  const latSVG = t => {
+    const L = t.lat.length, lines = v => (Array.isArray(v) ? v : [v]).map(txt);
+    const colW = t.lat.map(col => Math.max(24, ...col.map(v => Math.max(...lines(v).map(len))*8.2)));
+    const nl = Math.max(...t.lat.flat().map(v => lines(v).length)), lh = 17, h = nl > 1 ? 30 : 17, top = 30;
+    const cx = []; let x = 4;
+    colW.forEach((w, k) => { cx.push(x + w/2); x += w + 44; });
+    const W = Math.max(x - 44 + 4, 8.5*len(t.label) + 10);
+    const yOf = (k, i) => top + h*(2*i + (L-1-k)) + (nl-1)*lh/2;
+    const H = top + h*2*(L-1) + nl*lh + (t.times ? 26 : 6);
+    /* t.on (23 Oct 2026, Anh): the nodes the question works at, as "k,i". The rest of the tree is drawn
+       in grey, with a dot for a node that carries no figure, so students see where in the tree they are. */
+    const on = t.on ? new Set(t.on) : null, isOn = (k, i) => !on || on.has(k + "," + i);
+    const half = (k, i) => lines(t.lat[k][i]).join("") ? colW[k]/2 + 4 : 6;
+    let g = `<text class="tl" x="${W/2}" y="14" text-anchor="middle">${txt(t.label)}</text>`;
+    t.lat.forEach((col, k) => col.forEach((v, i) => {
+      const y = yOf(k, i), ls = lines(v);
+      if (ls.join("")) ls.forEach((s, j) => g += `<text x="${cx[k]}" y="${y + 5 + (j - (ls.length-1)/2)*lh}" text-anchor="middle">${s}</text>`);
+      else g += `<circle cx="${cx[k]}" cy="${y}" r="3.2"${isOn(k, i) ? "" : ` class="off"`}/>`;
+      if (k < L-1) [i, i+1].forEach(c => {
+        const y2 = yOf(k+1, c);
+        g += `<line x1="${cx[k] + half(k, i)}" y1="${y}" x2="${cx[k+1] - half(k+1, c)}" y2="${y2}" stroke-width="1.6"${isOn(k, i) && isOn(k+1, c) ? "" : ` class="off"`}/>`;
+      });
+    }));
+    if (t.times) t.times.forEach((s, k) => g += `<text class="tp" x="${cx[k]}" y="${H - 6}" text-anchor="middle">${txt(s)}</text>`);
+    return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${txt(t.label)}: ${t.lat.map(c => c.map(v => lines(v).join(" ")).join(" / ")).join("; then ")}">${g}</svg>`;
+  };
+  /* A payoff or profit diagram (Note 25 Part 3, 29 Oct 2026, Anh): t.pts are the corners of a piecewise-linear
+     line, left edge to right edge (a window around the kinks, not from S = 0, so the kinks stand apart);
+     t.dots are marked points, each with dashed guides to the axes; t.xt / t.yt are [value, label] ticks.
+     The horizontal axis sits at t.ybase, zero unless given (a collar's payoff never comes near zero).   */
+  const plotSVG = t => {
+    const L0 = 62, R0 = 14, T0 = 26, B0 = 40, yb = t.ybase || 0;
+    const xs = t.pts.map(p => p[0]), ys = t.pts.map(p => p[1]).concat([yb]);
+    const X0 = Math.min(...xs), X1 = Math.max(...xs), Y0 = Math.min(...ys), Y1 = Math.max(...ys), dy = (Y1 - Y0) || 1;
+    const lo = Y0 - 0.08*dy*(Y0 < yb), hi = Y1 + 0.12*dy;
+    /* One scale on both axes (Anh, 29 Oct 2026): a one-for-one slope must look like 45 degrees. */
+    const k = Math.min(304/(X1 - X0), 200/(hi - lo)), W = L0 + R0 + k*(X1 - X0), H = T0 + B0 + k*(hi - lo);
+    const px = x => L0 + k*(x - X0), py = y => T0 + k*(hi - y);
+    const dotY = x => ((t.dots || []).find(d => d[0] === x) || [x, yb])[1];
+    let g = `<line class="ax" x1="${L0}" y1="${py(yb)}" x2="${W - R0}" y2="${py(yb)}"/>`;
+    g += `<line class="ax" x1="${L0}" y1="${T0 - 4}" x2="${L0}" y2="${H - B0 + 4}"/>`;
+    (t.dots || []).forEach(([x, y]) => {
+      if (y !== yb) g += `<line class="gd" x1="${px(x)}" y1="${py(y)}" x2="${px(x)}" y2="${py(yb)}"/>`;
+      g += `<line class="gd" x1="${L0}" y1="${py(y)}" x2="${px(x)}" y2="${py(y)}"/>`;
+    });
+    g += `<polyline class="pl" points="${t.pts.map(([x, y]) => px(x).toFixed(1) + "," + py(y).toFixed(1)).join(" ")}"/>`;
+    (t.dots || []).forEach(([x, y]) => g += `<circle cx="${px(x)}" cy="${py(y)}" r="3.4"/>`);
+    (t.xt || []).forEach(([x, s]) => g += `<text class="tk" x="${px(x)}" y="${py(yb) + (dotY(x) < yb ? -8 : 17)}" text-anchor="middle">${txt(s)}</text>`);
+    (t.yt || []).forEach(([y, s]) => g += `<text class="tk" x="${L0 - 6}" y="${py(y) + 4.5}" text-anchor="end">${txt(s)}</text>`);
+    g += `<text class="tp" x="${W - R0}" y="${H - 6}" text-anchor="end">${txt(t.xlab)}</text>`;
+    g += `<text class="tp" x="${L0}" y="${T0 - 10}" text-anchor="middle">${txt(t.ylab)}</text>`;
+    return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${txt(t.label)}: ${txt(t.aria || "")}">${g}</svg>`;
+  };
+  return fig.map(t => {
+    if (t.lat) return latSVG(t);
+    if (t.pts) return plotSVG(t);
+    const n = t.outs.length, gap = n > 2 ? 30 : 46, top = 34;
+    const x1 = Math.max(40, 12 + 8.5*len(t.now)), x2 = x1 + 56;
+    const wide = Math.max(...t.outs.map((v, i) => 8.4*len(v) + (t.probs ? 6.6*(len(t.probs[i]) + 2) + 6 : 0)));
+    const W = Math.max(x2 + 10 + wide, 8.5*len(t.label) + 10), H = top + gap*(n-1) + 14, mid = top + gap*(n-1)/2;
+    let g = `<text class="tl" x="${(x1 + x2)/2}" y="14" text-anchor="middle">${txt(t.label)}</text>`;
+    g += `<text x="${x1-8}" y="${mid+5}" text-anchor="end">${txt(t.now)}</text>`;
+    t.outs.forEach((v, i) => {
+      const y = top + gap*i, dx = x2-x1, dy = y-mid, L = Math.hypot(dx, dy), ux = dx/L, uy = dy/L;
+      const ex = x2 - 2*ux, ey = y - 2*uy, bx = ex - 9*ux, by = ey - 9*uy;
+      g += `<line x1="${x1}" y1="${mid}" x2="${bx}" y2="${by}" stroke-width="1.8"/>`;
+      g += `<polygon points="${ex},${ey} ${bx-4*uy},${by+4*ux} ${bx+4*uy},${by-4*ux}" stroke-width="0"/>`;
+      g += `<text x="${x2+6}" y="${y+5}">${txt(v)}${t.probs ? `<tspan class="tp" dx="6">(${txt(t.probs[i])})</tspan>` : ""}</text>`;
+    });
+    return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${txt(t.label)}: ${txt(t.now) || "today"}, then ${t.outs.map(txt).join(" or ")}">${g}</svg>`;
+  }).join("");
+}
+
+function buildTopics(){
+  const box = $("topics");
+  TOPICS.forEach(t=>{
+    const b = document.createElement("button");
+    b.className = "chip"; b.textContent = t.label;
+    b.setAttribute("aria-pressed", String(t.key===active));
+    b.onclick = ()=>{
+      active = t.key;
+      [...box.children].forEach(c=>c.setAttribute("aria-pressed","false"));
+      b.setAttribute("aria-pressed","true");
+      seqIdx = 0;                 // a new topic restarts the sequence
+      newQuestion();
+    };
+    box.appendChild(b);
+  });
+  /* the Starred chip: practise only the questions starred on this page */
+  const s = document.createElement("button");
+  s.className = "chip"; s.id = "chipStar";
+  s.setAttribute("aria-pressed", "false");
+  s.onclick = ()=>{
+    active = "starred";
+    [...box.children].forEach(c=>c.setAttribute("aria-pressed","false"));
+    s.setAttribute("aria-pressed","true");
+    seqIdx = 0;
+    newQuestion();
+  };
+  box.appendChild(s);
+  updateStarChip();
+}
+
+const ALL_TEMPLATES = TEMPLATES.concat(CHOICE_TEMPLATES);
+
+/* A template's primary topic is `topic`; it may also list secondary topics in
+   `also`, so one item can appear under several chips. */
+function inTopic(t, key){
+  return t.topic === key || (Array.isArray(t.also) && t.also.includes(key));
+}
+
+/* ---- progress: distinct templates solved without opening the solution ---- */
+const PROG_KEY = "practice-progress:" + document.title;
+let mastered = new Set();
+try { mastered = new Set(JSON.parse(localStorage.getItem(PROG_KEY) || "[]")); }
+catch (e) { mastered = new Set(); }
+
+function saveProgress(){
+  try { localStorage.setItem(PROG_KEY, JSON.stringify([...mastered])); } catch (e) {}
+}
+function markMastered(id){
+  if (!id || mastered.has(id)) return;
+  mastered.add(id);
+  saveProgress();
+}
+
+/* ---- starred questions: kept per template, so a starred question comes back with new
+   numbers. Starred automatically on a wrong answer or on opening the solution before
+   solving; the student can star or unstar any question by hand. ---- */
+const STAR_KEY = "practice-starred:" + document.title;
+let starred = new Set();
+try { starred = new Set(JSON.parse(localStorage.getItem(STAR_KEY) || "[]")); }
+catch (e) { starred = new Set(); }
+starred = new Set([...starred].filter(id => ALL_TEMPLATES.some(t => t.id === id)));
+
+function saveStars(){
+  try { localStorage.setItem(STAR_KEY, JSON.stringify([...starred])); } catch (e) {}
+}
+function updateStarChip(){
+  const c = document.getElementById("chipStar");   // made by buildTopics, not in the markup
+  if (c) c.textContent = "★ Starred (" + starred.size + ")";
+}
+function showStar(){
+  const on = !!(current && starred.has(current.id));
+  $("star").hidden = !current;
+  $("star").setAttribute("aria-pressed", String(on));
+  $("star").textContent = on ? "★ Starred" : "☆ Star";
+}
+function setStar(id, on){
+  if (!id) return;
+  if (on) starred.add(id); else starred.delete(id);
+  saveStars(); updateStarChip(); showStar();
+}
+function autoStar(){ if (current && !starred.has(current.id)) setStar(current.id, true); }
+
+function poolFor(key){
+  if (key === "all") return ALL_TEMPLATES;
+  if (key === "starred") return ALL_TEMPLATES.filter(t => starred.has(t.id));
+  return ALL_TEMPLATES.filter(t => inTopic(t, key));
+}
+
+/* Templates are drawn WITHOUT immediate repeats. Sampling with replacement
+   looks fine on the full bank, but a topic holding only three or four
+   templates repeats roughly one press in three, which reads as the button
+   being broken. Hold the most recent half of the pool out of the draw. */
+let recentIds = [];
+/* Questions seen this session, so the arrow keys can step back and forth through them. */
+let history = [], histIdx = -1;
+let navKey = false;      // true while an arrow key is doing the rendering
+let order = "shuffle";   // "shuffle" | "seq"
+let seqIdx = 0;
+
+function newQuestion(replay){
+  let q;
+  if (replay){ q = replay.q; }
+  else {
+  const pool = poolFor(active);
+  if (!pool.length){
+    current = null;
+    $("qmeta").textContent = "Starred";
+    $("qtext").innerHTML = "No starred questions yet. A question is starred when you answer it " +
+      "wrongly or open its solution before solving it, and you can star any question yourself with " +
+      "<b>☆ Star</b>. Pick another chip to practise.";
+    $("qask").innerHTML = "";
+    $("opts").hidden = true; $("opts").innerHTML = "";
+    $("ans").hidden = true; $("check").hidden = true; $("next").hidden = true;
+    $("fb").innerHTML = ""; $("soldetails").hidden = true; $("seqPos").textContent = "";
+    showStar();
+    return;
+  }
+  let tpl;
+  if (order === "seq"){
+    /* walk the bank in order, wrapping at the end */
+    if (seqIdx >= pool.length) seqIdx = 0;
+    tpl = pool[seqIdx];
+    seqIdx = (seqIdx + 1) % pool.length;
+    $("seqPos").textContent = `${seqIdx === 0 ? pool.length : seqIdx} of ${pool.length}`;
+  } else {
+    const hold = Math.max(1, Math.floor(pool.length / 2));
+    let choices = pool.filter(t => !recentIds.slice(0, hold).includes(t.id));
+    if (!choices.length) choices = pool;        // pool of one, or all held out
+    tpl = pick(choices);
+    recentIds.unshift(tpl.id);
+    if (recentIds.length > 40) recentIds.length = 40;
+    $("seqPos").textContent = "";
+  }
+  q = tpl.gen();
+  q.name = tpl.name;
+  q.id   = tpl.id;
+  q.seqPos = $("seqPos").textContent;   // carried so stepping back shows its own position
+  if (q.mode !== "choice") q.distractors = usable(q.correct, q.cands, q.sep);
+  }
+  current = q;
+  if (replay){
+    tries = replay.tries; peeked = replay.peeked; solved = replay.solved; tallied = replay.tallied;
+  } else {
+    tries = 0; peeked = false; solved = false; tallied = false;
+    history = history.slice(0, histIdx + 1);           // a new draw discards anything ahead
+    history.push({q, tries:0, peeked:false, solved:false, tallied:false, fb:"", ans:""});
+    if (history.length > 50){ history.shift(); }
+    histIdx = history.length - 1;
+  }
+
+  const isChoice = q.mode === "choice";
+  $("qmeta").textContent = q.name;
+  $("qtext").innerHTML   = q.text;
+  $("qfig").innerHTML    = q.fig ? figHTML(q.fig) : "";
+  $("qfig").hidden       = !q.fig;
+  $("qask").innerHTML    = q.ask;
+  /* Hide the input and Check individually, NOT the whole row -- the
+     "New question" button lives in that row and must stay reachable
+     on choice questions. */
+  $("ans").hidden   = isChoice;
+  $("check").hidden = isChoice;
+  $("next").hidden  = false;
+  showStar();
+  $("opts").hidden     = !isChoice;
+  const box = $("opts");
+  box.innerHTML = "";              // always clear, even when the panel is hidden
+  if (isChoice){
+    q.options.forEach((o,k)=>{
+      const btn = document.createElement("button");
+      btn.className = "opt"; btn.innerHTML = o.html;
+      btn.onclick = () => pickOption(k);
+      box.appendChild(btn);
+    });
+  }
+  $("ans").value = "";
+  $("ans").placeholder = q.unit==="money" ? "e.g. 1234.56"
+                     : q.unit==="percent" ? "e.g. 12.34  (percent)"
+                     : "e.g. 18";
+  $("ans").disabled = false;
+  $("check").disabled = false;
+  $("fb").innerHTML = "";
+  $("steps").innerHTML = q.steps.map(s=>`<div>${s}</div>`).join("");
+  const d = $("soldetails"); d.hidden = false; d.open = false;
+  if (replay){
+    /* Put the question back exactly as it was left --- the feedback, what was typed, and
+       whether it had already been answered. The tallied/solved flags come back with it,
+       so revisiting a question never re-counts an attempt or re-awards mastery. */
+    $("fb").innerHTML = replay.fb || "";
+    $("ans").value    = replay.ans || "";
+    $("seqPos").textContent = q.seqPos || "";
+    if (isChoice && q.wrong){
+      [...$("opts").children].forEach((b,j)=>{
+        if (q.wrong.indexOf(j) >= 0){ b.classList.add("wrong"); b.disabled = true; }
+      });
+    }
+    if (solved || q.done){
+      if (isChoice){
+        [...$("opts").children].forEach((b,j)=>{ b.disabled = true;
+          if (q.options[j].correct) b.classList.add("right"); });
+      } else { $("ans").disabled = true; $("check").disabled = true; }
+    }
+    d.open = peeked || solved;
+  }
+  /* Arriving by arrow key must not park the cursor in the answer box: a restored answer
+     sitting there would swallow the next arrow press and strand the student. */
+  if (navKey) $("ans").blur();
+  else if (!isChoice && !$("ans").disabled) $("ans").focus();
+}
+
+function parseInput(raw){
+  const cleaned = raw.replace(/[$,%\s,]/g,"");
+  if (cleaned === "" ) return NaN;
+  return Number(cleaned);
+}
+
+function say(kind, title, body){
+  $("fb").innerHTML = `<div class="fb ${kind}"><strong>${title}</strong>${body}</div>`;
+}
+
+function pickOption(k){
+  const q = current;
+  if (q.done) return;
+  const o    = q.options[k];
+  const btns = [...$("opts").children];
+
+  tries++;
+  if (!tallied){ tallied = true; stats.att++; }
+
+  if (o.correct){
+    q.done = true; solved = true;
+    btns.forEach((b2,j)=>{ b2.disabled = true; if (q.options[j].correct) b2.classList.add("right"); });
+    if (peeked){
+      stats.streak = 0;
+      say("ok","Correct — but you read the solution first.",
+          "It still counts as attempted, just not toward first-try accuracy or your streak. " + o.msg);
+    } else {
+      stats.streak++;
+      if (tries === 1) stats.first++;
+      markMastered(q.id);
+      say("ok", tries===1 ? "Correct — first try." : "Correct.", o.msg);
+    }
+    $("soldetails").open = true;
+  } else {
+    stats.streak = 0;
+    btns[k].classList.add("wrong");
+    btns[k].disabled = true;
+    (q.wrong || (q.wrong = [])).push(k);   // remembered so a revisit keeps it eliminated
+    autoStar();
+    say("no","Not that one.", o.msg);
+  }
+  render();
+}
+
+function check(){
+  const raw = $("ans").value;
+  const parsed = parseInput(raw);
+  if (!Number.isFinite(parsed)){
+    say("hint","Enter a number","Type your answer as a number — you can include $ , or % and it will be ignored.");
+    return;
+  }
+  const q = current;
+  const val = q.unit==="percent" ? parsed/100 : parsed;
+  const TOL = q.tol || REL_MATCH;
+
+  /* Unit slips are formatting mistakes, not wrong answers, so they cost
+     neither an attempt nor first-try credit. Guarded so a genuinely
+     correct entry can never be mistaken for one. */
+  if (!near(val, q.correct, TOL)){
+    if (q.unit==="percent" && near(parsed, q.correct, TOL)){
+      say("hint","Right number, wrong units.",
+          `You entered <code>${raw}</code> as a decimal. This box wants a percent — enter <code>${(q.correct*100).toFixed(4).replace(/\.?0+$/,"")}</code> instead.`);
+      return;
+    }
+    if (near(val*100, q.correct, TOL) || near(val/100, q.correct, TOL)){
+      say("hint","Check your units.","Your figure is off by a factor of 100. Re-read what the box is asking for.");
+      return;
+    }
+  }
+
+  tries++;
+  if (!tallied){ tallied = true; stats.att++; }   // count each question once, right or wrong
+
+  if (near(val, q.correct, TOL)){
+    solved = true;
+    if (peeked){
+      stats.streak = 0;
+      say("ok","Correct — but you read the solution first.",
+          "That is a perfectly good way to learn, and it still counts as attempted. It does " +
+          "not count toward first-try accuracy or your streak, so those numbers stay honest. " +
+          "Try the next one before opening the solution.");
+    } else {
+      stats.streak++;
+      if (tries === 1) stats.first++;
+      markMastered(q.id);
+      say("ok","Correct.", tries===1 ? "First try — well done." : "Got there.");
+    }
+    $("check").disabled = true; $("ans").disabled = true;
+    $("soldetails").open = true;
+    render(); return;
+  }
+
+  stats.streak = 0;
+  autoStar();
+  const hit = q.distractors.find(d => near(val, d.val, TOL));
+  say("no", hit ? "Not quite — and I can see why." : "Not quite.",
+      hit ? hit.msg
+          : "That does not match any of the usual slips, so it may be an arithmetic error. Try again, or open the worked solution below.");
+  render();
+}
+
+function render(){
+  $("sAtt").textContent    = stats.att;
+  $("sFirst").textContent  = stats.first;
+  $("sAcc").textContent    = stats.att ? Math.round(stats.first/stats.att*100)+"%" : "—";
+  $("sStreak").textContent = stats.streak;
+  $("sPeek").textContent   = stats.peek;
+  const total = ALL_TEMPLATES.length;
+  $("pTotal").textContent  = total;
+  $("pDone").textContent   = mastered.size;
+  $("progfill").style.width = (total ? 100*mastered.size/total : 0).toFixed(1) + "%";
+}
+
+$("check").onclick = () => { if (current) check(); };
+$("star").onclick  = () => { if (current) setStar(current.id, !starred.has(current.id)); };
+$("next").onclick  = () => newQuestion();   // arrow fn: never pass the click Event as `replay`
+
+/* ---- arrow keys: right for the next question, left for the previous one -------------
+   Ignored while the answer box is being typed in, where the arrows move the caret, and
+   ignored with a modifier held so the browser's own shortcuts still work.            */
+function snapshotQuestion(){
+  const h = history[histIdx];
+  if (!h) return;
+  h.tries = tries; h.peeked = peeked; h.solved = solved; h.tallied = tallied;
+  h.fb = $("fb").innerHTML; h.ans = $("ans").value;
+}
+function goBack(){
+  if (histIdx <= 0) return;
+  snapshotQuestion(); histIdx--;
+  navKey = true; newQuestion(history[histIdx]); navKey = false;
+}
+function goForward(){
+  snapshotQuestion();
+  navKey = true;
+  if (histIdx < history.length - 1){ histIdx++; newQuestion(history[histIdx]); }
+  else newQuestion();
+  navKey = false;
+}
+document.addEventListener("keydown", e => {
+  if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+  if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
+  const t = e.target;
+  if (t && (t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+  /* Inside the answer box the arrows belong to the caret --- but only while it still has
+     somewhere to go. Once it sits at the end you are pressing toward, the press is free,
+     so a half-typed answer never traps a student in the field. */
+  if (t && t.tagName === "INPUT" && !t.disabled){
+    const at = t.selectionStart, to = t.selectionEnd, n = String(t.value).length;
+    if (at === null || at !== to) return;                       // a selection: leave it alone
+    if (e.key === "ArrowRight" ? at < n : at > 0) return;
+  }
+  e.preventDefault();
+  if (e.key === "ArrowRight") goForward(); else goBack();
+});
+$("ans").addEventListener("keydown", e=>{ if(e.key==="Enter" && !$("check").disabled) check(); });
+$("soldetails").addEventListener("toggle", ()=>{
+  if ($("soldetails").open && !solved && !peeked){
+    peeked = true;
+    stats.peek++;
+    autoStar();
+    if (!tallied){ tallied = true; stats.att++; }  // opening it counts as engaging with the question
+    render();
+  }
+});
+
+function setOrder(o){
+  order = o; seqIdx = 0;
+  $("mShuffle").setAttribute("aria-pressed", String(o === "shuffle"));
+  $("mSeq").setAttribute("aria-pressed",     String(o === "seq"));
+  newQuestion();
+}
+$("mShuffle").onclick = () => setOrder("shuffle");
+$("mSeq").onclick     = () => setOrder("seq");
+
+$("pReset").onclick = () => {
+  if (!mastered.size) return;
+  mastered.clear(); saveProgress(); render();
+};
+
+buildTopics();
+newQuestion();
+render();
+</script>
+</body>
+</html>

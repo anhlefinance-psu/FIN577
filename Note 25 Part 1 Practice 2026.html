@@ -53,6 +53,10 @@
   .qfig circle{fill:var(--accent)}
   .qfig line.off{stroke:var(--muted); opacity:.35}
   .qfig circle.off{fill:var(--muted); opacity:.45}
+  .qfig line.ax{stroke:var(--fg); opacity:.55; stroke-width:1.2}
+  .qfig line.gd{stroke:var(--muted); opacity:.7; stroke-width:1; stroke-dasharray:3 3}
+  .qfig polyline.pl{fill:none; stroke:var(--accent); stroke-width:2.4; stroke-linejoin:round}
+  .qfig .tk{font-size:13px}
   .ask{margin-top:14px; font-weight:600}
   .row{display:flex; gap:9px; margin-top:14px; flex-wrap:wrap}
   input[type=text]{
@@ -317,11 +321,10 @@ const TEMPLATES = [{ id:"pp1", topic:"payoff", name:"A call's profit at expirati
       cands=keepFar(correct,[
         {val:cpay(avg,K), msg:`That is the payoff at the expected share price, ${money(avg)}. The call's payoff is convex: the expected payoff averages the payoffs themselves, and the bad outcome's payoff stops at zero.`},
         {val:avg-K, msg:`You let the payoff go negative in the bad outcome. There you walk away: the payoff is max(S &minus; K, 0) = $0.00.`},
-        {val:(1-p)*(K-D), msg:`That is a put's expected payoff: it pays when the share ends below the strike. A call pays max(S &minus; K, 0), so only the ${money(U)} outcome pays.`},
         {val:U-K, msg:`That is the payoff if the share ends at ${money(U)}. Weight it by its probability, ${p}.`},
         {val:(1-p)*cpay(U,K), msg:`You swapped the probabilities. The share ends at ${money(U)} with probability ${p}.`},
         {val:0.5*cpay(U,K), msg:`You used equal probabilities. The share ends at ${money(U)} with probability ${p}.`}
-      ],sep);   // 29 Oct 2026: put's payoff added (a positive mistake for quiz papers; mkquiz577_1.js drops negative options)
+      ],sep);
     } while (usable(correct,cands,sep).length<3);
     const q=+(1-p).toFixed(1);
     return {
@@ -364,7 +367,7 @@ const TEMPLATES = [{ id:"pp1", topic:"payoff", name:"A call's profit at expirati
             equal to today's share price, <b>${money(S0)}</b>, and expires in one year. She can take one of two projects. With the safe project, the share price in one year will be
             <b>${money(S0+a)}</b> or <b>${money(S0-a)}</b>, with equal probabilities. With the risky project, it will be <b>${money(U2)}</b>
             or <b>${money(D2)}</b>, with equal probabilities: on average ${money(m)} lower.`,
-      ask:"By how much does the expected payoff of all her options change if she takes the risky project instead of the safe one? (Two decimals; enter a negative number if it falls.)",   // 29 Oct 2026 (Anh): "how much higher" ruled out the shareholder's negative answer
+      ask:"How much higher is the expected payoff of all her options with the risky project than with the safe one? (Two decimals.)",
       correct, cands,
       fig:[tr("Share in one year, safe project", "", [money(S0+a), money(S0-a)], ["0.5","0.5"]),
            tr("Share in one year, risky project", "", [money(U2), money(D2)], ["0.5","0.5"])],
@@ -417,8 +420,6 @@ const TEMPLATES = [{ id:"pp1", topic:"payoff", name:"A call's profit at expirati
       cands=keepFar(correct,[
         {val:X, msg:`That is only the cash you receive today. At expiration the call you own pays ${money(A)} and the call you sold costs you ${money(B)}.`},
         {val:-correct, msg:`You made the trade the wrong way round. The ${money(K1)} call pays at least as much as the ${money(K2)} call whatever happens, yet it is cheaper: buy it and sell the ${money(K2)} call.`},
-        /* 29 Oct 2026: a positive mistake added; quiz papers drop the negative one (Anh: a riskless profit is never negative) */
-        {val:-X+A-B, msg:`You counted today's ${money(X)} as money paid out. Selling the dearer ${money(K2)} call and buying the cheaper ${money(K1)} one brings it in: ${money(c2)} &minus; ${money(c1)}.`},
         {val:A-B, msg:`You left out the ${money(X)} you receive today from selling the dearer call and buying the cheaper one.`},
         {val:X+(S-K1)-(S-K2), msg:`A call's payoff never falls below zero: max(S &minus; K, 0). A call that ends out of the money pays nothing.`}
       ],sep);
@@ -593,7 +594,7 @@ const CHOICE_TEMPLATES = [{ id:"k1", topic:"concept", also:["payoff"], name:"Why
        msg:`The share pays no dividend, so holding the share until expiration gives you nothing the call does not. The two have the same payoff and must cost the same, ${money(S)}.`}
     ]);
     return {mode:"choice",
-      text:`A share trades at ${money(S)} and will pay no dividend before expiration. A call on it has a strike price of $0.`,
+      text:`A share trades at ${money(S)}. A call on it has a strike price of $0, and the share will pay no dividend before the call expires.`,
       ask:"What must the call cost?",
       options:opts,
       steps:[
@@ -776,8 +777,36 @@ function figHTML(fig){
     if (t.times) t.times.forEach((s, k) => g += `<text class="tp" x="${cx[k]}" y="${H - 6}" text-anchor="middle">${txt(s)}</text>`);
     return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${txt(t.label)}: ${t.lat.map(c => c.map(v => lines(v).join(" ")).join(" / ")).join("; then ")}">${g}</svg>`;
   };
+  /* A payoff or profit diagram (Note 25 Part 3, 29 Oct 2026, Anh): t.pts are the corners of a piecewise-linear
+     line, left edge to right edge (a window around the kinks, not from S = 0, so the kinks stand apart);
+     t.dots are marked points, each with dashed guides to the axes; t.xt / t.yt are [value, label] ticks.
+     The horizontal axis sits at t.ybase, zero unless given (a collar's payoff never comes near zero).   */
+  const plotSVG = t => {
+    const L0 = 62, R0 = 14, T0 = 26, B0 = 40, yb = t.ybase || 0;
+    const xs = t.pts.map(p => p[0]), ys = t.pts.map(p => p[1]).concat([yb]);
+    const X0 = Math.min(...xs), X1 = Math.max(...xs), Y0 = Math.min(...ys), Y1 = Math.max(...ys), dy = (Y1 - Y0) || 1;
+    const lo = Y0 - 0.08*dy*(Y0 < yb), hi = Y1 + 0.12*dy;
+    /* One scale on both axes (Anh, 29 Oct 2026): a one-for-one slope must look like 45 degrees. */
+    const k = Math.min(304/(X1 - X0), 200/(hi - lo)), W = L0 + R0 + k*(X1 - X0), H = T0 + B0 + k*(hi - lo);
+    const px = x => L0 + k*(x - X0), py = y => T0 + k*(hi - y);
+    const dotY = x => ((t.dots || []).find(d => d[0] === x) || [x, yb])[1];
+    let g = `<line class="ax" x1="${L0}" y1="${py(yb)}" x2="${W - R0}" y2="${py(yb)}"/>`;
+    g += `<line class="ax" x1="${L0}" y1="${T0 - 4}" x2="${L0}" y2="${H - B0 + 4}"/>`;
+    (t.dots || []).forEach(([x, y]) => {
+      if (y !== yb) g += `<line class="gd" x1="${px(x)}" y1="${py(y)}" x2="${px(x)}" y2="${py(yb)}"/>`;
+      g += `<line class="gd" x1="${L0}" y1="${py(y)}" x2="${px(x)}" y2="${py(y)}"/>`;
+    });
+    g += `<polyline class="pl" points="${t.pts.map(([x, y]) => px(x).toFixed(1) + "," + py(y).toFixed(1)).join(" ")}"/>`;
+    (t.dots || []).forEach(([x, y]) => g += `<circle cx="${px(x)}" cy="${py(y)}" r="3.4"/>`);
+    (t.xt || []).forEach(([x, s]) => g += `<text class="tk" x="${px(x)}" y="${py(yb) + (dotY(x) < yb ? -8 : 17)}" text-anchor="middle">${txt(s)}</text>`);
+    (t.yt || []).forEach(([y, s]) => g += `<text class="tk" x="${L0 - 6}" y="${py(y) + 4.5}" text-anchor="end">${txt(s)}</text>`);
+    g += `<text class="tp" x="${W - R0}" y="${H - 6}" text-anchor="end">${txt(t.xlab)}</text>`;
+    g += `<text class="tp" x="${L0}" y="${T0 - 10}" text-anchor="middle">${txt(t.ylab)}</text>`;
+    return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${txt(t.label)}: ${txt(t.aria || "")}">${g}</svg>`;
+  };
   return fig.map(t => {
     if (t.lat) return latSVG(t);
+    if (t.pts) return plotSVG(t);
     const n = t.outs.length, gap = n > 2 ? 30 : 46, top = 34;
     const x1 = Math.max(40, 12 + 8.5*len(t.now)), x2 = x1 + 56;
     const wide = Math.max(...t.outs.map((v, i) => 8.4*len(v) + (t.probs ? 6.6*(len(t.probs[i]) + 2) + 6 : 0)));
