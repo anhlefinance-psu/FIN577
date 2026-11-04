@@ -1,0 +1,1393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Note 26 — Option Pricing by Binomial Trees: practice</title>
+<style>
+  :root{
+    --bg:#ffffff; --fg:#1a1a1a; --muted:#5f6672; --line:#e2e5ea;
+    --card:#f7f8fa; --accent:#00205b; --accent-fg:#ffffff;
+    --ok-bg:#e8f5ec; --ok-line:#2e7d47; --ok-fg:#17532c;
+    --no-bg:#fdeceb; --no-line:#c0392b; --no-fg:#8e2b20;
+    --hint-bg:#fff8e6; --hint-line:#b8860b; --hint-fg:#6b4e00;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#14161a; --fg:#e8eaed; --muted:#9aa3af; --line:#2b2f36;
+      --card:#1b1e24; --accent:#7f9cd4; --accent-fg:#0d1015;
+      --ok-bg:#132a1c; --ok-line:#4caf70; --ok-fg:#9fdcb4;
+      --no-bg:#2c1614; --no-line:#e06c5d; --no-fg:#f0a99f;
+      --hint-bg:#2a2313; --hint-line:#d4a017; --hint-fg:#e5c976;
+    }
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:0; background:var(--bg); color:var(--fg);
+    font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  .wrap{max-width:760px; margin:0 auto; padding:24px 18px 64px}
+  header{border-bottom:1px solid var(--line); padding-bottom:14px; margin-bottom:20px}
+  h1{font-size:1.35rem; margin:0 0 4px}
+  .sub{color:var(--muted); font-size:.9rem}
+  .topics{display:flex; flex-wrap:wrap; gap:7px; margin:18px 0}
+  .chip{
+    border:1px solid var(--line); background:var(--card); color:var(--fg);
+    padding:6px 12px; border-radius:999px; cursor:pointer; font-size:.85rem;
+    font-family:inherit;
+  }
+  .chip[aria-pressed="true"]{background:var(--accent); color:var(--accent-fg); border-color:var(--accent)}
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:10px;
+    padding:20px; margin-bottom:16px;
+  }
+  .qmeta{font-size:.75rem; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin-bottom:10px}
+  .qtext{font-size:1.05rem; margin-bottom:6px}
+  .qtext b{font-variant-numeric:tabular-nums}
+  .qfig{display:flex; flex-wrap:wrap; gap:6px 26px; margin:10px 0 2px}
+  .qfig svg{max-width:100%; height:auto; overflow:visible}
+  .qfig text{fill:var(--fg); font-family:inherit; font-variant-numeric:tabular-nums}
+  .qfig .tl{font-weight:600}
+  .qfig .tp{fill:var(--muted); font-size:13px}
+  .qfig line, .qfig polygon{stroke:var(--accent); fill:var(--accent)}
+  .qfig circle{fill:var(--accent)}
+  .qfig line.off{stroke:var(--muted); opacity:.35}
+  .qfig circle.off{fill:var(--muted); opacity:.45}
+  .qfig line.ax{stroke:var(--fg); opacity:.55; stroke-width:1.2}
+  .qfig line.gd{stroke:var(--muted); opacity:.7; stroke-width:1; stroke-dasharray:3 3}
+  .qfig polyline.pl{fill:none; stroke:var(--accent); stroke-width:2.4; stroke-linejoin:round}
+  .qfig .tk{font-size:13px}
+  .ask{margin-top:14px; font-weight:600}
+  .row{display:flex; gap:9px; margin-top:14px; flex-wrap:wrap}
+  input[type=text]{
+    flex:1 1 190px; min-width:0; padding:11px 13px; font-size:1rem; font-family:inherit;
+    border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--fg);
+  }
+  input[type=text]:focus{outline:2px solid var(--accent); outline-offset:1px}
+  button{
+    padding:11px 17px; font-size:.95rem; font-family:inherit; border-radius:8px;
+    border:1px solid var(--accent); background:var(--accent); color:var(--accent-fg);
+    cursor:pointer; font-weight:600;
+  }
+  button.ghost{background:transparent; color:var(--fg); border-color:var(--line); font-weight:500}
+  button:disabled{opacity:.45; cursor:default}
+  .fb{border-radius:8px; padding:13px 15px; margin-top:15px; border-left:4px solid; font-size:.95rem}
+  .fb.ok{background:var(--ok-bg); border-color:var(--ok-line); color:var(--ok-fg)}
+  .fb.no{background:var(--no-bg); border-color:var(--no-line); color:var(--no-fg)}
+  .fb.hint{background:var(--hint-bg); border-color:var(--hint-line); color:var(--hint-fg)}
+  .fb strong{display:block; margin-bottom:3px}
+  details{margin-top:15px; border-top:1px solid var(--line); padding-top:13px}
+  summary{cursor:pointer; font-size:.9rem; color:var(--muted); font-weight:600}
+  .steps{margin-top:11px; font-size:.92rem}
+  .steps div{padding:5px 0; border-bottom:1px dashed var(--line)}
+  .steps div:last-child{border-bottom:none; font-weight:600}
+  .steps table.eqs{border-collapse:collapse; margin:2px 0}
+  .steps table.eqs td{padding:0; vertical-align:top}
+  .steps table.eqs td:first-child{text-align:right; padding-right:.3em}
+  .steps table.cf{border-collapse:collapse; margin:6px 0}
+  .steps table.cf td,.steps table.cf th{padding:2px 12px 2px 0; text-align:center}
+  .steps table.cf td:first-child,.steps table.cf th:first-child{text-align:left}
+  .steps table.cf th{border-bottom:1px solid var(--line)}
+  code{
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.88em;
+    background:var(--bg); padding:1px 5px; border-radius:4px; border:1px solid var(--line);
+  }
+  .opts{display:flex; flex-direction:column; gap:8px; margin-top:14px}
+  .opt{
+    text-align:left; padding:11px 14px; border:1px solid var(--line); background:var(--bg);
+    color:var(--fg); border-radius:8px; cursor:pointer; font-family:inherit;
+    font-size:.95rem; font-weight:400; line-height:1.55;
+  }
+  .opt:hover:not(:disabled){border-color:var(--accent)}
+  .opt.right{background:var(--ok-bg); border-color:var(--ok-line); border-width:2px}
+  .opt.wrong{background:var(--no-bg); border-color:var(--no-line)}
+  .opt:disabled{cursor:default}
+  .opt sup{font-size:.75em}
+  .stats{display:flex; gap:22px; font-size:.86rem; color:var(--muted); margin-top:22px;
+         border-top:1px solid var(--line); padding-top:14px; flex-wrap:wrap}
+  .stats b{color:var(--fg); font-variant-numeric:tabular-nums}
+  footer{margin-top:26px; font-size:.78rem; color:var(--muted); text-align:center}
+  /* The hidden attribute's UA rule is only [hidden]{display:none}, which loses
+     to author rules like .opts{display:flex} and .row{display:flex}. Without
+     this, hiding those panels silently does nothing. */
+  .modes{display:flex; gap:8px; align-items:center; margin-top:10px;
+         font-size:.84rem; color:var(--muted); flex-wrap:wrap}
+  .modes .chip{font-size:.84rem; padding:5px 12px}
+  .prog{margin-top:18px}
+  .progtop{display:flex; justify-content:space-between; align-items:baseline;
+           font-size:.86rem; color:var(--muted); margin-bottom:6px}
+  .progtop b{color:var(--fg); font-variant-numeric:tabular-nums}
+  .progbar{height:9px; border-radius:999px; background:var(--line); overflow:hidden}
+  .progfill{height:100%; width:0%; border-radius:999px; background:var(--accent);
+            transition:width .35s ease}
+  .progreset{background:none; border:none; color:var(--muted); font-size:.8rem;
+             padding:0; cursor:pointer; text-decoration:underline; font-weight:400}
+  .progreset:hover{color:var(--fg)}
+  .qhead{display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:10px}
+  .qhead .qmeta{margin-bottom:0}
+  .star{background:transparent; color:var(--muted); border:1px solid var(--line); border-radius:999px;
+        padding:3px 11px; font-size:.8rem; font-weight:500; white-space:nowrap; flex:none}
+  .star[aria-pressed="true"]{color:var(--hint-fg); background:var(--hint-bg); border-color:var(--hint-line)}
+  .star:hover{border-color:var(--accent)}
+  [hidden]{display:none !important}
+.rd{border-top:1px solid currentColor;padding:0 .12em;margin-left:.02em}   /* the bar over a square root (3 Nov 2026) */
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>Note 26 — Option Pricing by Binomial Trees: practice</h1>
+  <div class="sub">Rates are p.a., continuously compounded: discount with e<sup>&minus;rt</sup>. Trees use S<sub>up</sub> = S e<sup>&sigma;&radic;&Delta;t</sup>, d = 1/u and p = (e<sup>r&Delta;t</sup> &minus; d)/(u &minus; d). Answers are matched within 0.25% (dollar answers to the cent).</div>
+</header>
+
+<div class="topics" id="topics" role="group" aria-label="Choose topics"></div>
+
+<div class="modes" id="modes" role="group" aria-label="Question order">
+  <span>Order</span>
+  <button class="chip" id="mShuffle" type="button" aria-pressed="true">Shuffle</button>
+  <button class="chip" id="mSeq" type="button" aria-pressed="false">In order</button>
+  <span id="seqPos"></span>
+</div>
+
+<div class="card" id="card">
+  <div class="qhead">
+    <div class="qmeta" id="qmeta">—</div>
+    <button class="star" id="star" type="button" aria-pressed="false"
+            title="Star this question to practise it again under the Starred chip">☆ Star</button>
+  </div>
+  <div class="qtext" id="qtext">Loading…</div>
+  <div class="qfig" id="qfig" hidden></div>
+  <div class="ask" id="qask"></div>
+  <div class="opts" id="opts" hidden></div>
+  <div class="row" id="inputrow">
+    <input type="text" id="ans" autocomplete="off" inputmode="decimal"
+           placeholder="Your answer" aria-label="Your answer">
+    <button id="check">Check</button>
+    <button id="next" class="ghost">New question</button>
+  </div>
+  <div id="fb"></div>
+  <details id="soldetails" hidden>
+    <summary>Show the worked solution</summary>
+    <div class="steps" id="steps"></div>
+  </details>
+</div>
+
+<div class="prog">
+  <div class="progtop">
+    <span>Templates solved unaided <b id="pDone">0</b> of <b id="pTotal">0</b></span>
+    <button class="progreset" id="pReset" type="button">reset</button>
+  </div>
+  <div class="progbar"><div class="progfill" id="progfill"></div></div>
+</div>
+
+<div class="stats">
+  <span>Attempted <b id="sAtt">0</b></span>
+  <span>Correct first try <b id="sFirst">0</b></span>
+  <span>Accuracy <b id="sAcc">—</b></span>
+  <span>Streak <b id="sStreak">0</b></span>
+  <span>Solutions opened <b id="sPeek">0</b></span>
+</div>
+
+<footer>Numbers are randomised, so every attempt is different. Nothing you type leaves this page.<br>Use the &rarr; and &larr; arrow keys to move between questions.</footer>
+
+</div>
+
+<script>
+"use strict";
+
+/* ------------------------------------------------------------------ utils */
+const pick = a => a[Math.floor(Math.random()*a.length)];
+/* stepped range, e.g. range(0.04,0.24,0.0025) -> 81 rates instead of a list of 6 */
+const range = (lo,hi,step) => {
+  const out=[]; for(let v=lo; v<=hi+1e-9; v+=step) out.push(Number(v.toFixed(8)));
+  return out;
+};
+const ORD = n => n + (["th","st","nd","rd"][(n%100-n%10!=10)*(n%10<4)*(n%10)]||"th");
+const money = v => "$" + v.toLocaleString("en-US",{minimumFractionDigits:2, maximumFractionDigits:2});
+const pct   = (v,d=4) => (v*100).toFixed(d).replace(/\.?0+$/,"") + "%";
+const pctS  = (v,d=2) => (v*100).toFixed(d) + "%";
+const REL_SEP  = 0.01;    // distractors must sit >1% from everything else
+const REL_MATCH= 0.0025;  // student answer counts as a match within 0.25%
+
+const near = (a,b,tol) =>
+  Number.isFinite(a) && Number.isFinite(b) &&
+  Math.abs(a-b) / Math.max(Math.abs(a), Math.abs(b), 1e-12) < tol;
+
+/* Drop distractors too close to the answer (or to each other) to diagnose.
+   Templates about small effects (perpetuity timing) pass a tighter `sep`. */
+function usable(correct, cands, sep){
+  const s = sep || REL_SEP;
+  const kept = [];
+  for (const c of cands){
+    if (!Number.isFinite(c.val)) continue;
+    if (near(c.val, correct, s)) continue;
+    if (kept.some(k => near(k.val, c.val, s))) continue;
+    kept.push(c);
+  }
+  return kept;
+}
+
+/* ------------------------------------------------------------- templates */
+/* ---------------------------------------------------------------- Note 26 ---
+   Option Pricing by Binomial Trees (FIN 577). Continuous compounding throughout: discount with e^(-r t).
+   One-step tree: p = (S e^(rT) - S_down)/(S_up - S_down); value = (p V_up + (1-p) V_down) e^(-rT).
+   General tree: S_up = S e^(sigma sqrt(dt)), S_down = S e^(-sigma sqrt(dt)); u = e^(sigma sqrt(dt)), d = 1/u,
+   p = (e^(r dt) - d)/(u - d). Two-step trees with three-month steps; work backward; American options take
+   max(exercise now, wait). A known cash dividend: build the tree on S* = S - PV(dividend), and add back the
+   dividend's present value at the nodes before the ex-dividend date.
+   Built 3 Nov 2026 from the note and Anh's past FIN 577 / MF exams (rule 5):
+     p1   <- Note 26 Section 1 (the one-step tree revisited)
+     c1   <- Note 26 Section 1 (the call on the one-step tree)
+     sd1  <- Note 26 Section 2 (sigma sqrt(dt); daily sd x sqrt(252))
+     up1  <- Note 26 Section 2 (S_up and S_down)
+     iv1  <- 2025 MF sample final Q5(c) (the volatility implied by an up factor), on the note's e^(sigma sqrt(dt))
+     p2   <- 2025 MF sample final Q5(d) (the risk-neutral probability from sigma, r and dt)
+     nd1  <- 2025 MF final A Q5(b) (recover the missing nodes of a two-step tree)
+     ec2  <- 2025 MF final A Q5 (a European call on a two-step tree) and Note 26 Section 5
+     ep2  <- 2025 MF sample midterm Q6 (a European put on a tree) and Note 26 Section 5
+     ap1  <- 2025 MF midterm Q6(b) (exercise or continue at a 6-month node) and Note 26 Section 6
+     ap2  <- 2025 MF midterm Q6(c) (the American put today) and Note 26 Section 6
+     ds1  <- Note 26 Section 7, step 1 (S*)
+     cd1  <- Note 26 Section 7, step 3 (the cum-dividend price at a 3-month node)
+     dc1  <- 2025 MF final A Q6 (exercise just before the ex-dividend date), moved onto the note's tree
+   Anh dropped the one-backward-step call (n8 of the plan) on 3 Nov 2026.                                 */
+const keepFar = (correct,cands,sep) => cands.filter(c=>Number.isFinite(c.val) && c.val>0 && !near(c.val,correct,sep));
+const centsTol = v => Math.max(0.0025, 0.0051/Math.abs(v));          // a small dollar key is accepted to the cent
+const centsSep = v => Math.max(REL_SEP, 0.02/Math.abs(v));
+const atLeast3 = f => { let q; for (let i=0; i<500; i++) { q=f(); if (usable(q.correct,q.cands,q.sep).length>=3) return q; } return q; };
+const m4 = v => "$" + v.toFixed(4);                                   // a dollar value to four decimals
+const f6 = v => v.toFixed(6);
+const f4 = v => v.toFixed(4);
+const ex = s => `e<sup>${s}</sup>`;                                   // e^(...)
+const rP = r => `${pctS(r)} p.a., continuously compounded`;
+const sig = s => `${(s*100).toFixed(0)}%`;
+const cpay = (S,K) => Math.max(S-K,0);
+const ppay = (S,K) => Math.max(K-S,0);
+/* Trees: name every node by its time and place (rule 43). lat[k] lists the nodes at date k from the top. */
+const NODE = [["today's"], ["upper", "lower"], ["highest", "middle", "lowest"]];
+const WHEN = ["today", "3 months", "6 months"];
+const nodeAt = (k, i) => k===0 ? "today" : `the ${NODE[k][i]} node at ${WHEN[k]}`;
+const lat = (label, cols, times) => ({label, lat:cols, times});
+const latOn = (label, vals, times) => ({label, lat:[0,1,2].map(k => [...Array(k+1)].map((_, i) => vals[k + "," + i] ?? "")), times, on:Object.keys(vals)});
+const TIMES = ["today", "3 months", "6 months"];
+/* A two-step tree from S with three-month steps: P[k][i] is the price at date k, node i from the top. */
+const tree2 = (S, u) => [[S], [S*u, S/u], [S*u*u, S, S/(u*u)]];
+const RN26 = `The risk-neutral pricing equation says that the value of any security is its risk-neutral expected payoff, discounted at the risk-free rate`;
+
+const SIGS = [0.20, 0.24, 0.28, 0.30, 0.32, 0.36, 0.40];
+const RATES = range(0.01, 0.06, 0.005);
+
+
+/* ---- Sections 5 and 6: two-step trees with three-month steps. The share-price tree is printed to the cent; keys use
+   the exact prices (the cent rounding moves a value by well under the cent tolerance). */
+const treeText = P => `Today the share trades at <b>${money(P[0][0])}</b>. At 3 months it is at <b>${money(P[1][0])}</b> (upper node) or
+            <b>${money(P[1][1])}</b> (lower node); at 6 months at <b>${money(P[2][0])}</b> (highest node), <b>${money(P[2][1])}</b> (middle node)
+            or <b>${money(P[2][2])}</b> (lowest node).`;
+const treeFig = P => lat("Share price", P.map(c=>c.map(money)), TIMES);
+const back2 = (V2, p, g) => { const V1=[(p*V2[0]+(1-p)*V2[1])/g, (p*V2[1]+(1-p)*V2[2])/g]; return {V1, V0:(p*V1[0]+(1-p)*V1[1])/g}; };
+const draw2 = () => { const S=pick(range(40,120,1)), s=pick(SIGS), r=pick(RATES);
+  const u=+Math.exp(s*Math.sqrt(0.25)).toFixed(6), d=+(1/u).toFixed(6), g=Math.exp(r*0.25), p=(+g.toFixed(6)-d)/(u-d);
+  return {S, s, r, u, d, g, p, P:tree2(S,Math.exp(s*Math.sqrt(0.25))).map(c=>c.map(x=>+x.toFixed(2)))}; };
+
+/* ---- Section 7: a known cash dividend. Build the tree on S* = S - PV(dividend); add back the dividend's present value
+   at the nodes before the ex-dividend date. Keys to the cent (cents tolerance only): forgetting to discount the
+   dividend moves the answer by little, so the draws keep that gap above two cents.                                */
+const centsOnly = v => 0.0051/Math.abs(v);
+
+const TEMPLATES = [{ id:"p1", topic:"onestep", name:"The risk-neutral probability on a one-step tree", gen(){ return atLeast3(()=>{
+    /* Section 1: price the share itself. 100 = (105 p + 95 (1 - p)) e^(-rT), solved for p.
+       Variants: a six-month or a three-month step (the numbers change, the question does not). */
+    const T = pick([0.5, 0.25]), mo = T===0.5 ? "six" : "three";
+    const S=pick(range(40,120,1)), a=pick(range(0.04,0.15,0.01)), b=pick(range(0.04,0.15,0.01)), r=pick(RATES);
+    const Su=+(S*(1+a)).toFixed(2), Sd=+(S*(1-b)).toFixed(2);
+    const g=Math.exp(r*T), correct=(S*g-Sd)/(Su-Sd);
+    if (Math.abs(1-2*correct)<0.006) return {correct, cands:[], sep:REL_SEP};          // 1 - p and 0.5 would score
+    const cands=[
+      {val:(S-Sd)/(Su-Sd), msg:`You left out the discounting. The expected price in ${mo} months, discounted at the risk-free rate, must equal today's price: S = (p &times; S<sub>up</sub> + (1 &minus; p) &times; S<sub>down</sub>) &times; ${ex("&minus;rT")}.`},
+      {val:(S*Math.exp(r)-Sd)/(Su-Sd), msg:`You grew the share price for a whole year. The tree's step is ${mo} months, so T = ${T}: the factor is ${ex(`${pctS(r)} &times; ${T}`)}.`},
+      {val:1-correct, msg:`That is the probability of the down state, 1 &minus; p.`},
+      {val:(S*g-Sd)/Su, msg:`Divide by the gap between the two prices, S<sub>up</sub> &minus; S<sub>down</sub>, not by S<sub>up</sub>: p = (S &times; ${ex("rT")} &minus; S<sub>down</sub>) / (S<sub>up</sub> &minus; S<sub>down</sub>).`},
+      {val:0.5, msg:`The risk-neutral probability is not one half. It is the probability that makes the tree price the share at today's ${money(S)}.`}
+    ];
+    return {
+      unit:"percent", sep:REL_SEP,
+      text:`A share trades at <b>${money(S)}</b>. In ${mo} months it will trade at either <b>${money(Su)}</b> or <b>${money(Sd)}</b>.
+            The risk-free rate is <b>${rP(r)}</b>.`,
+      ask:"What is the risk-neutral probability that the share price goes up? (Two decimals.)",
+      correct, cands,
+      fig:[lat("Share price", [[money(S)], [money(Su), money(Sd)]], ["today", `${mo} months`])],
+      steps:[
+        `${RN26}. Applying this to the share: S = (p &times; S<sub>up</sub> + (1 &minus; p) &times; S<sub>down</sub>) &times; ${ex("&minus;rT")}`,
+        `${money(S)} = (p &times; ${money(Su)} + (1 &minus; p) &times; ${money(Sd)}) &times; ${ex(`&minus;${pctS(r)} &times; ${T}`)}`,
+        `Solving for p: p = (S &times; ${ex("rT")} &minus; S<sub>down</sub>) / (S<sub>up</sub> &minus; S<sub>down</sub>) = (${money(S)} &times; ${f6(g)} &minus; ${money(Sd)}) / (${money(Su)} &minus; ${money(Sd)}) = <b>${pctS(correct)}</b>`
+      ]};
+  }); }},
+
+{ id:"c1", topic:"onestep", name:"A call on a one-step tree", gen(){ return atLeast3(()=>{
+    /* Section 1, two steps: the share gives p, then the call's payoffs are priced with it. The strike is drawn
+       above or below today's price (the two variants), always between the two share prices in six months. */
+    const S=pick(range(40,120,1)), a=pick(range(0.05,0.15,0.01)), b=pick(range(0.05,0.15,0.01)), r=pick(RATES), T=0.5;
+    const Su=+(S*(1+a)).toFixed(2), Sd=+(S*(1-b)).toFixed(2);
+    const side=pick(["above","below"]);
+    const K = side==="above" ? Math.round(S + pick([0.25,0.5,0.75])*(Su-S)) : Math.round(S - pick([0.25,0.5,0.75])*(S-Sd));
+    const g=Math.exp(r*T), p=(S*+g.toFixed(6)-Sd)/(Su-Sd), Cu=cpay(Su,K), Cd=cpay(Sd,K);
+    const correct=(p*Cu+(1-p)*Cd)/g;
+    const tol=centsTol(correct), sep=centsSep(correct);
+    const cands=keepFar(correct,[
+      {val:p*Cu+(1-p)*Cd, msg:`That is the risk-neutral expected payoff in six months. Discount it to today: &times; ${ex(`&minus;${pctS(r)} &times; 0.5`)}.`},
+      {val:(0.5*Cu+0.5*Cd)/g, msg:`You weighted the payoffs equally. Use the risk-neutral probability ${pctS(p)}, which you get by pricing the share.`},
+      {val:((1-p)*Cu+p*Cd)/g, msg:`You swapped the probabilities: p = ${pctS(p)} goes with the up state, where the call pays ${money(Cu)}.`},
+      {val:(p*Cu+(1-p)*Cd)*Math.exp(-r), msg:`You discounted for a whole year. The call pays in six months: &times; ${ex(`&minus;${pctS(r)} &times; 0.5`)}.`},
+      {val:cpay(S*g,K)/g, msg:`That prices the call at the expected share price. The call's payoff is not a straight line: average the payoffs, ${money(Cu)} and ${money(Cd)}, not the share prices.`},
+      {val:(((S-Sd)/(Su-Sd))*Cu+(1-(S-Sd)/(Su-Sd))*Cd)/g, msg:`Your probability leaves out the discounting: in pricing the share, its expected price in six months is discounted to today's ${money(S)}.`}
+    ],sep);
+    return {
+      unit:"money", tol, sep,
+      text:`A share trades at <b>${money(S)}</b>. In six months it will trade at either <b>${money(Su)}</b> or <b>${money(Sd)}</b>.
+            The risk-free rate is <b>${rP(r)}</b>. A European call option on the share expires in six months and has a strike price of <b>${money(K)}</b>.`,
+      ask:"What is the call worth today? (Two decimals.)",
+      correct, cands,
+      fig:[lat("Share price", [[money(S)], [money(Su), money(Sd)]], ["today", "six months"]), lat("Call", [["?"], [money(Cu), money(Cd)]], ["today", "six months"])],
+      steps:[
+        `${RN26}. Step 1, apply it to the share: ${money(S)} = (p &times; ${money(Su)} + (1 &minus; p) &times; ${money(Sd)}) &times; ${ex(`&minus;${pctS(r)} &times; 0.5`)}`,
+        `p = (S &times; ${ex("rT")} &minus; S<sub>down</sub>) / (S<sub>up</sub> &minus; S<sub>down</sub>) = (${money(S)} &times; ${f6(g)} &minus; ${money(Sd)}) / (${money(Su)} &minus; ${money(Sd)}) = ${pctS(p,4)}`,
+        `Step 2, the call's payoffs: max(${money(Su)} &minus; ${money(K)}, 0) = ${money(Cu)} in the up state; max(${money(Sd)} &minus; ${money(K)}, 0) = ${money(Cd)} in the down state`,
+        `Call = (p &times; C<sub>up</sub> + (1 &minus; p) &times; C<sub>down</sub>) &times; ${ex("&minus;rT")} = (${f4(p)} &times; ${money(Cu)} + ${f4(1-p)} &times; ${money(Cd)}) &times; ${ex(`&minus;${pctS(r)} &times; 0.5`)} = <b>${m4(correct)}</b>`
+      ]};
+  }); }},
+
+{ id:"sd1", topic:"vol", name:"Standard deviation over a horizon", gen(){ return atLeast3(()=>{
+    /* Section 2: the standard deviation over dt years is sigma sqrt(dt); daily returns are annualized with
+       sqrt(252). Variants: annual to a shorter horizon, or daily to annual (the same rule run each way). */
+    const dir=pick(["down","up"]);
+    if (dir==="down") {
+      const s=pick(range(0.15,0.60,0.01)), h=pick([["a week",52],["a month",12],["three months",4]]);
+      const dt=1/h[1], correct=s*Math.sqrt(dt);
+      const cands=[
+        {val:s*dt, msg:`The standard deviation grows with the square root of time, not with time: &sigma; &times; &radic;<span class=rd>&Delta;t</span>, not &sigma; &times; &Delta;t.`},
+        {val:s/Math.sqrt(dt), msg:`You divided by &radic;<span class=rd>&Delta;t</span>. A shorter horizon has a smaller standard deviation: &sigma; &times; &radic;<span class=rd>&Delta;t</span> with &Delta;t = 1/${h[1]}.`},
+        {val:s*s*dt, msg:`That is the variance over the horizon, &sigma;&sup2; &times; &Delta;t. Take its square root.`}
+      ];
+      return {
+        unit:"percent", sep:REL_SEP,
+        text:`The annualized standard deviation of a share's continuously compounded returns is <b>${pctS(s,0)}</b>.`,
+        ask:`What is the standard deviation of its returns over ${h[0]}? (Two decimals.)`,
+        correct, cands,
+        steps:[
+          `The standard deviation over &Delta;t years is &sigma; &times; &radic;<span class=rd>&Delta;t</span>. Here &Delta;t = 1/${h[1]}.`,
+          `&sigma; &times; &radic;<span class=rd>&Delta;t</span> = ${pctS(s,0)} &times; &radic;<span class=rd>1/${h[1]}</span> = <b>${pctS(correct)}</b>`,
+          `The other way round: a standard deviation of daily returns is annualized by multiplying it by &radic;<span class=rd>252</span>, the square root of the number of trading days in a year.`
+        ]};
+    }
+    const sd=pick(range(0.008,0.035,0.001)), correct=sd*Math.sqrt(252);
+    const cands=[
+      {val:sd*252, msg:`The standard deviation grows with the square root of time, not with time: multiply by &radic;<span class=rd>252</span>, not 252.`},
+      {val:sd/Math.sqrt(252), msg:`You divided by &radic;<span class=rd>252</span>. A year is longer than a day, so the annual standard deviation is larger: multiply by &radic;<span class=rd>252</span>.`},
+      {val:sd*Math.sqrt(365), msg:`You used calendar days. Returns move only on trading days: about 252 in a year.`},
+      {val:sd*Math.sqrt(12), msg:`&radic;<span class=rd>12</span> annualizes a monthly standard deviation. These are daily returns: multiply by &radic;<span class=rd>252</span>.`}
+    ];
+    return {
+      unit:"percent", sep:REL_SEP,
+      text:`The standard deviation of a share's daily continuously compounded returns is <b>${pctS(sd,1)}</b>. A year has 252 trading days.`,
+      ask:"What is the annualized standard deviation of its returns? (Two decimals.)",
+      correct, cands,
+      steps:[
+        `A day is &Delta;t = 1/252 of a year, so the daily standard deviation is &sigma; &times; &radic;<span class=rd>1/252</span>. Turned around: &sigma; = daily standard deviation &times; &radic;<span class=rd>252</span>.`,
+        `&sigma; = ${pctS(sd,1)} &times; &radic;<span class=rd>252</span> = <b>${pctS(correct)}</b>`,
+        `The other way round: over a horizon of &Delta;t years, the standard deviation is &sigma; &times; &radic;<span class=rd>&Delta;t</span>, for example &sigma; &times; &radic;<span class=rd>1/52</span> over a week.`
+      ]};
+  }); }},
+
+{ id:"up1", topic:"vol", name:"The up or the down price", gen(){ return atLeast3(()=>{
+    /* Section 2: S_up = S e^(sigma sqrt(dt)), S_down = S e^(-sigma sqrt(dt)). Variants: up or down.
+       sigma sqrt(dt) >= 0.10, so that 1 + sigma sqrt(dt) (a shortcut the note does not use) never scores. */
+    const S=pick(range(40,150,1)), s=pick(SIGS), h=pick([["three months",4],["six months",2]]), dt=1/h[1];
+    const x=s*Math.sqrt(dt), dir=pick(["up","down"]), sg=dir==="up"?1:-1;
+    const correct=S*Math.exp(sg*x);
+    const tol=centsTol(correct), sep=centsSep(correct);
+    const cands=keepFar(correct,[
+      {val:S*(1+sg*x), msg:`You used ${dir==="up"?"1 + &sigma;&radic;<span class=rd>&Delta;t</span>":"1 &minus; &sigma;&radic;<span class=rd>&Delta;t</span>"} as the factor. The tree's ${dir} price is S &times; ${ex(dir==="up"?"&sigma;&radic;<span class=rd>&Delta;t</span>":"&minus;&sigma;&radic;<span class=rd>&Delta;t</span>")}, so that its continuously compounded return is exactly ${dir==="up"?"+":"&minus;"}&sigma;&radic;<span class=rd>&Delta;t</span>.`},
+      {val:S*Math.exp(sg*s*dt), msg:`You left out the square root. The standard deviation over &Delta;t years is &sigma; &times; &radic;<span class=rd>&Delta;t</span>, not &sigma; &times; &Delta;t.`},
+      {val:S*Math.exp(sg*s), msg:`You used the annual standard deviation. Over ${h[0]}, it is &sigma; &times; &radic;<span class=rd>1/${h[1]}</span>.`},
+      {val:S*Math.exp(-sg*x), msg:`That is the ${dir==="up"?"down":"up"} price. The ${dir} price is S &times; ${ex(dir==="up"?"&sigma;&radic;<span class=rd>&Delta;t</span>":"&minus;&sigma;&radic;<span class=rd>&Delta;t</span>")}.`}
+    ],sep);
+    return {
+      unit:"money", tol, sep,
+      text:`A share trades at <b>${money(S)}</b>, and the annualized standard deviation of its continuously compounded returns is <b>${sig(s)}</b>.
+            You build a one-step binomial tree with a step of <b>${h[0]}</b>.`,
+      ask:`What is the share price at the ${dir==="up"?"upper":"lower"} node in ${h[0]}? (Two decimals.)`,
+      correct, cands,
+      steps:[
+        `The ${dir} price is one standard deviation ${dir}: S<sub>${dir}</sub> = S &times; ${ex(dir==="up"?"&sigma;&radic;<span class=rd>&Delta;t</span>":"&minus;&sigma;&radic;<span class=rd>&Delta;t</span>")}, with &Delta;t = 1/${h[1]}.`,
+        `&sigma;&radic;<span class=rd>&Delta;t</span> = ${sig(s)} &times; &radic;<span class=rd>1/${h[1]}</span> = ${f6(x)}`,
+        `S<sub>${dir}</sub> = ${money(S)} &times; ${ex((sg<0?"&minus;":"")+f6(x))} = <b>${m4(correct)}</b>`,
+        `The ${dir==="up"?"lower":"upper"} node is found the same way: ${money(S)} &times; ${ex((sg>0?"&minus;":"")+f6(x))} = ${m4(S*Math.exp(-sg*x))}.`
+      ]};
+  }); }},
+
+{ id:"iv1", topic:"vol", name:"The volatility behind a tree", gen(){ return atLeast3(()=>{
+    /* 2025 MF sample final Q5(c), on the note's formula: ln(S_up/S) = sigma sqrt(dt), so sigma = ln(S_up/S)/sqrt(dt).
+       The up price is printed to the cent and the key is computed from the printed figure (rule 9).     */
+    const S=pick(range(40,150,1)), s=pick(range(0.16,0.48,0.02)), h=pick([["three months",4],["six months",2],["one month",12]]), dt=1/h[1];
+    const Su=+(S*Math.exp(s*Math.sqrt(dt))).toFixed(2), L=+Math.log(Su/S).toFixed(6);
+    const correct=L/Math.sqrt(dt);
+    const cands=[
+      {val:L, msg:`That is the standard deviation over ${h[0]}, &sigma;&radic;<span class=rd>&Delta;t</span>. Divide it by &radic;<span class=rd>&Delta;t</span> to annualize it.`},
+      {val:L/dt, msg:`The standard deviation grows with the square root of time: divide by &radic;<span class=rd>&Delta;t</span>, not by &Delta;t.`},
+      {val:L*Math.sqrt(dt), msg:`You multiplied by &radic;<span class=rd>&Delta;t</span>. The annual standard deviation is larger than the one over ${h[0]}: &sigma; = ln(S<sub>up</sub>/S) / &radic;<span class=rd>&Delta;t</span>.`},
+      {val:(Su/S-1)/Math.sqrt(dt), msg:`You used the simple return, S<sub>up</sub>/S &minus; 1. In the tree, the continuously compounded return ln(S<sub>up</sub>/S) is exactly &sigma;&radic;<span class=rd>&Delta;t</span>.`}
+    ];
+    return {
+      unit:"percent", sep:REL_SEP,
+      text:`A one-step binomial tree with a step of <b>${h[0]}</b> starts from a share price of <b>${money(S)}</b>. Its upper node is <b>${money(Su)}</b>.
+            The tree's up price is one standard deviation up.`,
+      ask:"What annualized standard deviation of returns does the tree assume? (Two decimals.)",
+      correct, cands,
+      fig:[lat("Share price", [[money(S)], [money(Su), "?"]], ["today", h[0]])],
+      steps:[
+        `The continuously compounded return to the upper node is one standard deviation up: ln(S<sub>up</sub>/S) = &sigma;&radic;<span class=rd>&Delta;t</span>, with &Delta;t = 1/${h[1]}.`,
+        `ln(${money(Su)}/${money(S)}) = ${f6(L)}`,
+        `&sigma; = ln(S<sub>up</sub>/S) / &radic;<span class=rd>&Delta;t</span> = ${f6(L)} / &radic;<span class=rd>1/${h[1]}</span> = <b>${pctS(correct)}</b>`
+      ]};
+  }); }},
+
+{ id:"p2", topic:"onestep", name:"The risk-neutral probability from the volatility", gen(){ return atLeast3(()=>{
+    /* 2025 MF sample final Q5(d), on the note's formulas: u = e^(sigma sqrt(dt)), d = 1/u, p = (e^(r dt) - d)/(u - d). */
+    const s=pick(SIGS), r=pick(RATES), h=pick([["three months",4],["six months",2]]), dt=1/h[1];
+    const u=Math.exp(s*Math.sqrt(dt)), d=1/u, g=Math.exp(r*dt), correct=(g-d)/(u-d);
+    if (Math.abs(1-2*correct)<0.006) return {correct, cands:[], sep:REL_SEP};          // 1 - p and 0.5 would score
+    const uS=Math.exp(s*dt);
+    const cands=[
+      {val:(Math.exp(r)-d)/(u-d), msg:`You grew $1 for a whole year. One step is ${h[0]}: ${ex("r&Delta;t")} = ${ex(`${pctS(r)} &times; 1/${h[1]}`)}.`},
+      {val:1-correct, msg:`That is 1 &minus; p, the probability of the lower node.`},
+      {val:(1-d)/(u-d), msg:`You left out the risk-free growth: the share must be expected to grow by ${ex("r&Delta;t")} over a step, not by 1.`},
+      {val:(g-1/uS)/(uS-1/uS), msg:`You left out the square root: u = ${ex("&sigma;&radic;<span class=rd>&Delta;t</span>")}, not ${ex("&sigma;&Delta;t")}.`},
+      {val:0.5, msg:`The risk-neutral probability is not one half: it is the probability that prices the share correctly, p = (${ex("r&Delta;t")} &minus; d)/(u &minus; d).`}
+    ];
+    return {
+      unit:"percent", sep:REL_SEP,
+      text:`The annualized standard deviation of a share's continuously compounded returns is <b>${sig(s)}</b>, and the risk-free rate is <b>${rP(r)}</b>.
+            You build a binomial tree with steps of <b>${h[0]}</b>.`,
+      ask:"What is the risk-neutral probability of going up at each step? (Two decimals.)",
+      correct, cands,
+      steps:[
+        `u = ${ex("&sigma;&radic;<span class=rd>&Delta;t</span>")} = ${ex(`${sig(s)} &times; &radic;<span class=rd>1/${h[1]}</span>`)} = ${f6(u)}, and d = 1/u = ${f6(d)}`,
+        `${ex("r&Delta;t")} = ${ex(`${pctS(r)} &times; 1/${h[1]}`)} = ${f6(g)}`,
+        `p = (${ex("r&Delta;t")} &minus; d) / (u &minus; d) = (${f6(g)} &minus; ${f6(d)}) / (${f6(u)} &minus; ${f6(d)}) = <b>${pctS(correct)}</b>`
+      ]};
+  }); }},
+
+{ id:"nd1", topic:"multi", name:"A missing node of a two-step tree", gen(){ return atLeast3(()=>{
+    /* 2025 MF final A Q5(b): the tree's first up price gives u; the 6-month nodes are S u^2, S, S d^2 with d = 1/u.
+       Variants: the highest or the lowest node. Su printed to the cent; the key uses the printed figure.     */
+    const S=pick(range(40,150,1)), s=pick(SIGS), x=s*Math.sqrt(0.25);
+    const Su=+(S*Math.exp(x)).toFixed(2), u=Su/S, which=pick(["highest","lowest"]);
+    const correct = which==="highest" ? S*u*u : S/(u*u);
+    const tol=centsTol(correct), sep=centsSep(correct);
+    const cands=keepFar(correct, which==="highest" ? [
+      {val:Su+(Su-S), msg:`You added the same dollar rise twice. The tree moves by percentages: each up step multiplies the price by u = ${f6(u)}, so the highest node is S &times; u &times; u.`},
+      {val:Su*u*u, msg:`That is three up steps. The highest node at 6 months is two up steps from today: S &times; u&sup2;.`},
+      {val:S*u, msg:`That is the upper node at 3 months. The highest node at 6 months is one more up step: &times; u.`},
+      {val:S/(u*u), msg:`That is the lowest node at 6 months, S &times; d&sup2;.`}
+    ] : [
+      {val:S-2*(Su-S), msg:`You took the same dollar fall twice. The tree moves by percentages: each down step multiplies the price by d = 1/u = ${f6(1/u)}, so the lowest node is S &times; d &times; d.`},
+      {val:S*(2-u)*(2-u), msg:`You used d = 2 &minus; u. In the tree d = 1/u, so that an up step and a down step bring the price back to where it was.`},
+      {val:S/u, msg:`That is the lower node at 3 months. The lowest node at 6 months is one more down step: &times; d.`},
+      {val:S*u*u, msg:`That is the highest node at 6 months, S &times; u&sup2;.`}
+    ], sep);
+    return {
+      unit:"money", tol, sep,
+      text:`A two-step binomial tree has steps of three months. Today's share price is <b>${money(S)}</b>, and the upper node at 3 months is <b>${money(Su)}</b>.
+            The down factor is d = 1/u.`,
+      ask:`What is the share price at the ${which} node at 6 months? (Two decimals.)`,
+      correct, cands,
+      fig:[lat("Share price", [[money(S)], [money(Su), "?"], [which==="highest"?"?":"", "", which==="lowest"?"?":""]], TIMES)],
+      steps:[
+        `The up factor: u = S<sub>up</sub>/S = ${money(Su)}/${money(S)} = ${f6(u)}; the down factor: d = 1/u = ${f6(1/u)}`,
+        which==="highest"
+          ? `The highest node at 6 months is two up steps from today: S &times; u&sup2; = ${money(S)} &times; ${f6(u)}&sup2; = <b>${m4(correct)}</b>`
+          : `The lowest node at 6 months is two down steps from today: S &times; d&sup2; = ${money(S)} &times; ${f6(1/u)}&sup2; = <b>${m4(correct)}</b>`,
+        which==="highest"
+          ? `The lowest node is found the same way: ${money(S)} &times; ${f6(1/u)}&sup2; = ${m4(S/(u*u))}. The middle node is S &times; u &times; d = ${money(S)}.`
+          : `The highest node is found the same way: ${money(S)} &times; ${f6(u)}&sup2; = ${m4(S*u*u)}. The middle node is S &times; u &times; d = ${money(S)}.`
+      ]};
+  }); }},
+
+{ id:"ec2", topic:"back", name:"A European call on a two-step tree", gen(){ return atLeast3(()=>{
+    /* 2025 MF final A Q5 and Note 26 Section 5: payoffs at 6 months, then back one step at a time.   */
+    const {S, s, r, u, d, g, p, P}=draw2();
+    const K=Math.round(S*pick([0.92,0.95,0.98,1.00,1.02,1.05,1.08]));
+    const C2=P[2].map(x=>cpay(x,K)), {V1, V0}=back2(C2,p,g), correct=V0;
+    const tol=centsTol(correct), sep=centsSep(correct);
+    const E2=p*p*C2[0]+2*p*(1-p)*C2[1]+(1-p)*(1-p)*C2[2];
+    const cands=keepFar(correct,[
+      {val:E2, msg:`That is the risk-neutral expected payoff at 6 months. Discount it back to today, one step at a time: &times; ${ex(`&minus;${pctS(r)} &times; 0.25`)} at each step.`},
+      {val:E2/g, msg:`You discounted for one step only. The payoffs are six months away: two steps of three months.`},
+      {val:(p*p*C2[0]+p*(1-p)*C2[1]+(1-p)*(1-p)*C2[2])/(g*g), msg:`Two paths lead to the middle node at 6 months (up then down, and down then up). Working backward node by node counts both.`},
+      {val:back2(C2,0.5,g).V0, msg:`You weighted up and down equally. Use the risk-neutral probability p = (${ex("r&Delta;t")} &minus; d)/(u &minus; d) = ${pctS(p)}.`},
+      {val:back2(C2,1-p,g).V0, msg:`You swapped the probabilities: p = ${pctS(p)} goes with the move up.`},
+      {val:cpay(S,K), msg:`That is what the call would pay if exercised today. A European call can only be exercised at 6 months: price it from its payoffs then.`}
+    ],sep);
+    return {
+      unit:"money", tol, sep,
+      text:`The annualized standard deviation of a share's continuously compounded returns is <b>${sig(s)}</b>, and the risk-free rate is <b>${rP(r)}</b>.
+            A two-step binomial tree with steps of three months gives these share prices. ${treeText(P)}
+            A European call option on the share expires in 6 months and has a strike price of <b>${money(K)}</b>.`,
+      ask:"What is the call worth today? (Two decimals.)",
+      correct, cands,
+      fig:[treeFig(P)],
+      steps:[
+        `u = ${ex("&sigma;&radic;<span class=rd>&Delta;t</span>")} = ${ex(`${sig(s)} &times; &radic;<span class=rd>1/4</span>`)} = ${f6(u)}, d = 1/u = ${f6(d)}; p = (${ex("r&Delta;t")} &minus; d)/(u &minus; d) = (${f6(g)} &minus; ${f6(d)})/(${f6(u)} &minus; ${f6(d)}) = ${pctS(p,4)}`,
+        `At 6 months the call pays max(S &minus; ${money(K)}, 0): ${m4(C2[0])} at the highest node, ${m4(C2[1])} at the middle node and ${m4(C2[2])} at the lowest node.`,
+        `${RN26}. If we end up at the upper node at 3 months: (${f4(p)} &times; ${m4(C2[0])} + ${f4(1-p)} &times; ${m4(C2[1])}) &times; ${ex(`&minus;${pctS(r)} &times; 0.25`)} = ${m4(V1[0])}`,
+        `If we end up at the lower node at 3 months: (${f4(p)} &times; ${m4(C2[1])} + ${f4(1-p)} &times; ${m4(C2[2])}) &times; ${ex(`&minus;${pctS(r)} &times; 0.25`)} = ${m4(V1[1])}`,
+        `Today: (${f4(p)} &times; ${m4(V1[0])} + ${f4(1-p)} &times; ${m4(V1[1])}) &times; ${ex(`&minus;${pctS(r)} &times; 0.25`)} = <b>${m4(correct)}</b>`
+      ]};
+  }); }},
+
+{ id:"ep2", topic:"back", name:"A European put on a two-step tree", gen(){ return atLeast3(()=>{
+    /* 2025 MF sample midterm Q6 and Note 26 Section 5, for the put.                                 */
+    const {S, s, r, u, d, g, p, P}=draw2();
+    const K=Math.round(S*pick([0.92,0.95,0.98,1.00,1.02,1.05,1.08]));
+    const P2=P[2].map(x=>ppay(x,K)), {V1, V0}=back2(P2,p,g), correct=V0;
+    const tol=centsTol(correct), sep=centsSep(correct);
+    const E2=p*p*P2[0]+2*p*(1-p)*P2[1]+(1-p)*(1-p)*P2[2];
+    const cands=keepFar(correct,[
+      {val:E2, msg:`That is the risk-neutral expected payoff at 6 months. Discount it back to today, one step at a time: &times; ${ex(`&minus;${pctS(r)} &times; 0.25`)} at each step.`},
+      {val:E2/g, msg:`You discounted for one step only. The payoffs are six months away: two steps of three months.`},
+      {val:(p*p*P2[0]+p*(1-p)*P2[1]+(1-p)*(1-p)*P2[2])/(g*g), msg:`Two paths lead to the middle node at 6 months (up then down, and down then up). Working backward node by node counts both.`},
+      {val:back2(P2,0.5,g).V0, msg:`You weighted up and down equally. Use the risk-neutral probability p = (${ex("r&Delta;t")} &minus; d)/(u &minus; d) = ${pctS(p)}.`},
+      {val:back2(P2,1-p,g).V0, msg:`You swapped the probabilities: p = ${pctS(p)} goes with the move up, where the put pays least.`},
+      {val:back2(P[2].map(x=>cpay(x,K)),p,g).V0, msg:`That is the call. A put pays max(K &minus; S, 0).`}
+    ],sep);
+    return {
+      unit:"money", tol, sep,
+      text:`The annualized standard deviation of a share's continuously compounded returns is <b>${sig(s)}</b>, and the risk-free rate is <b>${rP(r)}</b>.
+            A two-step binomial tree with steps of three months gives these share prices. ${treeText(P)}
+            A European put option on the share expires in 6 months and has a strike price of <b>${money(K)}</b>.`,
+      ask:"What is the put worth today? (Two decimals.)",
+      correct, cands,
+      fig:[treeFig(P)],
+      steps:[
+        `u = ${ex("&sigma;&radic;<span class=rd>&Delta;t</span>")} = ${ex(`${sig(s)} &times; &radic;<span class=rd>1/4</span>`)} = ${f6(u)}, d = 1/u = ${f6(d)}; p = (${ex("r&Delta;t")} &minus; d)/(u &minus; d) = (${f6(g)} &minus; ${f6(d)})/(${f6(u)} &minus; ${f6(d)}) = ${pctS(p,4)}`,
+        `At 6 months the put pays max(${money(K)} &minus; S, 0): ${m4(P2[0])} at the highest node, ${m4(P2[1])} at the middle node and ${m4(P2[2])} at the lowest node.`,
+        `${RN26}. If we end up at the upper node at 3 months: (${f4(p)} &times; ${m4(P2[0])} + ${f4(1-p)} &times; ${m4(P2[1])}) &times; ${ex(`&minus;${pctS(r)} &times; 0.25`)} = ${m4(V1[0])}`,
+        `If we end up at the lower node at 3 months: (${f4(p)} &times; ${m4(P2[1])} + ${f4(1-p)} &times; ${m4(P2[2])}) &times; ${ex(`&minus;${pctS(r)} &times; 0.25`)} = ${m4(V1[1])}`,
+        `Today: (${f4(p)} &times; ${m4(V1[0])} + ${f4(1-p)} &times; ${m4(V1[1])}) &times; ${ex(`&minus;${pctS(r)} &times; 0.25`)} = <b>${m4(correct)}</b>`
+      ]};
+  }); }},
+
+{ id:"ap1", topic:"amer", name:"Exercise the American put, or wait?", gen(){ return atLeast3(()=>{
+    /* 2025 MF midterm Q6(b), Note 26 Section 6: at the lower node at 3 months, value = max(exercise now, wait).
+       p is given (to four decimals of a percent), so the question is the comparison itself. */
+    const o=draw2(), {S, r, g, P}=o, pp=+o.p.toFixed(6);
+    const K=Math.round(S*pick([0.90,0.92,0.94,0.96,0.98,1.00,1.03,1.06,1.10]));
+    const Sd=P[1][1], wait=(pp*ppay(P[2][1],K)+(1-pp)*ppay(P[2][2],K))/g, exer=K-Sd;
+    if (exer<=0 || Math.abs(exer-wait)<0.02*Math.max(exer,wait)) return {correct:NaN, cands:[], sep:REL_SEP};   // a real comparison, either way
+    const correct=Math.max(wait,exer);
+    const tol=centsTol(correct), sep=centsSep(correct);
+    const cands=keepFar(correct,[
+      {val:Math.min(wait,exer), msg:exer>wait
+         ? `That is the value of waiting. Exercising now is worth more, ${m4(exer)}, so the holder exercises and the put is worth ${m4(exer)} at this node.`
+         : `That is the payoff from exercising now. Waiting is worth more, ${m4(wait)}, so the holder waits and the put is worth ${m4(wait)} at this node.`},
+      {val:pp*ppay(P[2][1],K)+(1-pp)*ppay(P[2][2],K), msg:`You did not discount the value of waiting. The payoffs come three months later: &times; ${ex(`&minus;${pctS(r)} &times; 0.25`)}.`},
+      {val:((1-pp)*ppay(P[2][1],K)+pp*ppay(P[2][2],K))/g, msg:`You swapped the probabilities. From the lower node, the move up (probability ${pctS(pp,4)}) leads to the middle node at 6 months.`},
+      {val:exer+wait, msg:`The holder chooses one or the other: the put is worth the larger of the payoff from exercising now and the value of waiting, not their sum.`}
+    ],sep);
+    return {
+      unit:"money", tol, sep,
+      text:`A two-step binomial tree for a share has steps of three months. At the lower node at 3 months, the share trades at <b>${money(Sd)}</b>;
+            from there it moves to <b>${money(P[2][1])}</b> (the middle node at 6 months) or <b>${money(P[2][2])}</b> (the lowest node at 6 months).
+            The risk-neutral probability of going up at each step is <b>${pctS(pp,4)}</b>, and the risk-free rate is <b>${rP(r)}</b>.
+            An American put option on the share expires in 6 months and has a strike price of <b>${money(K)}</b>.`,
+      ask:"What is the put worth at the lower node at 3 months? (Two decimals.)",
+      correct, cands,
+      fig:[latOn("Share price", {"1,1":money(Sd), "2,1":money(P[2][1]), "2,2":money(P[2][2])}, TIMES)],
+      steps:[
+        `At 6 months the put pays max(${money(K)} &minus; S, 0): ${m4(ppay(P[2][1],K))} at the middle node and ${m4(ppay(P[2][2],K))} at the lowest node.`,
+        `Payoff from exercising now, at the lower node at 3 months: K &minus; S = ${money(K)} &minus; ${money(Sd)} = ${m4(exer)}`,
+        `Value of waiting: (p &times; P<sub>up</sub> + (1 &minus; p) &times; P<sub>down</sub>) &times; ${ex("&minus;r&Delta;t")} = (${f4(pp)} &times; ${m4(ppay(P[2][1],K))} + ${f4(1-pp)} &times; ${m4(ppay(P[2][2],K))}) &times; ${ex(`&minus;${pctS(r)} &times; 0.25`)} = ${m4(wait)}`,
+        exer>wait ? `Exercising is worth more, so the holder exercises: the put is worth max(${m4(exer)}, ${m4(wait)}) = <b>${m4(correct)}</b>.`
+                  : `Waiting is worth more, so the holder waits: the put is worth max(${m4(exer)}, ${m4(wait)}) = <b>${m4(correct)}</b>.`
+      ]};
+  }); }},
+
+{ id:"ap2", topic:"amer", name:"An American put on a two-step tree", gen(){ return atLeast3(()=>{
+    /* 2025 MF midterm Q6(c), Note 26 Section 6: back through the tree taking max(exercise, wait) at every node.
+       Drawn so that the put is exercised at the lower node at 3 months but not today. p is given.      */
+    let o, K, pp, A2, A1, A0, E, ex1, cont1;
+    do {
+      o=draw2(); pp=+o.p.toFixed(6);
+      K=Math.round(o.S*pick([1.00,1.02,1.04,1.06,1.08,1.10]));
+      A2=o.P[2].map(x=>ppay(x,K));
+      cont1=[(pp*A2[0]+(1-pp)*A2[1])/o.g, (pp*A2[1]+(1-pp)*A2[2])/o.g];
+      ex1=[ppay(o.P[1][0],K), ppay(o.P[1][1],K)];
+      A1=[Math.max(cont1[0],ex1[0]), Math.max(cont1[1],ex1[1])];
+      A0=(pp*A1[0]+(1-pp)*A1[1])/o.g;
+      E=(pp*cont1[0]+(1-pp)*cont1[1])/o.g;
+    } while (!(ex1[1]>cont1[1]*1.02) || ppay(o.S,K)>=A0 || A0-E<0.02*A0);
+    const {S, r, g, P}=o, correct=A0;
+    const tol=centsTol(correct), sep=centsSep(correct);
+    const cands=keepFar(correct,[
+      {val:E, msg:`That is the European put: you never compared exercising with waiting. At the lower node at 3 months, exercising pays ${m4(ex1[1])} against ${m4(cont1[1])} for waiting.`},
+      {val:ex1[0]>0 ? (pp*ex1[0]+(1-pp)*ex1[1])/g : NaN, msg:`You exercised at both nodes at 3 months. At the upper node, waiting is worth more: ${m4(cont1[0])} against ${m4(ex1[0])}.`},
+      {val:A0-E, msg:`That is the value of the right to exercise early, the American put minus the European put. The question asks for the American put itself.`},
+      {val:(pp*A1[0]+(1-pp)*A1[1]), msg:`You did not discount the last step back to today: &times; ${ex(`&minus;${pctS(r)} &times; 0.25`)}.`},
+      {val:Math.max(ppay(S,K),E), msg:`You compared exercising with waiting only today. The holder makes the same comparison at every node, and at the lower node at 3 months exercising wins.`}
+    ],sep);
+    return {
+      unit:"money", tol, sep,
+      text:`A two-step binomial tree for a share has steps of three months. ${treeText(P)}
+            The risk-neutral probability of going up at each step is <b>${pctS(pp,4)}</b>, and the risk-free rate is <b>${rP(r)}</b>.
+            An American put option on the share expires in 6 months and has a strike price of <b>${money(K)}</b>.`,
+      ask:"What is the American put worth today? (Two decimals.)",
+      correct, cands,
+      fig:[treeFig(P)],
+      steps:[
+        `At 6 months the put pays max(${money(K)} &minus; S, 0): ${m4(A2[0])}, ${m4(A2[1])} and ${m4(A2[2])} at the highest, middle and lowest nodes.`,
+        `At the upper node at 3 months: exercising pays ${m4(ex1[0])}; waiting is worth (${f4(pp)} &times; ${m4(A2[0])} + ${f4(1-pp)} &times; ${m4(A2[1])}) &times; ${ex(`&minus;${pctS(r)} &times; 0.25`)} = ${m4(cont1[0])}. The put is worth ${m4(A1[0])}.`,
+        `At the lower node at 3 months: exercising pays ${money(K)} &minus; ${money(P[1][1])} = ${m4(ex1[1])}; waiting is worth (${f4(pp)} &times; ${m4(A2[1])} + ${f4(1-pp)} &times; ${m4(A2[2])}) &times; ${ex(`&minus;${pctS(r)} &times; 0.25`)} = ${m4(cont1[1])}. The holder exercises: ${m4(A1[1])}.`,
+        `Today: waiting is worth (${f4(pp)} &times; ${m4(A1[0])} + ${f4(1-pp)} &times; ${m4(A1[1])}) &times; ${ex(`&minus;${pctS(r)} &times; 0.25`)} = ${m4(A0)}, more than the ${m4(ppay(S,K))} from exercising now. The American put is worth <b>${m4(correct)}</b>.`
+      ]};
+  }); }},
+
+{ id:"ds1", topic:"div", name:"The share price net of the dividend", gen(){ return atLeast3(()=>{
+    /* Section 7, step 1: S* = S - D e^(-r tau).                                                          */
+    let S, D, m, r, PV, correct;
+    do { S=pick(range(40,120,1)); D=pick(range(1.00,4.00,0.25)); m=pick([1,2,3,4,5]); r=pick(RATES);
+         PV=D*Math.exp(-r*m/12); correct=S-PV; } while (D-PV<0.02 || PV-D*Math.exp(-r*0.5)<0.02);
+    const tol=centsOnly(correct), sep=0.015/correct;
+    const cands=[
+      {val:S-D, msg:`Take out the dividend's present value, not the dividend itself: ${money(D)} &times; ${ex(`&minus;${pctS(r)} &times; ${m}/12`)}.`},
+      {val:S-D*Math.exp(-r*0.5), msg:`You discounted the dividend from the option's expiration. The dividend is paid in ${m} month${m>1?"s":""}: discount it over ${m}/12 of a year.`},
+      {val:S-D*Math.exp(-r*m), msg:`You used ${m} years. The dividend is paid in ${m} month${m>1?"s":""}: t = ${m}/12.`},
+      {val:S+PV, msg:`The dividend's present value is taken out of today's share price, not added: S* = S &minus; PV(dividend).`},
+      {val:PV, msg:`That is the dividend's present value. S* is what is left of today's share price once it is taken out.`}
+    ];
+    return {
+      unit:"money", tol, sep,
+      text:`A share trades at <b>${money(S)}</b> and will pay a dividend of <b>${money(D)}</b> per share in <b>${m} month${m>1?"s":""}</b>.
+            The risk-free rate is <b>${rP(r)}</b>. To price a 6-month option on the share, you build the binomial tree on the share price net of the dividend, S*.`,
+      ask:"What is S* today? (Two decimals.)",
+      correct, cands,
+      steps:[
+        `The dividend is known in advance, so its part of the share price is riskless: S = S* + PV(dividend).`,
+        `PV(dividend) = ${money(D)} &times; ${ex(`&minus;${pctS(r)} &times; ${m}/12`)} = ${m4(PV)}`,
+        `S* = S &minus; PV(dividend) = ${money(S)} &minus; ${m4(PV)} = <b>${m4(correct)}</b>`
+      ]};
+  }); }},
+
+{ id:"cd1", topic:"div", name:"The share price at a 3-month node, with the dividend", gen(){ return atLeast3(()=>{
+    /* Section 7, step 3: at 3 months, before the ex-dividend date, the share price is S* u (or S* d) plus the
+       dividend's present value as of 3 months. Variants: the upper or the lower node.                    */
+    let S, D, m, r, s, u, Ss, PV0, PV3, which, Sn, correct;
+    do { S=pick(range(40,120,1)); D=pick(range(1.00,4.00,0.25)); m=pick([4,5]); r=pick(RATES); s=pick(SIGS);
+         u=+Math.exp(s*0.5).toFixed(6); PV0=+(D*Math.exp(-r*m/12)).toFixed(4); PV3=+(D*Math.exp(-r*(m-3)/12)).toFixed(4); Ss=+(S-PV0).toFixed(4);
+         which=pick(["upper","lower"]); Sn = +(which==="upper" ? Ss*u : Ss*(+(1/u).toFixed(6))).toFixed(4); correct=Sn+PV3;
+    } while (D-PV3<0.02 || PV3-PV0<0.02);
+    const tol=centsOnly(correct), sep=0.015/correct;
+    const fct = which==="upper" ? u : +(1/u).toFixed(6);
+    const cands=[
+      {val:Sn, msg:`That is S* at this node. Before the ex-dividend date, the share price also includes the dividend's present value: add it back.`},
+      {val:S*fct, msg:`You built the tree on today's share price. Build it on S* = S &minus; PV(dividend), then add the dividend's present value back at the nodes before the ex-dividend date.`},
+      {val:Sn+D, msg:`You added back the dividend itself. At 3 months the dividend is still ${m-3} month${m-3>1?"s":""} away: add its present value as of 3 months, ${money(D)} &times; ${ex(`&minus;${pctS(r)} &times; ${m-3}/12`)}.`},
+      {val:Sn+PV0, msg:`You added back today's present value of the dividend. At 3 months the dividend is closer: ${money(D)} &times; ${ex(`&minus;${pctS(r)} &times; ${m-3}/12`)}.`},
+      {val:S*fct-D, msg:`You built the tree on today's share price and took the dividend off. The dividend has not been paid yet at 3 months: the share price still includes it.`}
+    ];
+    return {
+      unit:"money", tol, sep,
+      text:`A share trades at <b>${money(S)}</b> and will pay a dividend of <b>${money(D)}</b> per share in <b>${m} months</b>.
+            The annualized standard deviation of its continuously compounded returns is <b>${sig(s)}</b>, and the risk-free rate is <b>${rP(r)}</b>.
+            You build a two-step binomial tree with steps of three months on the share price net of the dividend, S*, and add back the dividend's present value at the nodes before the ex-dividend date.`,
+      ask:`What is the share price at the ${which} node at 3 months? (Two decimals.)`,
+      correct, cands,
+      steps:[
+        `S* = S &minus; PV(dividend) = ${money(S)} &minus; ${money(D)} &times; ${ex(`&minus;${pctS(r)} &times; ${m}/12`)} = ${money(S)} &minus; ${m4(PV0)} = ${m4(Ss)}`,
+        `u = ${ex("&sigma;&radic;<span class=rd>&Delta;t</span>")} = ${ex(`${sig(s)} &times; &radic;<span class=rd>1/4</span>`)} = ${f6(u)}, d = 1/u = ${f6(1/u)}. S* at the ${which} node at 3 months: ${m4(Ss)} &times; ${f6(fct)} = ${m4(Sn)}`,
+        `At 3 months the dividend is ${m-3} month${m-3>1?"s":""} away. Its present value as of this point: ${money(D)} &times; ${ex(`&minus;${pctS(r)} &times; ${m-3}/12`)} = ${m4(PV3)}`,
+        `Share price at the ${which} node at 3 months = ${m4(Sn)} + ${m4(PV3)} = <b>${m4(correct)}</b>`,
+        `The ${which==="upper"?"lower":"upper"} node is found the same way: ${m4(Ss)} &times; ${f6(which==="upper"?+(1/u).toFixed(6):u)} + ${m4(PV3)} = ${m4(+(Ss*(which==="upper"?+(1/u).toFixed(6):u)).toFixed(4)+PV3)}.`
+      ]};
+  }); }},
+
+{ id:"dc1", topic:"div", name:"Exercise the American call before the dividend?", gen(){ return atLeast3(()=>{
+    /* 2025 MF final A Q6, moved onto the note's tree (Section 7): at the upper node at 3 months, the last node
+       before the ex-dividend date, value = max(cum-dividend price - K, value of waiting). The S* tree and p
+       are given.                                                                                          */
+    let S, D, m, r, s, u, g, pp, Ss, PV3, K, cum, ex1, wait, correct;
+    do { S=pick(range(40,120,1)); D=pick(range(1.00,4.00,0.25)); m=pick([4,5]); r=pick(RATES); s=pick(SIGS);
+         u=Math.exp(s*0.5); g=Math.exp(r*0.25); pp=+((g-1/u)/(u-1/u)).toFixed(6);
+         Ss=S-D*Math.exp(-r*m/12); PV3=+(D*Math.exp(-r*(m-3)/12)).toFixed(4);
+         K=Math.round(S*pick([0.90,0.93,0.96,1.00,1.03]));
+         var Su_=+(Ss*u).toFixed(2), Suu_=+(Ss*u*u).toFixed(2), Sm_=+Ss.toFixed(2);
+         cum=Su_+PV3; ex1=cum-K; wait=(pp*cpay(Suu_,K)+(1-pp)*cpay(Sm_,K))/g; correct=Math.max(ex1,wait);
+    } while (ex1<=0 || D-PV3<0.02 || Math.abs(ex1-wait)<0.02*correct);
+    const tol=centsOnly(correct), sep=0.015/correct;
+    const cands=keepFar(correct,[
+      {val:Math.min(ex1,wait), msg:ex1>wait
+         ? `That is the value of waiting. Exercising now, before the share goes ex-dividend, is worth more: ${m4(ex1)}.`
+         : `That is the payoff from exercising now. Waiting is worth more here: ${m4(wait)}.`},
+      {val:Math.max(Su_-K, wait), msg:`You left the dividend out of the share price at 3 months. Before the ex-dividend date, the share price is S* plus the dividend's present value: ${m4(Su_)} + ${m4(PV3)} = ${m4(cum)}.`},
+      {val:pp*cpay(Suu_,K)+(1-pp)*cpay(Sm_,K), msg:`You did not discount the value of waiting: the payoffs come three months later, &times; ${ex(`&minus;${pctS(r)} &times; 0.25`)}.`},
+      {val:(pp*cpay((Su_+PV3)*u,K)+(1-pp)*cpay((Su_+PV3)/u,K))/g, msg:`After the ex-dividend date the share price is S* alone: the dividend has been paid. At 6 months the nodes are ${m4(Suu_)} and ${m4(Sm_)}.`}
+    ],sep);
+    return {
+      unit:"money", tol, sep,
+      text:`A share will pay a dividend of <b>${money(D)}</b> per share in <b>${m} months</b>. A two-step binomial tree with steps of three months is built on
+            the share price net of the dividend, S*: at the upper node at 3 months S* is <b>${money(Su_)}</b>, and it moves from there to <b>${money(Suu_)}</b>
+            (the highest node at 6 months) or <b>${money(Sm_)}</b> (the middle node at 6 months). The risk-neutral probability of going up at each step is
+            <b>${pctS(pp,4)}</b>, and the risk-free rate is <b>${rP(r)}</b>. At a node before the ex-dividend date, the share price is S* plus the dividend's present value at that node.
+            An American call option on the share expires in 6 months and has a strike price of <b>${money(K)}</b>.`,
+      ask:"What is the call worth at the upper node at 3 months? (Two decimals.)",
+      correct, cands,
+      fig:[latOn("S*", {"1,0":money(Su_), "2,0":money(Suu_), "2,1":money(Sm_)}, TIMES)],
+      steps:[
+        `At the upper node at 3 months the dividend is ${m-3} month${m-3>1?"s":""} away. Its present value: ${money(D)} &times; ${ex(`&minus;${pctS(r)} &times; ${m-3}/12`)} = ${m4(PV3)}. The share price there is S* + PV(dividend) = ${money(Su_)} + ${m4(PV3)} = ${m4(cum)}.`,
+        `Payoff from exercising now: ${m4(cum)} &minus; ${money(K)} = ${m4(ex1)}`,
+        `At 6 months the dividend has been paid, so the share price is S*: the call pays max(${money(Suu_)} &minus; ${money(K)}, 0) = ${m4(cpay(Suu_,K))} at the highest node and max(${money(Sm_)} &minus; ${money(K)}, 0) = ${m4(cpay(Sm_,K))} at the middle node.`,
+        `Value of waiting: (${f4(pp)} &times; ${m4(cpay(Suu_,K))} + ${f4(1-pp)} &times; ${m4(cpay(Sm_,K))}) &times; ${ex(`&minus;${pctS(r)} &times; 0.25`)} = ${m4(wait)}`,
+        ex1>wait ? `Exercising is worth more, so the holder exercises just before the share goes ex-dividend: the call is worth <b>${m4(correct)}</b>.`
+                 : `Waiting is worth more, so the holder waits: the call is worth <b>${m4(correct)}</b>.`
+      ]};
+  }); }}
+
+];
+
+/* ======================= CHOICE-MODE ITEMS ==============================
+   Auto-graded by which option is clicked, not by a typed number.
+     topic "error"   — a worked solution with one planted mistake
+     topic "concept" — reason about the direction of an effect, no arithmetic
+   Directional items shuffle their own options so position carries no
+   information; spot-the-error items must stay in step order.            */
+
+function shuffle(a){
+  const out = a.slice();
+  for (let i=out.length-1; i>0; i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [out[i],out[j]] = [out[j],out[i]];
+  }
+  return out;
+}
+
+const CHOICE_TEMPLATES = [{ id:"k1", topic:"concept", name:"What the up price stands for", gen(){
+    /* Section 2: ln(S_up/S) = sigma sqrt(dt), exactly one standard deviation up. Rewritten 3 Nov 2026 after the
+       blind sitting (the key was the longest option): four options of one shape, a figure and a reason each.   */
+    const s=pick(SIGS), h=pick([["three months",4],["six months",2],["one month",12]]), x=s*Math.sqrt(1/h[1]);
+    const opts=shuffle([
+      {html:`Its continuously compounded return, ln(S<sub>up</sub>/S), is ${pctS(x)}: the annualized standard deviation times &radic;<span class=rd>1/${h[1]}</span>`, correct:true,
+       msg:`Right. S<sub>up</sub> = S &times; ${ex("&sigma;&radic;<span class=rd>&Delta;t</span>")}, so ln(S<sub>up</sub>/S) = &sigma;&radic;<span class=rd>&Delta;t</span> = ${sig(s)} &times; &radic;<span class=rd>1/${h[1]}</span> = ${pctS(x)}: one standard deviation over ${h[0]}.`},
+      {html:`Its continuously compounded return, ln(S<sub>up</sub>/S), is ${pctS(s)}: the annualized standard deviation itself`, correct:false,
+       msg:`The annual standard deviation is scaled down to the step: over ${h[0]} it is &sigma; &times; &radic;<span class=rd>1/${h[1]}</span> = ${pctS(x)}.`},
+      {html:`Its continuously compounded return, ln(S<sub>up</sub>/S), is ${pctS(s/h[1])}: the annualized standard deviation times 1/${h[1]}`, correct:false,
+       msg:`The standard deviation grows with the square root of time, not with time: &sigma; &times; &radic;<span class=rd>1/${h[1]}</span> = ${pctS(x)}.`},
+      {html:`Its simple return, S<sub>up</sub>/S &minus; 1, is ${pctS(x)}: the annualized standard deviation times &radic;<span class=rd>1/${h[1]}</span>`, correct:false,
+       msg:`It is the continuously compounded return, ln(S<sub>up</sub>/S), that equals ${pctS(x)}. The simple return is ${ex(pctS(x))} &minus; 1 = ${pctS(Math.exp(x)-1)}.`}
+    ]);
+    return {mode:"choice",
+      text:`A share's continuously compounded returns have an annualized standard deviation of ${sig(s)}. You build a binomial tree with steps of ${h[0]}, with S<sub>up</sub> = S &times; ${ex("&sigma;&radic;<span class=rd>&Delta;t</span>")}.`,
+      ask:"Which statement about the up price S<sub>up</sub> at the end of the first step is right?",
+      options:opts,
+      steps:[
+        `S<sub>up</sub> = S &times; ${ex("&sigma;&radic;<span class=rd>&Delta;t</span>")}, so its continuously compounded return is ln(S<sub>up</sub>/S) = &sigma;&radic;<span class=rd>&Delta;t</span>.`,
+        `&sigma;&radic;<span class=rd>&Delta;t</span> = ${sig(s)} &times; &radic;<span class=rd>1/${h[1]}</span> = ${pctS(x)}: one standard deviation of the returns over ${h[0]}. The down price is one standard deviation down.`
+      ]};
+  }},
+{ id:"k3", topic:"concept", name:"Where the risk-neutral probability comes from", gen(){
+    /* Sections 1 and 3: p is the probability that prices the share itself correctly.                 */
+    const opts=shuffle([
+      {html:`It is the probability that makes the share's risk-neutral expected price, discounted at the risk-free rate, equal to today's share price`, correct:true,
+       msg:`Right. Applying the risk-neutral pricing equation to the share, S = (p &times; S u + (1 &minus; p) &times; S d) &times; ${ex("&minus;r&Delta;t")}, and solving for p gives p = (${ex("r&Delta;t")} &minus; d)/(u &minus; d).`},
+      {html:`It is the probability, estimated from the share's past returns, that the share goes up`, correct:false,
+       msg:`p is not estimated from the data. It is the probability that prices the share correctly in the tree; past returns enter only through &sigma;, in u and d.`},
+      {html:`It is one half, because the up and down moves are one standard deviation each`, correct:false,
+       msg:`Equal-sized moves do not make p one half. p must make the discounted expected share price equal today's price: p = (${ex("r&Delta;t")} &minus; d)/(u &minus; d).`},
+      {html:`It is the probability that makes the call's expected payoff equal to the call's market price`, correct:false,
+       msg:`p comes from the share, not the option: it is set so that the tree prices the share correctly. The option is then priced with it.`}
+    ]);
+    return {mode:"choice",
+      text:`In a binomial tree, the risk-neutral probability of going up at each step is p = (${ex("r&Delta;t")} &minus; d)/(u &minus; d).`,
+      ask:"Which statement describes where p comes from?",
+      options:opts,
+      steps:[`The risk-neutral pricing equation applied to the share: S = (p &times; S u + (1 &minus; p) &times; S d) &times; ${ex("&minus;r&Delta;t")}.`,
+             `S drops out from both sides; solving for p gives p = (${ex("r&Delta;t")} &minus; d)/(u &minus; d).`]};
+  }},
+
+{ id:"k4", topic:"concept", name:"Why more steps", gen(){
+    /* Section 4: after n steps there are n + 1 share prices at the horizon: a better "resolution". Rewritten 3 Nov
+       2026 after the blind sitting: every option now gives a count and a reason.                               */
+    const n=pick([3,4,6,12]);
+    const opts=shuffle([
+      {html:`${n+1}, because the price depends only on how many of the ${n} steps go up; more prices describe the distribution at the horizon more finely`, correct:true,
+       msg:`Right. With d = 1/u, an up and a down in either order end at the same price, so ${n} steps give ${n+1} prices at the horizon.`},
+      {html:`${2**n}, because each of the ${2**n} paths through the tree ends at its own price; more prices describe the distribution at the horizon more finely`, correct:false,
+       msg:`There are ${2**n} paths, but they end at only ${n+1} prices: an up step followed by a down step ends where a down step followed by an up step does, because d = 1/u.`},
+      {html:`${2*n}, because each of the ${n} steps adds an up price and a down price; more prices describe the distribution at the horizon more finely`, correct:false,
+       msg:`Each step adds one price at the horizon, not two: ${n} steps give ${n+1} prices.`},
+      {html:`2, as in a one-step tree, because the share still either goes up or down; shorter steps only make each move smaller`, correct:false,
+       msg:`More steps give more possible prices at the horizon: ${n} steps give ${n+1}. That is the point of adding steps.`}
+    ]);
+    return {mode:"choice",
+      text:`You split an option's life into ${n} steps of equal length and build a binomial tree with d = 1/u.`,
+      ask:"How many different share prices does the tree have at the horizon?",
+      options:opts,
+      steps:[`At each node the price is multiplied by u to go up or by d = 1/u to go down, so up-then-down and down-then-up end at the same price.`,
+             `After ${n} steps the share price at the horizon depends only on the number of up steps, 0 to ${n}: ${n+1} prices.`]};
+  }},
+{ id:"k6", topic:"amer", name:"The American call on a share with no dividend", gen(){
+    /* Section 6: with no dividend, waiting is always worth more than exercising: American call = European call.
+       Rewritten 3 Nov 2026 after the blind sitting (one distractor was contrived).                             */
+    const c=pick(range(2.00,8.00,0.25));
+    const opts=shuffle([
+      {html:`${money(c)}: at every node, waiting is worth more than exercising`, correct:true,
+       msg:`Right. On a share that pays no dividend, waiting is always worth more than exercising, so the right to exercise early is never used and is worth nothing.`},
+      {html:`More than ${money(c)}: the right to exercise early is worth something`, correct:false,
+       msg:`For a call on a share that pays no dividend, the holder never uses that right: at every node of the tree, waiting is worth more than exercising.`},
+      {html:`More than ${money(c)}: the holder can exercise at a high node before the share falls`, correct:false,
+       msg:`At a high node, waiting is still worth more: the call keeps its upside, and its protection if the share falls, while the strike price is paid later.`},
+      {html:`Less than ${money(c)}: the holder may exercise at the wrong time`, correct:false,
+       msg:`The holder chooses when to exercise, so the right can never be worth less than nothing: an American option is worth at least as much as the European one.`}
+    ]);
+    return {mode:"choice",
+      text:`A share pays no dividend. A European call on it with six months to expiration is worth ${money(c)}.`,
+      ask:"What is an otherwise identical American call worth?",
+      options:opts,
+      steps:[`At every node, the American call is worth max(payoff from exercising now, value of waiting).`,
+             `On a share that pays no dividend, waiting is always worth more than exercising, so the American call is worth the same as the European call: ${money(c)}.`]};
+  }},
+{ id:"k7", topic:"div", name:"Why build the tree on S*", gen(){
+    /* Section 7: S = S* + PV(dividend); the dividend is known in advance, so all the risk is in S*. Rewritten
+       3 Nov 2026 after the blind sitting (one option was half true).                                          */
+    const D=pick(range(1.00,4.00,0.25)), m=pick([2,3,4,5]);
+    const opts=shuffle([
+      {html:`The ${money(D)} dividend is known in advance, so its present value is riskless and the up and down moves apply only to S*`, correct:true,
+       msg:`Right. S = S* + PV(dividend). The dividend part is riskless, so the up and down moves apply to S*, and the dividend's present value is added back at the nodes before the ex-dividend date.`},
+      {html:`The option holder receives the ${money(D)} dividend, so it is kept out of the tree and added to the option's payoff`, correct:false,
+       msg:`The dividend goes to the shareholders, not to the option holder. It is kept out of the up and down moves because it is riskless.`},
+      {html:`The share's returns are less volatile without the dividend, so S* moves by smaller up and down steps than the share`, correct:false,
+       msg:`The tree uses the same u and d for S* as it would for the share. S* is used because the dividend is a known, riskless amount; the risk is in the rest of the share price.`},
+      {html:`The dividend is paid only at expiration, so S* is the share price at every node of the tree`, correct:false,
+       msg:`The dividend is paid in ${m} months, before expiration. At the nodes before the ex-dividend date, the share price is S* plus the dividend's present value.`}
+    ]);
+    return {mode:"choice",
+      text:`A share will pay a dividend of ${money(D)} in ${m} months. To price a 6-month option, you build the tree on S* = S &minus; PV(dividend) and add the dividend's present value back at the nodes before the ex-dividend date.`,
+      ask:"Why is the tree built on S* rather than on the share price itself?",
+      options:opts,
+      steps:[`Split the share price: S = S* + PV(dividend).`,
+             `The ${money(D)} is known in advance, so its present value is riskless; all the risk is in S*. The tree's up and down moves apply to S*.`]};
+  }},
+{ id:"k8", topic:"div", name:"When to exercise an American call with a dividend", gen(){
+    /* Section 7: exercise, if at all, at a high node just before the ex-dividend date. Rewritten 3 Nov 2026 after
+       the blind sitting (the key was the longest, hedged option): four options of one shape.                  */
+    const D=pick(range(1.00,4.00,0.25)), m=pick([4,5]);
+    const opts=shuffle([
+      {html:`At the upper node at 3 months, before the share goes ex-dividend`, correct:true,
+       msg:`Right. Exercising there gets the holder the share before it goes ex-dividend, and so the ${money(D)} dividend. It pays when that beats the value of waiting.`},
+      {html:`At the lower node at 3 months, before the share goes ex-dividend`, correct:false,
+       msg:`At a low node the call is worth little or nothing if exercised. Early exercise pays only at a high node, where the payoff from exercising beats waiting.`},
+      {html:`At the upper node at 3 months, after the share goes ex-dividend`, correct:false,
+       msg:`The share goes ex-dividend between 3 and 6 months, after the 3-month nodes. To collect the dividend, the holder must exercise before that date.`},
+      {html:`Nowhere before 6 months, whatever the dividend`, correct:false,
+       msg:`That holds for a share that pays no dividend. With a dividend, exercising just before the ex-dividend date can be worth more than waiting.`}
+    ]);
+    return {mode:"choice",
+      text:`A share will pay a dividend of ${money(D)} in ${m} months. An American call on it expires in 6 months, and you price it on a two-step tree with steps of three months.`,
+      ask:"Where in the tree could it pay to exercise the call early?",
+      options:opts,
+      steps:[`At each node: value = max(payoff from exercising now, value of waiting).`,
+             `Between 3 and 6 months the share goes ex-dividend and its price drops by about the dividend. At the upper node at 3 months, exercising first, to collect the dividend, can beat waiting.`]};
+  }}
+];
+
+const TOPICS = [
+  {key:"all", label:"Mixed"},
+  {key:"onestep", label:"One-step tree"},
+  {key:"vol", label:"Up and down prices"},
+  {key:"multi", label:"Multi-step trees"},
+  {key:"back", label:"Working backward"},
+  {key:"amer", label:"American options"},
+  {key:"div", label:"Dividends"},
+  {key:"concept", label:"Reason it out"}
+];
+
+/* ----------------------------------------------------------------- state */
+let active = "all", current = null, tries = 0;
+let peeked = false, solved = false, tallied = false;  // tallied = already counted in `attempted`
+const stats = {att:0, first:0, streak:0, peek:0};
+
+const $ = id => document.getElementById(id);
+
+/* One-period trees for templates that return q.fig = [{label, now, outs:[...], probs:[...]?}, ...]
+   (added 22 Oct 2026 for Note 13, at Anh's request). Values come from the same draw as the text. */
+function figHTML(fig){
+  const txt = s => String(s).replace(/<[^>]+>/g, "");
+  const len = s => txt(s).replace(/&[a-z]+;/g, "x").length;
+  /* A multi-period recombining tree (Notes 16 and 19, 22 Oct 2026): t.lat[k] lists the nodes at
+     date k from the top; a node is a string or an array of lines; t.times labels the dates.      */
+  const latSVG = t => {
+    const L = t.lat.length, lines = v => (Array.isArray(v) ? v : [v]).map(txt);
+    const colW = t.lat.map(col => Math.max(24, ...col.map(v => Math.max(...lines(v).map(len))*8.2)));
+    const nl = Math.max(...t.lat.flat().map(v => lines(v).length)), lh = 17, h = nl > 1 ? 30 : 17, top = 30;
+    const cx = []; let x = 4;
+    colW.forEach((w, k) => { cx.push(x + w/2); x += w + 44; });
+    const W = Math.max(x - 44 + 4, 8.5*len(t.label) + 10);
+    const yOf = (k, i) => top + h*(2*i + (L-1-k)) + (nl-1)*lh/2;
+    const H = top + h*2*(L-1) + nl*lh + (t.times ? 26 : 6);
+    /* t.on (23 Oct 2026, Anh): the nodes the question works at, as "k,i". The rest of the tree is drawn
+       in grey, with a dot for a node that carries no figure, so students see where in the tree they are. */
+    const on = t.on ? new Set(t.on) : null, isOn = (k, i) => !on || on.has(k + "," + i);
+    const half = (k, i) => lines(t.lat[k][i]).join("") ? colW[k]/2 + 4 : 6;
+    let g = `<text class="tl" x="${W/2}" y="14" text-anchor="middle">${txt(t.label)}</text>`;
+    t.lat.forEach((col, k) => col.forEach((v, i) => {
+      const y = yOf(k, i), ls = lines(v);
+      if (ls.join("")) ls.forEach((s, j) => g += `<text x="${cx[k]}" y="${y + 5 + (j - (ls.length-1)/2)*lh}" text-anchor="middle">${s}</text>`);
+      else g += `<circle cx="${cx[k]}" cy="${y}" r="3.2"${isOn(k, i) ? "" : ` class="off"`}/>`;
+      if (k < L-1) [i, i+1].forEach(c => {
+        const y2 = yOf(k+1, c);
+        g += `<line x1="${cx[k] + half(k, i)}" y1="${y}" x2="${cx[k+1] - half(k+1, c)}" y2="${y2}" stroke-width="1.6"${isOn(k, i) && isOn(k+1, c) ? "" : ` class="off"`}/>`;
+      });
+    }));
+    if (t.times) t.times.forEach((s, k) => g += `<text class="tp" x="${cx[k]}" y="${H - 6}" text-anchor="middle">${txt(s)}</text>`);
+    return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${txt(t.label)}: ${t.lat.map(c => c.map(v => lines(v).join(" ")).join(" / ")).join("; then ")}">${g}</svg>`;
+  };
+  /* A payoff or profit diagram (Note 25 Part 3, 29 Oct 2026, Anh): t.pts are the corners of a piecewise-linear
+     line, left edge to right edge (a window around the kinks, not from S = 0, so the kinks stand apart);
+     t.dots are marked points, each with dashed guides to the axes; t.xt / t.yt are [value, label] ticks.
+     The horizontal axis sits at t.ybase, zero unless given (a collar's payoff never comes near zero).   */
+  const plotSVG = t => {
+    const L0 = 62, R0 = 14, T0 = 26, B0 = 40, yb = t.ybase || 0;
+    const xs = t.pts.map(p => p[0]), ys = t.pts.map(p => p[1]).concat([yb]);
+    const X0 = Math.min(...xs), X1 = Math.max(...xs), Y0 = Math.min(...ys), Y1 = Math.max(...ys), dy = (Y1 - Y0) || 1;
+    const lo = Y0 - 0.08*dy*(Y0 < yb), hi = Y1 + 0.12*dy;
+    /* One scale on both axes (Anh, 29 Oct 2026): a one-for-one slope must look like 45 degrees. */
+    const k = Math.min(304/(X1 - X0), 200/(hi - lo)), W = L0 + R0 + k*(X1 - X0), H = T0 + B0 + k*(hi - lo);
+    const px = x => L0 + k*(x - X0), py = y => T0 + k*(hi - y);
+    const dotY = x => ((t.dots || []).find(d => d[0] === x) || [x, yb])[1];
+    let g = `<line class="ax" x1="${L0}" y1="${py(yb)}" x2="${W - R0}" y2="${py(yb)}"/>`;
+    g += `<line class="ax" x1="${L0}" y1="${T0 - 4}" x2="${L0}" y2="${H - B0 + 4}"/>`;
+    (t.dots || []).forEach(([x, y]) => {
+      if (y !== yb) g += `<line class="gd" x1="${px(x)}" y1="${py(y)}" x2="${px(x)}" y2="${py(yb)}"/>`;
+      g += `<line class="gd" x1="${L0}" y1="${py(y)}" x2="${px(x)}" y2="${py(y)}"/>`;
+    });
+    g += `<polyline class="pl" points="${t.pts.map(([x, y]) => px(x).toFixed(1) + "," + py(y).toFixed(1)).join(" ")}"/>`;
+    (t.dots || []).forEach(([x, y]) => g += `<circle cx="${px(x)}" cy="${py(y)}" r="3.4"/>`);
+    (t.xt || []).forEach(([x, s]) => g += `<text class="tk" x="${px(x)}" y="${py(yb) + (dotY(x) < yb ? -8 : 17)}" text-anchor="middle">${txt(s)}</text>`);
+    (t.yt || []).forEach(([y, s]) => g += `<text class="tk" x="${L0 - 6}" y="${py(y) + 4.5}" text-anchor="end">${txt(s)}</text>`);
+    g += `<text class="tp" x="${W - R0}" y="${H - 6}" text-anchor="end">${txt(t.xlab)}</text>`;
+    g += `<text class="tp" x="${L0}" y="${T0 - 10}" text-anchor="middle">${txt(t.ylab)}</text>`;
+    return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${txt(t.label)}: ${txt(t.aria || "")}">${g}</svg>`;
+  };
+  return fig.map(t => {
+    if (t.lat) return latSVG(t);
+    if (t.pts) return plotSVG(t);
+    const n = t.outs.length, gap = n > 2 ? 30 : 46, top = 34;
+    const x1 = Math.max(40, 12 + 8.5*len(t.now)), x2 = x1 + 56;
+    const wide = Math.max(...t.outs.map((v, i) => 8.4*len(v) + (t.probs ? 6.6*(len(t.probs[i]) + 2) + 6 : 0)));
+    const W = Math.max(x2 + 10 + wide, 8.5*len(t.label) + 10), H = top + gap*(n-1) + 14, mid = top + gap*(n-1)/2;
+    let g = `<text class="tl" x="${(x1 + x2)/2}" y="14" text-anchor="middle">${txt(t.label)}</text>`;
+    g += `<text x="${x1-8}" y="${mid+5}" text-anchor="end">${txt(t.now)}</text>`;
+    t.outs.forEach((v, i) => {
+      const y = top + gap*i, dx = x2-x1, dy = y-mid, L = Math.hypot(dx, dy), ux = dx/L, uy = dy/L;
+      const ex = x2 - 2*ux, ey = y - 2*uy, bx = ex - 9*ux, by = ey - 9*uy;
+      g += `<line x1="${x1}" y1="${mid}" x2="${bx}" y2="${by}" stroke-width="1.8"/>`;
+      g += `<polygon points="${ex},${ey} ${bx-4*uy},${by+4*ux} ${bx+4*uy},${by-4*ux}" stroke-width="0"/>`;
+      g += `<text x="${x2+6}" y="${y+5}">${txt(v)}${t.probs ? `<tspan class="tp" dx="6">(${txt(t.probs[i])})</tspan>` : ""}</text>`;
+    });
+    return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${txt(t.label)}: ${txt(t.now) || "today"}, then ${t.outs.map(txt).join(" or ")}">${g}</svg>`;
+  }).join("");
+}
+
+function buildTopics(){
+  const box = $("topics");
+  TOPICS.forEach(t=>{
+    const b = document.createElement("button");
+    b.className = "chip"; b.textContent = t.label;
+    b.setAttribute("aria-pressed", String(t.key===active));
+    b.onclick = ()=>{
+      active = t.key;
+      [...box.children].forEach(c=>c.setAttribute("aria-pressed","false"));
+      b.setAttribute("aria-pressed","true");
+      seqIdx = 0;                 // a new topic restarts the sequence
+      newQuestion();
+    };
+    box.appendChild(b);
+  });
+  /* the Starred chip: practise only the questions starred on this page */
+  const s = document.createElement("button");
+  s.className = "chip"; s.id = "chipStar";
+  s.setAttribute("aria-pressed", "false");
+  s.onclick = ()=>{
+    active = "starred";
+    [...box.children].forEach(c=>c.setAttribute("aria-pressed","false"));
+    s.setAttribute("aria-pressed","true");
+    seqIdx = 0;
+    newQuestion();
+  };
+  box.appendChild(s);
+  updateStarChip();
+}
+
+const ALL_TEMPLATES = TEMPLATES.concat(CHOICE_TEMPLATES);
+
+/* A template's primary topic is `topic`; it may also list secondary topics in
+   `also`, so one item can appear under several chips. */
+function inTopic(t, key){
+  return t.topic === key || (Array.isArray(t.also) && t.also.includes(key));
+}
+
+/* ---- progress: distinct templates solved without opening the solution ---- */
+const PROG_KEY = "practice-progress:" + document.title;
+let mastered = new Set();
+try { mastered = new Set(JSON.parse(localStorage.getItem(PROG_KEY) || "[]")); }
+catch (e) { mastered = new Set(); }
+
+function saveProgress(){
+  try { localStorage.setItem(PROG_KEY, JSON.stringify([...mastered])); } catch (e) {}
+}
+function markMastered(id){
+  if (!id || mastered.has(id)) return;
+  mastered.add(id);
+  saveProgress();
+}
+
+/* ---- starred questions: kept per template, so a starred question comes back with new
+   numbers. Starred automatically on a wrong answer or on opening the solution before
+   solving; the student can star or unstar any question by hand. ---- */
+const STAR_KEY = "practice-starred:" + document.title;
+let starred = new Set();
+try { starred = new Set(JSON.parse(localStorage.getItem(STAR_KEY) || "[]")); }
+catch (e) { starred = new Set(); }
+starred = new Set([...starred].filter(id => ALL_TEMPLATES.some(t => t.id === id)));
+
+function saveStars(){
+  try { localStorage.setItem(STAR_KEY, JSON.stringify([...starred])); } catch (e) {}
+}
+function updateStarChip(){
+  const c = document.getElementById("chipStar");   // made by buildTopics, not in the markup
+  if (c) c.textContent = "★ Starred (" + starred.size + ")";
+}
+function showStar(){
+  const on = !!(current && starred.has(current.id));
+  $("star").hidden = !current;
+  $("star").setAttribute("aria-pressed", String(on));
+  $("star").textContent = on ? "★ Starred" : "☆ Star";
+}
+function setStar(id, on){
+  if (!id) return;
+  if (on) starred.add(id); else starred.delete(id);
+  saveStars(); updateStarChip(); showStar();
+}
+function autoStar(){ if (current && !starred.has(current.id)) setStar(current.id, true); }
+
+function poolFor(key){
+  if (key === "all") return ALL_TEMPLATES;
+  if (key === "starred") return ALL_TEMPLATES.filter(t => starred.has(t.id));
+  return ALL_TEMPLATES.filter(t => inTopic(t, key));
+}
+
+/* Templates are drawn WITHOUT immediate repeats. Sampling with replacement
+   looks fine on the full bank, but a topic holding only three or four
+   templates repeats roughly one press in three, which reads as the button
+   being broken. Hold the most recent half of the pool out of the draw. */
+let recentIds = [];
+/* Questions seen this session, so the arrow keys can step back and forth through them. */
+let history = [], histIdx = -1;
+let navKey = false;      // true while an arrow key is doing the rendering
+let order = "shuffle";   // "shuffle" | "seq"
+let seqIdx = 0;
+
+function newQuestion(replay){
+  let q;
+  if (replay){ q = replay.q; }
+  else {
+  const pool = poolFor(active);
+  if (!pool.length){
+    current = null;
+    $("qmeta").textContent = "Starred";
+    $("qtext").innerHTML = "No starred questions yet. A question is starred when you answer it " +
+      "wrongly or open its solution before solving it, and you can star any question yourself with " +
+      "<b>☆ Star</b>. Pick another chip to practise.";
+    $("qask").innerHTML = "";
+    $("opts").hidden = true; $("opts").innerHTML = "";
+    $("ans").hidden = true; $("check").hidden = true; $("next").hidden = true;
+    $("fb").innerHTML = ""; $("soldetails").hidden = true; $("seqPos").textContent = "";
+    showStar();
+    return;
+  }
+  let tpl;
+  if (order === "seq"){
+    /* walk the bank in order, wrapping at the end */
+    if (seqIdx >= pool.length) seqIdx = 0;
+    tpl = pool[seqIdx];
+    seqIdx = (seqIdx + 1) % pool.length;
+    $("seqPos").textContent = `${seqIdx === 0 ? pool.length : seqIdx} of ${pool.length}`;
+  } else {
+    const hold = Math.max(1, Math.floor(pool.length / 2));
+    let choices = pool.filter(t => !recentIds.slice(0, hold).includes(t.id));
+    if (!choices.length) choices = pool;        // pool of one, or all held out
+    tpl = pick(choices);
+    recentIds.unshift(tpl.id);
+    if (recentIds.length > 40) recentIds.length = 40;
+    $("seqPos").textContent = "";
+  }
+  q = tpl.gen();
+  q.name = tpl.name;
+  q.id   = tpl.id;
+  q.seqPos = $("seqPos").textContent;   // carried so stepping back shows its own position
+  if (q.mode !== "choice") q.distractors = usable(q.correct, q.cands, q.sep);
+  }
+  current = q;
+  if (replay){
+    tries = replay.tries; peeked = replay.peeked; solved = replay.solved; tallied = replay.tallied;
+  } else {
+    tries = 0; peeked = false; solved = false; tallied = false;
+    history = history.slice(0, histIdx + 1);           // a new draw discards anything ahead
+    history.push({q, tries:0, peeked:false, solved:false, tallied:false, fb:"", ans:""});
+    if (history.length > 50){ history.shift(); }
+    histIdx = history.length - 1;
+  }
+
+  const isChoice = q.mode === "choice";
+  $("qmeta").textContent = q.name;
+  $("qtext").innerHTML   = q.text;
+  $("qfig").innerHTML    = q.fig ? figHTML(q.fig) : "";
+  $("qfig").hidden       = !q.fig;
+  $("qask").innerHTML    = q.ask;
+  /* Hide the input and Check individually, NOT the whole row -- the
+     "New question" button lives in that row and must stay reachable
+     on choice questions. */
+  $("ans").hidden   = isChoice;
+  $("check").hidden = isChoice;
+  $("next").hidden  = false;
+  showStar();
+  $("opts").hidden     = !isChoice;
+  const box = $("opts");
+  box.innerHTML = "";              // always clear, even when the panel is hidden
+  if (isChoice){
+    q.options.forEach((o,k)=>{
+      const btn = document.createElement("button");
+      btn.className = "opt"; btn.innerHTML = o.html;
+      btn.onclick = () => pickOption(k);
+      box.appendChild(btn);
+    });
+  }
+  $("ans").value = "";
+  $("ans").placeholder = q.unit==="money" ? "e.g. 1234.56"
+                     : q.unit==="percent" ? "e.g. 12.34  (percent)"
+                     : "e.g. 18";
+  $("ans").disabled = false;
+  $("check").disabled = false;
+  $("fb").innerHTML = "";
+  $("steps").innerHTML = q.steps.map(s=>`<div>${s}</div>`).join("");
+  const d = $("soldetails"); d.hidden = false; d.open = false;
+  if (replay){
+    /* Put the question back exactly as it was left --- the feedback, what was typed, and
+       whether it had already been answered. The tallied/solved flags come back with it,
+       so revisiting a question never re-counts an attempt or re-awards mastery. */
+    $("fb").innerHTML = replay.fb || "";
+    $("ans").value    = replay.ans || "";
+    $("seqPos").textContent = q.seqPos || "";
+    if (isChoice && q.wrong){
+      [...$("opts").children].forEach((b,j)=>{
+        if (q.wrong.indexOf(j) >= 0){ b.classList.add("wrong"); b.disabled = true; }
+      });
+    }
+    if (solved || q.done){
+      if (isChoice){
+        [...$("opts").children].forEach((b,j)=>{ b.disabled = true;
+          if (q.options[j].correct) b.classList.add("right"); });
+      } else { $("ans").disabled = true; $("check").disabled = true; }
+    }
+    d.open = peeked || solved;
+  }
+  /* Arriving by arrow key must not park the cursor in the answer box: a restored answer
+     sitting there would swallow the next arrow press and strand the student. */
+  if (navKey) $("ans").blur();
+  else if (!isChoice && !$("ans").disabled) $("ans").focus();
+}
+
+function parseInput(raw){
+  const cleaned = raw.replace(/[$,%\s,]/g,"");
+  if (cleaned === "" ) return NaN;
+  return Number(cleaned);
+}
+
+function say(kind, title, body){
+  $("fb").innerHTML = `<div class="fb ${kind}"><strong>${title}</strong>${body}</div>`;
+}
+
+function pickOption(k){
+  const q = current;
+  if (q.done) return;
+  const o    = q.options[k];
+  const btns = [...$("opts").children];
+
+  tries++;
+  if (!tallied){ tallied = true; stats.att++; }
+
+  if (o.correct){
+    q.done = true; solved = true;
+    btns.forEach((b2,j)=>{ b2.disabled = true; if (q.options[j].correct) b2.classList.add("right"); });
+    if (peeked){
+      stats.streak = 0;
+      say("ok","Correct — but you read the solution first.",
+          "It still counts as attempted, just not toward first-try accuracy or your streak. " + o.msg);
+    } else {
+      stats.streak++;
+      if (tries === 1) stats.first++;
+      markMastered(q.id);
+      say("ok", tries===1 ? "Correct — first try." : "Correct.", o.msg);
+    }
+    $("soldetails").open = true;
+  } else {
+    stats.streak = 0;
+    btns[k].classList.add("wrong");
+    btns[k].disabled = true;
+    (q.wrong || (q.wrong = [])).push(k);   // remembered so a revisit keeps it eliminated
+    autoStar();
+    say("no","Not that one.", o.msg);
+  }
+  render();
+}
+
+function check(){
+  const raw = $("ans").value;
+  const parsed = parseInput(raw);
+  if (!Number.isFinite(parsed)){
+    say("hint","Enter a number","Type your answer as a number — you can include $ , or % and it will be ignored.");
+    return;
+  }
+  const q = current;
+  const val = q.unit==="percent" ? parsed/100 : parsed;
+  const TOL = q.tol || REL_MATCH;
+
+  /* Unit slips are formatting mistakes, not wrong answers, so they cost
+     neither an attempt nor first-try credit. Guarded so a genuinely
+     correct entry can never be mistaken for one. */
+  if (!near(val, q.correct, TOL)){
+    if (q.unit==="percent" && near(parsed, q.correct, TOL)){
+      say("hint","Right number, wrong units.",
+          `You entered <code>${raw}</code> as a decimal. This box wants a percent — enter <code>${(q.correct*100).toFixed(4).replace(/\.?0+$/,"")}</code> instead.`);
+      return;
+    }
+    if (near(val*100, q.correct, TOL) || near(val/100, q.correct, TOL)){
+      say("hint","Check your units.","Your figure is off by a factor of 100. Re-read what the box is asking for.");
+      return;
+    }
+  }
+
+  tries++;
+  if (!tallied){ tallied = true; stats.att++; }   // count each question once, right or wrong
+
+  if (near(val, q.correct, TOL)){
+    solved = true;
+    if (peeked){
+      stats.streak = 0;
+      say("ok","Correct — but you read the solution first.",
+          "That is a perfectly good way to learn, and it still counts as attempted. It does " +
+          "not count toward first-try accuracy or your streak, so those numbers stay honest. " +
+          "Try the next one before opening the solution.");
+    } else {
+      stats.streak++;
+      if (tries === 1) stats.first++;
+      markMastered(q.id);
+      say("ok","Correct.", tries===1 ? "First try — well done." : "Got there.");
+    }
+    $("check").disabled = true; $("ans").disabled = true;
+    $("soldetails").open = true;
+    render(); return;
+  }
+
+  stats.streak = 0;
+  autoStar();
+  const hit = q.distractors.find(d => near(val, d.val, TOL));
+  say("no", hit ? "Not quite — and I can see why." : "Not quite.",
+      hit ? hit.msg
+          : "That does not match any of the usual slips, so it may be an arithmetic error. Try again, or open the worked solution below.");
+  render();
+}
+
+function render(){
+  $("sAtt").textContent    = stats.att;
+  $("sFirst").textContent  = stats.first;
+  $("sAcc").textContent    = stats.att ? Math.round(stats.first/stats.att*100)+"%" : "—";
+  $("sStreak").textContent = stats.streak;
+  $("sPeek").textContent   = stats.peek;
+  const total = ALL_TEMPLATES.length;
+  $("pTotal").textContent  = total;
+  $("pDone").textContent   = mastered.size;
+  $("progfill").style.width = (total ? 100*mastered.size/total : 0).toFixed(1) + "%";
+}
+
+$("check").onclick = () => { if (current) check(); };
+$("star").onclick  = () => { if (current) setStar(current.id, !starred.has(current.id)); };
+$("next").onclick  = () => newQuestion();   // arrow fn: never pass the click Event as `replay`
+
+/* ---- arrow keys: right for the next question, left for the previous one -------------
+   Ignored while the answer box is being typed in, where the arrows move the caret, and
+   ignored with a modifier held so the browser's own shortcuts still work.            */
+function snapshotQuestion(){
+  const h = history[histIdx];
+  if (!h) return;
+  h.tries = tries; h.peeked = peeked; h.solved = solved; h.tallied = tallied;
+  h.fb = $("fb").innerHTML; h.ans = $("ans").value;
+}
+function goBack(){
+  if (histIdx <= 0) return;
+  snapshotQuestion(); histIdx--;
+  navKey = true; newQuestion(history[histIdx]); navKey = false;
+}
+function goForward(){
+  snapshotQuestion();
+  navKey = true;
+  if (histIdx < history.length - 1){ histIdx++; newQuestion(history[histIdx]); }
+  else newQuestion();
+  navKey = false;
+}
+document.addEventListener("keydown", e => {
+  if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+  if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
+  const t = e.target;
+  if (t && (t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+  /* Inside the answer box the arrows belong to the caret --- but only while it still has
+     somewhere to go. Once it sits at the end you are pressing toward, the press is free,
+     so a half-typed answer never traps a student in the field. */
+  if (t && t.tagName === "INPUT" && !t.disabled){
+    const at = t.selectionStart, to = t.selectionEnd, n = String(t.value).length;
+    if (at === null || at !== to) return;                       // a selection: leave it alone
+    if (e.key === "ArrowRight" ? at < n : at > 0) return;
+  }
+  e.preventDefault();
+  if (e.key === "ArrowRight") goForward(); else goBack();
+});
+$("ans").addEventListener("keydown", e=>{ if(e.key==="Enter" && !$("check").disabled) check(); });
+$("soldetails").addEventListener("toggle", ()=>{
+  if ($("soldetails").open && !solved && !peeked){
+    peeked = true;
+    stats.peek++;
+    autoStar();
+    if (!tallied){ tallied = true; stats.att++; }  // opening it counts as engaging with the question
+    render();
+  }
+});
+
+function setOrder(o){
+  order = o; seqIdx = 0;
+  $("mShuffle").setAttribute("aria-pressed", String(o === "shuffle"));
+  $("mSeq").setAttribute("aria-pressed",     String(o === "seq"));
+  newQuestion();
+}
+$("mShuffle").onclick = () => setOrder("shuffle");
+$("mSeq").onclick     = () => setOrder("seq");
+
+$("pReset").onclick = () => {
+  if (!mastered.size) return;
+  mastered.clear(); saveProgress(); render();
+};
+
+buildTopics();
+newQuestion();
+render();
+</script>
+</body>
+</html>
