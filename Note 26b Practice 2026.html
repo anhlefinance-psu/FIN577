@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Note 26b — Option Pricing by Simulation: practice</title>
+<style>
+  :root{
+    --bg:#ffffff; --fg:#1a1a1a; --muted:#5f6672; --line:#e2e5ea;
+    --card:#f7f8fa; --accent:#00205b; --accent-fg:#ffffff;
+    --ok-bg:#e8f5ec; --ok-line:#2e7d47; --ok-fg:#17532c;
+    --no-bg:#fdeceb; --no-line:#c0392b; --no-fg:#8e2b20;
+    --hint-bg:#fff8e6; --hint-line:#b8860b; --hint-fg:#6b4e00;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#14161a; --fg:#e8eaed; --muted:#9aa3af; --line:#2b2f36;
+      --card:#1b1e24; --accent:#7f9cd4; --accent-fg:#0d1015;
+      --ok-bg:#132a1c; --ok-line:#4caf70; --ok-fg:#9fdcb4;
+      --no-bg:#2c1614; --no-line:#e06c5d; --no-fg:#f0a99f;
+      --hint-bg:#2a2313; --hint-line:#d4a017; --hint-fg:#e5c976;
+    }
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:0; background:var(--bg); color:var(--fg);
+    font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  .wrap{max-width:760px; margin:0 auto; padding:24px 18px 64px}
+  header{border-bottom:1px solid var(--line); padding-bottom:14px; margin-bottom:20px}
+  h1{font-size:1.35rem; margin:0 0 4px}
+  .sub{color:var(--muted); font-size:.9rem}
+  .topics{display:flex; flex-wrap:wrap; gap:7px; margin:18px 0}
+  .chip{
+    border:1px solid var(--line); background:var(--card); color:var(--fg);
+    padding:6px 12px; border-radius:999px; cursor:pointer; font-size:.85rem;
+    font-family:inherit;
+  }
+  .chip[aria-pressed="true"]{background:var(--accent); color:var(--accent-fg); border-color:var(--accent)}
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:10px;
+    padding:20px; margin-bottom:16px;
+  }
+  .qmeta{font-size:.75rem; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin-bottom:10px}
+  .qtext{font-size:1.05rem; margin-bottom:6px}
+  .qtext b{font-variant-numeric:tabular-nums}
+  .qfig{display:flex; flex-wrap:wrap; gap:6px 26px; margin:10px 0 2px}
+  .qfig svg{max-width:100%; height:auto; overflow:visible}
+  .qfig text{fill:var(--fg); font-family:inherit; font-variant-numeric:tabular-nums}
+  .qfig .tl{font-weight:600}
+  .qfig .tp{fill:var(--muted); font-size:13px}
+  .qfig line, .qfig polygon{stroke:var(--accent); fill:var(--accent)}
+  .qfig circle{fill:var(--accent)}
+  .qfig line.off{stroke:var(--muted); opacity:.35}
+  .qfig circle.off{fill:var(--muted); opacity:.45}
+  .qfig line.ax{stroke:var(--fg); opacity:.55; stroke-width:1.2}
+  .qfig line.gd{stroke:var(--muted); opacity:.7; stroke-width:1; stroke-dasharray:3 3}
+  .qfig polyline.pl{fill:none; stroke:var(--accent); stroke-width:2.4; stroke-linejoin:round}
+  .qfig .tk{font-size:13px}
+  .ask{margin-top:14px; font-weight:600}
+  .row{display:flex; gap:9px; margin-top:14px; flex-wrap:wrap}
+  input[type=text]{
+    flex:1 1 190px; min-width:0; padding:11px 13px; font-size:1rem; font-family:inherit;
+    border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--fg);
+  }
+  input[type=text]:focus{outline:2px solid var(--accent); outline-offset:1px}
+  button{
+    padding:11px 17px; font-size:.95rem; font-family:inherit; border-radius:8px;
+    border:1px solid var(--accent); background:var(--accent); color:var(--accent-fg);
+    cursor:pointer; font-weight:600;
+  }
+  button.ghost{background:transparent; color:var(--fg); border-color:var(--line); font-weight:500}
+  button:disabled{opacity:.45; cursor:default}
+  .fb{border-radius:8px; padding:13px 15px; margin-top:15px; border-left:4px solid; font-size:.95rem}
+  .fb.ok{background:var(--ok-bg); border-color:var(--ok-line); color:var(--ok-fg)}
+  .fb.no{background:var(--no-bg); border-color:var(--no-line); color:var(--no-fg)}
+  .fb.hint{background:var(--hint-bg); border-color:var(--hint-line); color:var(--hint-fg)}
+  .fb strong{display:block; margin-bottom:3px}
+  details{margin-top:15px; border-top:1px solid var(--line); padding-top:13px}
+  summary{cursor:pointer; font-size:.9rem; color:var(--muted); font-weight:600}
+  .steps{margin-top:11px; font-size:.92rem}
+  .steps div{padding:5px 0; border-bottom:1px dashed var(--line)}
+  .steps div:last-child{border-bottom:none; font-weight:600}
+  .steps table.eqs{border-collapse:collapse; margin:2px 0}
+  .steps table.eqs td{padding:0; vertical-align:top}
+  .steps table.eqs td:first-child{text-align:right; padding-right:.3em}
+  .steps table.cf{border-collapse:collapse; margin:6px 0}
+  .steps table.cf td,.steps table.cf th{padding:2px 12px 2px 0; text-align:center}
+  .steps table.cf td:first-child,.steps table.cf th:first-child{text-align:left}
+  .steps table.cf th{border-bottom:1px solid var(--line)}
+  code{
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.88em;
+    background:var(--bg); padding:1px 5px; border-radius:4px; border:1px solid var(--line);
+  }
+  .opts{display:flex; flex-direction:column; gap:8px; margin-top:14px}
+  .opt{
+    text-align:left; padding:11px 14px; border:1px solid var(--line); background:var(--bg);
+    color:var(--fg); border-radius:8px; cursor:pointer; font-family:inherit;
+    font-size:.95rem; font-weight:400; line-height:1.55;
+  }
+  .opt:hover:not(:disabled){border-color:var(--accent)}
+  .opt.right{background:var(--ok-bg); border-color:var(--ok-line); border-width:2px}
+  .opt.wrong{background:var(--no-bg); border-color:var(--no-line)}
+  .opt:disabled{cursor:default}
+  .opt sup{font-size:.75em}
+  .stats{display:flex; gap:22px; font-size:.86rem; color:var(--muted); margin-top:22px;
+         border-top:1px solid var(--line); padding-top:14px; flex-wrap:wrap}
+  .stats b{color:var(--fg); font-variant-numeric:tabular-nums}
+  footer{margin-top:26px; font-size:.78rem; color:var(--muted); text-align:center}
+  /* The hidden attribute's UA rule is only [hidden]{display:none}, which loses
+     to author rules like .opts{display:flex} and .row{display:flex}. Without
+     this, hiding those panels silently does nothing. */
+  .modes{display:flex; gap:8px; align-items:center; margin-top:10px;
+         font-size:.84rem; color:var(--muted); flex-wrap:wrap}
+  .modes .chip{font-size:.84rem; padding:5px 12px}
+  .prog{margin-top:18px}
+  .progtop{display:flex; justify-content:space-between; align-items:baseline;
+           font-size:.86rem; color:var(--muted); margin-bottom:6px}
+  .progtop b{color:var(--fg); font-variant-numeric:tabular-nums}
+  .progbar{height:9px; border-radius:999px; background:var(--line); overflow:hidden}
+  .progfill{height:100%; width:0%; border-radius:999px; background:var(--accent);
+            transition:width .35s ease}
+  .progreset{background:none; border:none; color:var(--muted); font-size:.8rem;
+             padding:0; cursor:pointer; text-decoration:underline; font-weight:400}
+  .progreset:hover{color:var(--fg)}
+  .qhead{display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:10px}
+  .qhead .qmeta{margin-bottom:0}
+  .star{background:transparent; color:var(--muted); border:1px solid var(--line); border-radius:999px;
+        padding:3px 11px; font-size:.8rem; font-weight:500; white-space:nowrap; flex:none}
+  .star[aria-pressed="true"]{color:var(--hint-fg); background:var(--hint-bg); border-color:var(--hint-line)}
+  .star:hover{border-color:var(--accent)}
+  [hidden]{display:none !important}
+.rd{border-top:1px solid currentColor;padding:0 .12em;margin-left:.02em}   /* the bar over a square root (3 Nov 2026) */
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>Note 26b — Option Pricing by Simulation: practice</h1>
+  <div class="sub">Rates are p.a.; continuously compounded rates discount with e<sup>&minus;rT</sup>. A share trades on about 252 days a year. Answers are matched within 0.25% (dollar answers to the cent).</div>
+</header>
+
+<div class="topics" id="topics" role="group" aria-label="Choose topics"></div>
+
+<div class="modes" id="modes" role="group" aria-label="Question order">
+  <span>Order</span>
+  <button class="chip" id="mShuffle" type="button" aria-pressed="true">Shuffle</button>
+  <button class="chip" id="mSeq" type="button" aria-pressed="false">In order</button>
+  <span id="seqPos"></span>
+</div>
+
+<div class="card" id="card">
+  <div class="qhead">
+    <div class="qmeta" id="qmeta">—</div>
+    <button class="star" id="star" type="button" aria-pressed="false"
+            title="Star this question to practise it again under the Starred chip">☆ Star</button>
+  </div>
+  <div class="qtext" id="qtext">Loading…</div>
+  <div class="qfig" id="qfig" hidden></div>
+  <div class="ask" id="qask"></div>
+  <div class="opts" id="opts" hidden></div>
+  <div class="row" id="inputrow">
+    <input type="text" id="ans" autocomplete="off" inputmode="decimal"
+           placeholder="Your answer" aria-label="Your answer">
+    <button id="check">Check</button>
+    <button id="next" class="ghost">New question</button>
+  </div>
+  <div id="fb"></div>
+  <details id="soldetails" hidden>
+    <summary>Show the worked solution</summary>
+    <div class="steps" id="steps"></div>
+  </details>
+</div>
+
+<div class="prog">
+  <div class="progtop">
+    <span>Templates solved unaided <b id="pDone">0</b> of <b id="pTotal">0</b></span>
+    <button class="progreset" id="pReset" type="button">reset</button>
+  </div>
+  <div class="progbar"><div class="progfill" id="progfill"></div></div>
+</div>
+
+<div class="stats">
+  <span>Attempted <b id="sAtt">0</b></span>
+  <span>Correct first try <b id="sFirst">0</b></span>
+  <span>Accuracy <b id="sAcc">—</b></span>
+  <span>Streak <b id="sStreak">0</b></span>
+  <span>Solutions opened <b id="sPeek">0</b></span>
+</div>
+
+<footer>Numbers are randomised, so every attempt is different. Nothing you type leaves this page.<br>Use the &rarr; and &larr; arrow keys to move between questions.</footer>
+
+</div>
+
+<script>
+"use strict";
+
+/* ------------------------------------------------------------------ utils */
+const pick = a => a[Math.floor(Math.random()*a.length)];
+/* stepped range, e.g. range(0.04,0.24,0.0025) -> 81 rates instead of a list of 6 */
+const range = (lo,hi,step) => {
+  const out=[]; for(let v=lo; v<=hi+1e-9; v+=step) out.push(Number(v.toFixed(8)));
+  return out;
+};
+const ORD = n => n + (["th","st","nd","rd"][(n%100-n%10!=10)*(n%10<4)*(n%10)]||"th");
+const money = v => "$" + v.toLocaleString("en-US",{minimumFractionDigits:2, maximumFractionDigits:2});
+const pct   = (v,d=4) => (v*100).toFixed(d).replace(/\.?0+$/,"") + "%";
+const pctS  = (v,d=2) => (v*100).toFixed(d) + "%";
+const REL_SEP  = 0.01;    // distractors must sit >1% from everything else
+const REL_MATCH= 0.0025;  // student answer counts as a match within 0.25%
+
+const near = (a,b,tol) =>
+  Number.isFinite(a) && Number.isFinite(b) &&
+  Math.abs(a-b) / Math.max(Math.abs(a), Math.abs(b), 1e-12) < tol;
+
+/* Drop distractors too close to the answer (or to each other) to diagnose.
+   Templates about small effects (perpetuity timing) pass a tighter `sep`. */
+function usable(correct, cands, sep){
+  const s = sep || REL_SEP;
+  const kept = [];
+  for (const c of cands){
+    if (!Number.isFinite(c.val)) continue;
+    if (near(c.val, correct, s)) continue;
+    if (kept.some(k => near(k.val, c.val, s))) continue;
+    kept.push(c);
+  }
+  return kept;
+}
+
+/* ------------------------------------------------------------- templates */
+/* ---------------------------------------------------------------- Note 26b ---
+   Option Pricing by Simulation (FIN 577). Price = risk-neutral expected payoff x e^(-rT), the expected payoff estimated
+   by averaging the payoffs of many simulated share prices. A path: S_n = S_0 (1 + r_1)(1 + r_2)...(1 + r_n), with 252
+   trading days a year (126 to six months). Risk-neutral: shift every daily return by the same amount so that they
+   average the daily risk-free rate, r^f = r/252; the standard deviation is unchanged. Normal draws: mean r^f, standard
+   deviation sigma/sqrt(252), with the period's sigma when volatility changes. A known dividend: every path starts from
+   S* = S - PV(dividend).
+   Built 5 Nov 2026 from the note (no past exam asks for a simulated price; the sample final's essay Q, part (c), and
+   Case 06 Part 4 are the only prior material, rule 5):
+     pr1  <- Note 26b Section 2 (price = average payoff, discounted)
+     rn1  <- Note 26b Section 4 (subtract the same amount from every daily return)
+     dv1  <- Note 26b Section 7 (start from S*), set up after Case 06 Part 4 (a dividend inside the option's life)
+   Anh dropped the dart-board expected score (plan item 1) on 5 Nov 2026.                                     */
+const keepFar = (correct,cands,sep) => cands.filter(c=>Number.isFinite(c.val) && c.val>0 && !near(c.val,correct,sep));
+const centsTol = v => Math.max(0.0025, 0.0051/Math.abs(v));          // a small dollar key is accepted to the cent
+const centsSep = v => Math.max(REL_SEP, 0.02/Math.abs(v));
+const atLeast3 = f => { let q; for (let i=0; i<500; i++) { q=f(); if (usable(q.correct,q.cands,q.sep).length>=3) return q; } return q; };
+const m4 = v => "$" + v.toFixed(4);
+const f4 = v => v.toFixed(4);
+const f6 = v => v.toFixed(6);
+const ex = s => `e<sup>${s}</sup>`;
+const rP = r => `${pctS(r)} p.a., continuously compounded`;
+const cpay = (S,K) => Math.max(S-K,0);
+const ppay = (S,K) => Math.max(K-S,0);
+const RN26B = `The price of an option is its risk-neutral expected payoff, discounted at the risk-free rate`;
+const RATES = range(0.01, 0.05, 0.005);
+const gauss = () => { let u=0, v=0; while(!u) u=Math.random(); while(!v) v=Math.random(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); };
+
+const TEMPLATES = [{ id:"pr1", topic:"price", name:"An option's price from simulated share prices", gen(){ return atLeast3(()=>{
+    /* Section 2: price = average payoff x e^(-rT). Eight simulated risk-neutral share prices at expiration, three to
+       five of them in the money. Variants: a call or a put; three or six months.                                 */
+    const kind=pick(["call","put"]), T=pick([0.25,0.5]), mo = T===0.5 ? "six" : "three";
+    const S=pick(range(40,120,1)), s=pick([0.20,0.25,0.30,0.35,0.40]), r=pick(RATES);
+    const K=Math.round(S*pick(range(0.96,1.04,0.01)));
+    let P, pay, itm;
+    do { P=[...Array(8)].map(()=>+(S*Math.exp((r-s*s/2)*T + s*Math.sqrt(T)*gauss())).toFixed(2));
+         pay=P.map(x=> kind==="call" ? cpay(x,K) : ppay(x,K)); itm=pay.filter(x=>x>0).length;
+    } while (itm<3 || itm>5 || P.some(x=>Math.abs(x-K)<0.5));
+    const g=Math.exp(-r*T), avg=pay.reduce((a,b)=>a+b,0)/8, sum=avg*8, mS=P.reduce((a,b)=>a+b,0)/8;
+    const correct=avg*g, tol=centsTol(correct), sep=centsSep(correct);
+    const other=P.map(x=> kind==="call" ? ppay(x,K) : cpay(x,K)).reduce((a,b)=>a+b,0)/8;
+    const cands=keepFar(correct,[
+      {val:avg, msg:`That is the average payoff, the risk-neutral expected payoff in ${mo} months. Discount it to today: &times; ${ex(`&minus;${pctS(r)} &times; ${T}`)}.`},
+      {val:avg*Math.exp(-r), msg:`You discounted for a whole year. The option pays in ${mo} months, so T = ${T}: &times; ${ex(`&minus;${pctS(r)} &times; ${T}`)}.`},
+      {val:(kind==="call" ? mS-K : K-mS)*g, msg:`You worked from the average share price, ${m4(mS)}. Average the option's payoffs instead: each simulated price that ends ${kind==="call"?"below":"above"} the strike scores 0, not a negative amount.`},
+      {val:sum/itm*g, msg:`You averaged over the ${itm} paths that pay off. The paths that score 0 count too: divide the total by all 8.`},
+      {val:other*g, msg:`Those are the ${kind==="call"?"put":"call"}'s payoffs. A ${kind} pays ${kind==="call"?"max(S<sub>T</sub> &minus; K, 0)":"max(K &minus; S<sub>T</sub>, 0)"}.`}
+    ],sep);
+    const pl = P.map(x=>money(x)).join(", ");
+    return {
+      unit:"money", tol, sep,
+      text:`A share trades at <b>${money(S)}</b> and the risk-free rate is <b>${rP(r)}</b>. To price a European ${kind} option on the share
+            that expires in ${mo} months with a strike price of <b>${money(K)}</b>, a computer simulates eight risk-neutral paths of the share price.
+            They end at <b>${pl}</b>.`,
+      ask:`What is the ${kind} worth today, based on these eight paths? (Two decimals.)`,
+      correct, cands,
+      steps:[
+        `${RN26B}. The simulation estimates the expected payoff by the average payoff over the paths.`,
+        `The ${kind}'s payoff on each path, ${kind==="call"?"max(S<sub>T</sub> &minus; "+money(K)+", 0)":"max("+money(K)+" &minus; S<sub>T</sub>, 0)"}:<br>&emsp;&emsp;${pay.map(x=>money(x)).join(", ")}`,
+        `Average payoff = ${money(sum)} / 8 = ${m4(avg)}`,
+        `Price = ${m4(avg)} &times; ${ex(`&minus;${pctS(r)} &times; ${T}`)} = <b>${m4(correct)}</b>`
+      ]};
+  }); }},
+
+{ id:"rn1", topic:"rn", name:"Making a daily return risk-neutral", gen(){ return atLeast3(()=>{
+    /* Section 4: subtract (average - risk-free)/252 from every daily return, so that the returns average r^f = r/252.
+       Variants: the return drawn is positive or negative.                                                         */
+    /* rf stays at or below 3.5% so that mu - rf > rf: at mu = 2 rf, subtracting rf/252 would score (grid, 5 Nov 2026). */
+    const mu=pick(range(0.08,0.16,0.01)), rf=pick(range(0.01,0.035,0.005));
+    const d=pick([1,-1])*pick(range(0.0030,0.0120,0.0001));
+    const shift=(mu-rf)/252, correct=d-shift;
+    const cands=[
+      {val:d, msg:`That is the return as it came out of the data. Before it goes in the bag, every daily return is lowered by the same amount, (${pctS(mu,0)} &minus; ${pctS(rf)})/252.`},
+      {val:d-mu/252, msg:`You subtracted the whole average, ${pctS(mu,0)}/252, so the returns would average zero. They must average the risk-free rate: subtract (${pctS(mu,0)} &minus; ${pctS(rf)})/252.`},
+      {val:d-rf/252, msg:`You subtracted the risk-free rate. Subtract the gap between the average return and the risk-free rate, (${pctS(mu,0)} &minus; ${pctS(rf)})/252, so that the returns average the risk-free rate.`},
+      {val:d+shift, msg:`You moved the return the wrong way. The returns average more than the risk-free rate, so every one of them comes down.`},
+      {val:d-(mu-rf), msg:`You subtracted ${pctS(mu-rf)}, a whole year's gap, from a one-day return. Per trading day, the gap is (${pctS(mu,0)} &minus; ${pctS(rf)})/252.`},
+      {val:d-(mu-rf)/365, msg:`A share trades on about 252 days a year, not 365: the gap per trading day is (${pctS(mu,0)} &minus; ${pctS(rf)})/252.`},
+      {val:d*rf/mu, msg:`You scaled the return down in proportion. The adjustment subtracts the same amount from every return, which leaves their spread unchanged; scaling would shrink it.`}
+    ];
+    return {
+      unit:"percent", sep:REL_SEP,
+      text:`ABC's daily returns have averaged <b>${pctS(mu,0)} p.a.</b> and the risk-free rate is <b>${pctS(rf)} p.a.</b> A share trades on about 252 trading days a year,
+            so ${pctS(mu,0)} p.a. is ${pctS(mu,0)}/252 a trading day. To simulate risk-neutral paths of ABC's share price, you first adjust ABC's daily returns.
+            One of them is <b>${d<0?"&minus;":""}${pctS(Math.abs(d))}</b>.`,
+      ask:`What is this daily return after the risk-neutral adjustment? (Four decimals, in percent.)`,
+      correct, cands,
+      steps:[
+        `The adjusted returns must average the daily risk-free rate, ${pctS(rf)}/252 = ${pctS(rf/252,4)}. They now average ${pctS(mu,0)}/252 = ${pctS(mu/252,4)}.`,
+        `So subtract the same amount from every return: (${pctS(mu,0)} &minus; ${pctS(rf)})/252 = ${pctS(shift,4)}`,
+        `${d<0?"&minus;":""}${pctS(Math.abs(d))} &minus; ${pctS(shift,4)} = <b>${correct<0?"&minus;":""}${pctS(Math.abs(correct),4)}</b>`
+      ]};
+  }); }},
+
+{ id:"dv1", topic:"div", name:"A simulated path with a dividend", gen(){ return atLeast3(()=>{
+    /* Section 7: every path starts from S* = S - D e^(-r m/12); S_126 = S* x (the product of the 126 growth factors).
+       Variants: a call or a put, always in the money on the path drawn.                                         */
+    const kind=pick(["call","put"]);
+    let S, D, m, r, G, K, PV, ST, correct;
+    do { S=pick(range(40,120,1)); D=pick(range(1.00,4.00,0.25)); m=pick([1,2,3,4,5]); r=pick(RATES);
+         G=pick(range(0.9000,1.1000,0.0025)); K=Math.round(S*pick(range(0.92,1.08,0.01)));
+         PV=D*Math.exp(-r*m/12); ST=+(S-PV).toFixed(4)*G; correct = kind==="call" ? ST-K : K-ST;   // ST from the printed S*
+    } while (correct<1 || (kind==="call" ? S*G-K : K-S*G)<0.5 || Math.abs(G-1)<0.02);
+    const tol=centsTol(correct), sep=centsSep(correct);
+    const pay = x => kind==="call" ? x-K : K-x;
+    const cands=keepFar(correct,[
+      {val:pay(S*G), msg:`You started the path from today's share price, ${money(S)}. With a dividend before expiration, every path starts from the price net of the dividend's present value, S* = ${m4(S-PV)}.`},
+      {val:pay((S-D)*G), msg:`You took out the dividend itself, ${money(D)}. Take out its present value: ${money(D)} &times; ${ex(`&minus;${pctS(r)} &times; ${m}/12`)} = ${m4(PV)}.`},
+      {val:pay(S*G-D), msg:`You took the dividend off at the end. The path starts from S* = S &minus; PV(dividend), and the growth factors apply to S*.`},
+      {val:pay(ST)*Math.exp(-r*0.5), msg:`You discounted the payoff. The question asks for the payoff at expiration on this one path; discounting comes after averaging the payoffs over all the paths.`},
+      {val:pay((S+PV)*G), msg:`The dividend's present value is taken out of today's share price, not added: S* = S &minus; PV(dividend).`}
+    ],sep);
+    return {
+      unit:"money", tol, sep,
+      text:`A share trades at <b>${money(S)}</b> and will pay a dividend of <b>${money(D)}</b> per share in <b>${m} month${m>1?"s":""}</b>.
+            The risk-free rate is <b>${rP(r)}</b>. To price a 6-month European ${kind} option on the share with a strike price of <b>${money(K)}</b>,
+            you simulate 126 risk-neutral daily returns per path. On one path, (1 + r<sub>1</sub>) &times; (1 + r<sub>2</sub>) &times; &hellip; &times; (1 + r<sub>126</sub>) = <b>${f4(G)}</b>.`,
+      ask:`What is the ${kind}'s payoff at expiration on this path? (Two decimals.)`,
+      correct, cands,
+      steps:[
+        `With a dividend before expiration, every path starts from the share price net of the dividend's present value: S* = S &minus; PV(dividend).`,
+        `PV(dividend) = ${money(D)} &times; ${ex(`&minus;${pctS(r)} &times; ${m}/12`)} = ${m4(PV)}, so S* = ${money(S)} &minus; ${m4(PV)} = ${m4(S-PV)}`,
+        `S<sub>126</sub> = S* &times; (1 + r<sub>1</sub>) &times; &hellip; &times; (1 + r<sub>126</sub>) = ${m4(S-PV)} &times; ${f4(G)} = ${m4(ST)}`,
+        `Payoff = ${kind==="call" ? `${m4(ST)} &minus; ${money(K)}` : `${money(K)} &minus; ${m4(ST)}`} = <b>${m4(correct)}</b>`
+      ]};
+  }); }}
+
+];
+
+/* ======================= CHOICE-MODE ITEMS ==============================
+   Auto-graded by which option is clicked, not by a typed number.
+     topic "error"   — a worked solution with one planted mistake
+     topic "concept" — reason about the direction of an effect, no arithmetic
+   Directional items shuffle their own options so position carries no
+   information; spot-the-error items must stay in step order.            */
+
+function shuffle(a){
+  const out = a.slice();
+  for (let i=out.length-1; i>0; i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [out[i],out[j]] = [out[j],out[i]];
+  }
+  return out;
+}
+
+const CHOICE_TEMPLATES = [{ id:"k1", topic:"path", name:"Building a path from daily returns", gen(){
+    /* Section 3: S_n = S_0 (1 + r_1)(1 + r_2)...(1 + r_n). Four expressions of one shape. Variants: the horizon. */
+    const h=pick([["three months",63],["six months",126],["one month",21]]), S=pick(range(40,120,1)), n=h[1];
+    const opts=shuffle([
+      {html:`${money(S)} &times; (1 + r<sub>1</sub>) &times; (1 + r<sub>2</sub>) &times; &hellip; &times; (1 + r<sub>${n}</sub>)`, correct:true,
+       msg:`Right. Each day's return grows the price by a factor of 1 + r<sub>i</sub>, starting from the previous day's price: S<sub>1</sub> = ${money(S)} &times; (1 + r<sub>1</sub>), S<sub>2</sub> = S<sub>1</sub> &times; (1 + r<sub>2</sub>), and so on.`},
+      {html:`${money(S)} &times; (1 + r<sub>1</sub> + r<sub>2</sub> + &hellip; + r<sub>${n}</sub>)`, correct:false,
+       msg:`Adding the returns ignores compounding: each day's return applies to the price the day before, which already includes the earlier returns. Multiply the factors 1 + r<sub>i</sub>.`},
+      {html:`${money(S)} &times; (1 + r&#772;)<sup>${n}</sup>, where r&#772; is the average of r<sub>1</sub>, r<sub>2</sub>, &hellip;, r<sub>${n}</sub>`, correct:false,
+       msg:`Compounding the average return does not give the path's end. The order of the days does not matter, but each day's own return does: multiply (1 + r<sub>1</sub>) &times; &hellip; &times; (1 + r<sub>${n}</sub>).`},
+      {html:`${money(S)} &times; (1 + r<sub>1</sub>) &times; (1 + r<sub>2</sub>) &times; &hellip; &times; (1 + r<sub>${n}</sub>), discounted to today at the risk-free rate`, correct:false,
+       msg:`The path gives the share price at ${h[0]}, so it is not discounted. Discounting comes later, applied to the average of the option's payoffs.`}
+    ]);
+    return {mode:"choice",
+      text:`A share trades at ${money(S)}. You draw ${n} daily returns, r<sub>1</sub>, r<sub>2</sub>, &hellip;, r<sub>${n}</sub>, one for each trading day over the next ${h[0]}, to simulate one path of the share price.`,
+      ask:`Which expression gives the share price at the end of this path, in ${h[0]}?`,
+      options:opts,
+      steps:[`Each day's return takes the price one trading day further: S<sub>1</sub> = ${money(S)} &times; (1 + r<sub>1</sub>), S<sub>2</sub> = S<sub>1</sub> &times; (1 + r<sub>2</sub>), &hellip;`,
+             `So S<sub>${n}</sub> = ${money(S)} &times; (1 + r<sub>1</sub>) &times; (1 + r<sub>2</sub>) &times; &hellip; &times; (1 + r<sub>${n}</sub>).`]};
+  }},
+
+{ id:"k2", topic:"rn", name:"How far to lower the returns", gen(){
+    /* Section 4: S_t = E*[S_t+1]/(1 + r^f) gives E*[r_i] = r^f, no more, no less. Four reasons of one shape.  */
+    const mu=pick(range(0.08,0.16,0.01)), rf=pick(range(0.01,0.05,0.005)), mid=(mu+rf)/2;
+    const opts=shuffle([
+      {html:`Because only then would the risk-neutral pricing equation price the share itself correctly: today's price, and the price on every day of the path`, correct:true,
+       msg:`Right. S<sub>t</sub> = E*[S<sub>t+1</sub>]/(1 + r<sup>f</sup>) gives 1 + r<sup>f</sup> = E*[1 + r<sub>i</sub>], that is, E*[r<sub>i</sub>] = r<sup>f</sup>. At ${pctS(mid)} the share would be expected to earn more than the risk-free rate.`},
+      {html:`Because the risk-free rate is the lowest return an investor would accept, so it is the most cautious choice for the average daily return in the bag`, correct:false,
+       msg:`Caution is not the reason, and a lower average than the risk-free rate would be wrong too. The average is pinned down by pricing the share itself correctly: E*[r<sub>i</sub>] = r<sup>f</sup>, no more, no less.`},
+      {html:`Because lowering the average all the way to the risk-free rate also brings the spread of the returns down to its risk-neutral level`, correct:false,
+       msg:`Subtracting the same amount from every return leaves their spread unchanged. The average is pinned down by pricing the share itself correctly: E*[r<sub>i</sub>] = r<sup>f</sup>.`},
+      {html:`Because the share's price at the option's expiration must then, on average, equal its price today, as risk-neutral pricing requires of every asset`, correct:false,
+       msg:`With an average of r<sup>f</sup>, the share's price is expected to grow at the risk-free rate, not to stay where it is. That is what pricing the share correctly requires: E*[r<sub>i</sub>] = r<sup>f</sup>.`}
+    ]);
+    return {mode:"choice",
+      text:`ABC's daily returns have averaged ${pctS(mu,0)} p.a. and the risk-free rate is ${pctS(rf)} p.a. To simulate risk-neutral paths of ABC's share price, you subtract the same amount from every daily return, so that they average the risk-free rate, ${pctS(rf)} p.a., rather than stopping part of the way, at, say, ${pctS(mid)} p.a., halfway between the two.`,
+      ask:`Why must the returns be lowered all the way to the risk-free rate?`,
+      options:opts,
+      steps:[`The risk-neutral pricing equation applied to the share over one day: S<sub>t</sub> = E*[S<sub>t+1</sub>]/(1 + r<sup>f</sup>), with r<sup>f</sup> the risk-free rate for one trading day.`,
+             `Dividing by S<sub>t</sub>: 1 + r<sup>f</sup> = E*[S<sub>t+1</sub>/S<sub>t</sub>] = E*[1 + r<sub>i</sub>], so E*[r<sub>i</sub>] = r<sup>f</sup>. Lower the returns by less and the share earns more than the risk-free rate; by more, less. Either way the simulation misprices the share.`]};
+  }},
+
+{ id:"k3", topic:"rn", name:"The risk-neutral adjustment and volatility", gen(){
+    /* Sections 4 and 5: subtracting the same amount from every return leaves their standard deviation unchanged. */
+    const mu=pick(range(0.08,0.16,0.01)), rf=pick(range(0.01,0.05,0.005)), sh=(mu-rf)/252, sd=pick(range(0.0090,0.0250,0.0001));   // sd as shown: options computed from it (blind sitting, 5 Nov 2026)
+    const opts=shuffle([
+      {html:`It stays at ${pctS(sd)}: every return moves by the same amount, so their spread around the average does not change`, correct:true,
+       msg:`Right. Subtracting ${pctS(sh,4)} from every return moves the whole set, and its average, down by the same amount. The spread around the average, and so the standard deviation, is unchanged.`},
+      {html:`It falls to ${pctS(sd-sh)}: the standard deviation comes down by the amount subtracted from each return`, correct:false,
+       msg:`Subtracting the same amount from every return moves the average down with them, so each return's distance from the average does not change. The standard deviation stays at ${pctS(sd)}.`},
+      {html:`It falls to ${pctS(sd*rf/mu)}: the standard deviation comes down in proportion to the average, by ${pctS(rf)}/${pctS(mu,0)}`, correct:false,
+       msg:`That would be scaling every return down, which is not the adjustment. Subtracting the same amount from every return leaves the standard deviation at ${pctS(sd)}.`},
+      {html:`It must be estimated again from the adjusted returns, since the risk-neutral standard deviation differs from the one in the data`, correct:false,
+       msg:`No further adjustment is needed. Subtracting the same amount from every return leaves the standard deviation where it was, ${pctS(sd)}.`}
+    ]);
+    return {mode:"choice",
+      text:`ABC's daily returns have averaged ${pctS(mu,0)} p.a., with a standard deviation of ${pctS(sd)} a trading day. The risk-free rate is ${pctS(rf)} p.a. To make the returns risk-neutral, you subtract (${pctS(mu,0)} &minus; ${pctS(rf)})/252 = ${pctS(sh,4)} from every one of them.`,
+      ask:`What is the standard deviation of the adjusted daily returns?`,
+      options:opts,
+      steps:[`Subtracting ${pctS(sh,4)} from every return moves every return, and their average, down by ${pctS(sh,4)}.`,
+             `Each return's distance from the average is unchanged, so the standard deviation stays at ${pctS(sd)} a trading day. The risk-neutral adjustment changes the average, not the volatility.`]};
+  }},
+
+{ id:"k4", topic:"normal", name:"Which normal distribution to draw from", gen(){
+    /* Section 5: draw r_i from a normal distribution with mean r^f = r/252 and standard deviation sigma/sqrt(252).
+       Options are a balanced 2 x 2 (mean r/252 or mu/252, sd sigma/sqrt(252) or sigma/252), so no figure recurs in
+       three options and the key cannot be found by counting (blind sitting, 5 Nov 2026).                            */
+    const r=pick(range(0.01,0.05,0.005)), mu=pick(range(0.08,0.16,0.01)), s=pick(range(0.15,0.40,0.01));
+    const one = (m,sd) => `mean ${pctS(m,4)} and standard deviation ${pctS(sd,4)}`;
+    const opts=shuffle([
+      {html:one(r/252, s/Math.sqrt(252)), correct:true,
+       msg:`Right. The mean is the daily risk-free rate, ${pctS(r)}/252 = ${pctS(r/252,4)}; the standard deviation is ${pctS(s,0)}/&radic;<span class=rd>252</span> = ${pctS(s/Math.sqrt(252),4)}.`},
+      {html:one(mu/252, s/Math.sqrt(252)), correct:false,
+       msg:`That mean is ABC's average return, ${pctS(mu,0)}/252. Risk-neutral returns average the risk-free rate: ${pctS(r)}/252 = ${pctS(r/252,4)}.`},
+      {html:one(r/252, s/252), correct:false,
+       msg:`The standard deviation scales with the square root of time: ${pctS(s,0)}/&radic;<span class=rd>252</span>, not ${pctS(s,0)}/252.`},
+      {html:one(mu/252, s/252), correct:false,
+       msg:`Two slips. Risk-neutral returns average the risk-free rate, ${pctS(r)}/252, not ABC's average return; and the standard deviation scales with the square root of time, ${pctS(s,0)}/&radic;<span class=rd>252</span>.`}
+    ]);
+    return {mode:"choice",
+      text:`ABC's returns have an annualized standard deviation of ${pctS(s,0)} and have averaged ${pctS(mu,0)} p.a. The risk-free rate is ${pctS(r)} p.a. A share trades on about 252 days a year. You simulate risk-neutral paths of ABC's share price by drawing each daily return from a normal distribution.`,
+      ask:`Which normal distribution do you draw each daily return from?`,
+      options:opts,
+      steps:[`The mean: risk-neutral daily returns average the daily risk-free rate, ${pctS(r)}/252 = ${pctS(r/252,4)}.`,
+             `The standard deviation: the risk-neutral adjustment leaves it unchanged, so it is the data's, ${pctS(s,0)}/&radic;<span class=rd>252</span> = ${pctS(s/Math.sqrt(252),4)} a trading day.`]};
+  }},
+
+{ id:"k5", topic:"vol", name:"Changing volatility", gen(){
+    /* Section 6 and the 2024-26 sample final, essay Q (c): draw each day's return with the volatility of its period.
+       Variants: a day in the first or the second three months.                                                   */
+    const s1=pick(range(0.10,0.25,0.01)), k=pick([1.5,2,2.5]), s2=+(s1*k).toFixed(4), r=pick(range(0.01,0.05,0.005));
+    const late=pick([true,false]), day = late ? pick(range(70,120,1)) : pick(range(5,58,1));
+    const sk = late ? s2 : s1, so = late ? s1 : s2;
+    const one = sd => `mean ${pctS(r)}/252 and standard deviation ${sd}`;
+    const opts=shuffle([
+      {html:one(`${pctS(sk)}/&radic;<span class=rd>252</span>`), correct:true,
+       msg:`Right. Day ${day} falls in the ${late?"second":"first"} three months, when the annualized standard deviation is ${pctS(sk)}; a day's standard deviation is ${pctS(sk)}/&radic;<span class=rd>252</span>.`},
+      {html:one(`${pctS(so)}/&radic;<span class=rd>252</span>`), correct:false,
+       msg:`That is the volatility of the ${late?"first":"second"} three months. Day ${day} falls in the ${late?"second":"first"} (the first three months are days 1 to 63), so use ${pctS(sk)}.`},
+      {html:one(`${pctS((s1+s2)/2)}/&radic;<span class=rd>252</span>`), correct:false,
+       msg:`Averaging the two volatilities treats the whole six months alike. Each day takes the volatility of its own period: ${pctS(sk)} for day ${day}.`},
+      {html:one(`${pctS(sk)}/&radic;<span class=rd>63</span>`), correct:false,
+       msg:`The annualized standard deviation is turned into a daily one with the 252 trading days in a year, not the 63 days in the period: ${pctS(sk)}/&radic;<span class=rd>252</span>.`}
+    ]);
+    return {mode:"choice",
+      text:`You simulate 126 daily returns for each path of a share price over the next six months. The risk-free rate is ${pctS(r)} p.a. You believe the annualized standard deviation of the share's returns will be ${pctS(s1)} for the first three months (days 1 to 63) and ${pctS(s2)} for the next three months (days 64 to 126).`,
+      ask:`From which normal distribution do you draw the return on day ${day}?`,
+      options:opts,
+      steps:[`The mean is the daily risk-free rate, ${pctS(r)}/252, on every day: the risk-neutral adjustment applies to every day's return, whatever its volatility.`,
+             `Day ${day} is in the ${late?"second":"first"} three months, so its standard deviation is ${pctS(sk)}/&radic;<span class=rd>252</span> = ${pctS(sk/Math.sqrt(252),4)}. On day ${late ? 30 : 100}, in the ${late?"first":"second"} three months, it would be ${pctS(so)}/&radic;<span class=rd>252</span> = ${pctS(so/Math.sqrt(252),4)}.`]};
+  }},
+
+{ id:"k6", topic:"normal", name:"The bag or the normal distribution", gen(){
+    /* Section 5: actual daily returns have fatter tails than a normal distribution; the bag keeps them. Rewritten
+       5 Nov 2026 after the blind sitting (all three readers: the stem stated the fact and gave the key away). The stem
+       now describes the two methods only; the fat tails have to come from the note.                                */
+    const opts=shuffle([
+      {html:`Only the bag's draws keep the fat tails of ABC's actual returns: the bag holds those returns, while a normal distribution has thin tails`, correct:true,
+       msg:`Right. Actual daily returns have fatter tails than a normal distribution. The bag holds the actual returns, shifted by the same amount, so it keeps their fat tails; a normal distribution with the same mean and standard deviation does not have them.`},
+      {html:`Both keep the fat tails of ABC's actual returns: the normal distribution is given the same mean and standard deviation as the bag`, correct:false,
+       msg:`Matching the mean and the standard deviation does not match the tails. A normal distribution has thin tails whatever its standard deviation; only the bag, which holds the actual returns, keeps their fat tails.`},
+      {html:`Only the normal draws have fat tails: a normal distribution allows moves of any size, while the bag holds only the moves seen so far`, correct:false,
+       msg:`A normal distribution allows any move but has thin tails: actual daily returns have fatter tails than a normal distribution. The bag, which holds the actual returns, keeps them.`},
+      {html:`Neither keeps the fat tails of ABC's actual returns: the risk-neutral adjustment pulls every return in the bag toward the risk-free rate`, correct:false,
+       msg:`The adjustment subtracts the same amount from every return. It moves them all down without changing their spread or their shape, so the bag keeps the fat tails.`}
+    ]);
+    return {mode:"choice",
+      text:`You can simulate ABC's risk-neutral daily returns in two ways. One: draw them from a bag holding ABC's daily returns, each lowered by the same amount so that they average the risk-free rate. Two: draw them from a normal distribution with the same mean and standard deviation as the returns in the bag.`,
+      ask:`Which statement about the tails of the two methods' draws is right?`,
+      options:opts,
+      steps:[`Actual daily returns have fatter tails than a normal distribution: very large moves, up or down, happen more often than a normal distribution allows.`,
+             `The bag holds ABC's actual returns, shifted by the same amount, which changes their average but not their shape, so it keeps their fat tails. A normal distribution with the same mean and standard deviation has thin tails.`]};
+  }}
+];
+
+const TOPICS = [
+  {key:"all", label:"Mixed"},
+  {key:"price", label:"Price from simulations"},
+  {key:"path", label:"Building a path"},
+  {key:"rn", label:"Risk-neutral returns"},
+  {key:"normal", label:"Normal draws"},
+  {key:"vol", label:"Changing volatility"},
+  {key:"div", label:"Dividends"}
+];
+
+/* ----------------------------------------------------------------- state */
+let active = "all", current = null, tries = 0;
+let peeked = false, solved = false, tallied = false;  // tallied = already counted in `attempted`
+const stats = {att:0, first:0, streak:0, peek:0};
+
+const $ = id => document.getElementById(id);
+
+/* One-period trees for templates that return q.fig = [{label, now, outs:[...], probs:[...]?}, ...]
+   (added 22 Oct 2026 for Note 13, at Anh's request). Values come from the same draw as the text. */
+function figHTML(fig){
+  const txt = s => String(s).replace(/<[^>]+>/g, "");
+  const len = s => txt(s).replace(/&[a-z]+;/g, "x").length;
+  /* A multi-period recombining tree (Notes 16 and 19, 22 Oct 2026): t.lat[k] lists the nodes at
+     date k from the top; a node is a string or an array of lines; t.times labels the dates.      */
+  const latSVG = t => {
+    const L = t.lat.length, lines = v => (Array.isArray(v) ? v : [v]).map(txt);
+    const colW = t.lat.map(col => Math.max(24, ...col.map(v => Math.max(...lines(v).map(len))*8.2)));
+    const nl = Math.max(...t.lat.flat().map(v => lines(v).length)), lh = 17, h = nl > 1 ? 30 : 17, top = 30;
+    const cx = []; let x = 4;
+    colW.forEach((w, k) => { cx.push(x + w/2); x += w + 44; });
+    const W = Math.max(x - 44 + 4, 8.5*len(t.label) + 10);
+    const yOf = (k, i) => top + h*(2*i + (L-1-k)) + (nl-1)*lh/2;
+    const H = top + h*2*(L-1) + nl*lh + (t.times ? 26 : 6);
+    /* t.on (23 Oct 2026, Anh): the nodes the question works at, as "k,i". The rest of the tree is drawn
+       in grey, with a dot for a node that carries no figure, so students see where in the tree they are. */
+    const on = t.on ? new Set(t.on) : null, isOn = (k, i) => !on || on.has(k + "," + i);
+    const half = (k, i) => lines(t.lat[k][i]).join("") ? colW[k]/2 + 4 : 6;
+    let g = `<text class="tl" x="${W/2}" y="14" text-anchor="middle">${txt(t.label)}</text>`;
+    t.lat.forEach((col, k) => col.forEach((v, i) => {
+      const y = yOf(k, i), ls = lines(v);
+      if (ls.join("")) ls.forEach((s, j) => g += `<text x="${cx[k]}" y="${y + 5 + (j - (ls.length-1)/2)*lh}" text-anchor="middle">${s}</text>`);
+      else g += `<circle cx="${cx[k]}" cy="${y}" r="3.2"${isOn(k, i) ? "" : ` class="off"`}/>`;
+      if (k < L-1) [i, i+1].forEach(c => {
+        const y2 = yOf(k+1, c);
+        g += `<line x1="${cx[k] + half(k, i)}" y1="${y}" x2="${cx[k+1] - half(k+1, c)}" y2="${y2}" stroke-width="1.6"${isOn(k, i) && isOn(k+1, c) ? "" : ` class="off"`}/>`;
+      });
+    }));
+    if (t.times) t.times.forEach((s, k) => g += `<text class="tp" x="${cx[k]}" y="${H - 6}" text-anchor="middle">${txt(s)}</text>`);
+    return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${txt(t.label)}: ${t.lat.map(c => c.map(v => lines(v).join(" ")).join(" / ")).join("; then ")}">${g}</svg>`;
+  };
+  /* A payoff or profit diagram (Note 25 Part 3, 29 Oct 2026, Anh): t.pts are the corners of a piecewise-linear
+     line, left edge to right edge (a window around the kinks, not from S = 0, so the kinks stand apart);
+     t.dots are marked points, each with dashed guides to the axes; t.xt / t.yt are [value, label] ticks.
+     The horizontal axis sits at t.ybase, zero unless given (a collar's payoff never comes near zero).   */
+  const plotSVG = t => {
+    const L0 = 62, R0 = 14, T0 = 26, B0 = 40, yb = t.ybase || 0;
+    const xs = t.pts.map(p => p[0]), ys = t.pts.map(p => p[1]).concat([yb]);
+    const X0 = Math.min(...xs), X1 = Math.max(...xs), Y0 = Math.min(...ys), Y1 = Math.max(...ys), dy = (Y1 - Y0) || 1;
+    const lo = Y0 - 0.08*dy*(Y0 < yb), hi = Y1 + 0.12*dy;
+    /* One scale on both axes (Anh, 29 Oct 2026): a one-for-one slope must look like 45 degrees. */
+    const k = Math.min(304/(X1 - X0), 200/(hi - lo)), W = L0 + R0 + k*(X1 - X0), H = T0 + B0 + k*(hi - lo);
+    const px = x => L0 + k*(x - X0), py = y => T0 + k*(hi - y);
+    const dotY = x => ((t.dots || []).find(d => d[0] === x) || [x, yb])[1];
+    let g = `<line class="ax" x1="${L0}" y1="${py(yb)}" x2="${W - R0}" y2="${py(yb)}"/>`;
+    g += `<line class="ax" x1="${L0}" y1="${T0 - 4}" x2="${L0}" y2="${H - B0 + 4}"/>`;
+    (t.dots || []).forEach(([x, y]) => {
+      if (y !== yb) g += `<line class="gd" x1="${px(x)}" y1="${py(y)}" x2="${px(x)}" y2="${py(yb)}"/>`;
+      g += `<line class="gd" x1="${L0}" y1="${py(y)}" x2="${px(x)}" y2="${py(y)}"/>`;
+    });
+    g += `<polyline class="pl" points="${t.pts.map(([x, y]) => px(x).toFixed(1) + "," + py(y).toFixed(1)).join(" ")}"/>`;
+    (t.dots || []).forEach(([x, y]) => g += `<circle cx="${px(x)}" cy="${py(y)}" r="3.4"/>`);
+    (t.xt || []).forEach(([x, s]) => g += `<text class="tk" x="${px(x)}" y="${py(yb) + (dotY(x) < yb ? -8 : 17)}" text-anchor="middle">${txt(s)}</text>`);
+    (t.yt || []).forEach(([y, s]) => g += `<text class="tk" x="${L0 - 6}" y="${py(y) + 4.5}" text-anchor="end">${txt(s)}</text>`);
+    g += `<text class="tp" x="${W - R0}" y="${H - 6}" text-anchor="end">${txt(t.xlab)}</text>`;
+    g += `<text class="tp" x="${L0}" y="${T0 - 10}" text-anchor="middle">${txt(t.ylab)}</text>`;
+    return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${txt(t.label)}: ${txt(t.aria || "")}">${g}</svg>`;
+  };
+  return fig.map(t => {
+    if (t.lat) return latSVG(t);
+    if (t.pts) return plotSVG(t);
+    const n = t.outs.length, gap = n > 2 ? 30 : 46, top = 34;
+    const x1 = Math.max(40, 12 + 8.5*len(t.now)), x2 = x1 + 56;
+    const wide = Math.max(...t.outs.map((v, i) => 8.4*len(v) + (t.probs ? 6.6*(len(t.probs[i]) + 2) + 6 : 0)));
+    const W = Math.max(x2 + 10 + wide, 8.5*len(t.label) + 10), H = top + gap*(n-1) + 14, mid = top + gap*(n-1)/2;
+    let g = `<text class="tl" x="${(x1 + x2)/2}" y="14" text-anchor="middle">${txt(t.label)}</text>`;
+    g += `<text x="${x1-8}" y="${mid+5}" text-anchor="end">${txt(t.now)}</text>`;
+    t.outs.forEach((v, i) => {
+      const y = top + gap*i, dx = x2-x1, dy = y-mid, L = Math.hypot(dx, dy), ux = dx/L, uy = dy/L;
+      const ex = x2 - 2*ux, ey = y - 2*uy, bx = ex - 9*ux, by = ey - 9*uy;
+      g += `<line x1="${x1}" y1="${mid}" x2="${bx}" y2="${by}" stroke-width="1.8"/>`;
+      g += `<polygon points="${ex},${ey} ${bx-4*uy},${by+4*ux} ${bx+4*uy},${by-4*ux}" stroke-width="0"/>`;
+      g += `<text x="${x2+6}" y="${y+5}">${txt(v)}${t.probs ? `<tspan class="tp" dx="6">(${txt(t.probs[i])})</tspan>` : ""}</text>`;
+    });
+    return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${txt(t.label)}: ${txt(t.now) || "today"}, then ${t.outs.map(txt).join(" or ")}">${g}</svg>`;
+  }).join("");
+}
+
+function buildTopics(){
+  const box = $("topics");
+  TOPICS.forEach(t=>{
+    const b = document.createElement("button");
+    b.className = "chip"; b.textContent = t.label;
+    b.setAttribute("aria-pressed", String(t.key===active));
+    b.onclick = ()=>{
+      active = t.key;
+      [...box.children].forEach(c=>c.setAttribute("aria-pressed","false"));
+      b.setAttribute("aria-pressed","true");
+      seqIdx = 0;                 // a new topic restarts the sequence
+      newQuestion();
+    };
+    box.appendChild(b);
+  });
+  /* the Starred chip: practise only the questions starred on this page */
+  const s = document.createElement("button");
+  s.className = "chip"; s.id = "chipStar";
+  s.setAttribute("aria-pressed", "false");
+  s.onclick = ()=>{
+    active = "starred";
+    [...box.children].forEach(c=>c.setAttribute("aria-pressed","false"));
+    s.setAttribute("aria-pressed","true");
+    seqIdx = 0;
+    newQuestion();
+  };
+  box.appendChild(s);
+  updateStarChip();
+}
+
+const ALL_TEMPLATES = TEMPLATES.concat(CHOICE_TEMPLATES);
+
+/* A template's primary topic is `topic`; it may also list secondary topics in
+   `also`, so one item can appear under several chips. */
+function inTopic(t, key){
+  return t.topic === key || (Array.isArray(t.also) && t.also.includes(key));
+}
+
+/* ---- progress: distinct templates solved without opening the solution ---- */
+const PROG_KEY = "practice-progress:" + document.title;
+let mastered = new Set();
+try { mastered = new Set(JSON.parse(localStorage.getItem(PROG_KEY) || "[]")); }
+catch (e) { mastered = new Set(); }
+
+function saveProgress(){
+  try { localStorage.setItem(PROG_KEY, JSON.stringify([...mastered])); } catch (e) {}
+}
+function markMastered(id){
+  if (!id || mastered.has(id)) return;
+  mastered.add(id);
+  saveProgress();
+}
+
+/* ---- starred questions: kept per template, so a starred question comes back with new
+   numbers. Starred automatically on a wrong answer or on opening the solution before
+   solving; the student can star or unstar any question by hand. ---- */
+const STAR_KEY = "practice-starred:" + document.title;
+let starred = new Set();
+try { starred = new Set(JSON.parse(localStorage.getItem(STAR_KEY) || "[]")); }
+catch (e) { starred = new Set(); }
+starred = new Set([...starred].filter(id => ALL_TEMPLATES.some(t => t.id === id)));
+
+function saveStars(){
+  try { localStorage.setItem(STAR_KEY, JSON.stringify([...starred])); } catch (e) {}
+}
+function updateStarChip(){
+  const c = document.getElementById("chipStar");   // made by buildTopics, not in the markup
+  if (c) c.textContent = "★ Starred (" + starred.size + ")";
+}
+function showStar(){
+  const on = !!(current && starred.has(current.id));
+  $("star").hidden = !current;
+  $("star").setAttribute("aria-pressed", String(on));
+  $("star").textContent = on ? "★ Starred" : "☆ Star";
+}
+function setStar(id, on){
+  if (!id) return;
+  if (on) starred.add(id); else starred.delete(id);
+  saveStars(); updateStarChip(); showStar();
+}
+function autoStar(){ if (current && !starred.has(current.id)) setStar(current.id, true); }
+
+function poolFor(key){
+  if (key === "all") return ALL_TEMPLATES;
+  if (key === "starred") return ALL_TEMPLATES.filter(t => starred.has(t.id));
+  return ALL_TEMPLATES.filter(t => inTopic(t, key));
+}
+
+/* Templates are drawn WITHOUT immediate repeats. Sampling with replacement
+   looks fine on the full bank, but a topic holding only three or four
+   templates repeats roughly one press in three, which reads as the button
+   being broken. Hold the most recent half of the pool out of the draw. */
+let recentIds = [];
+/* Questions seen this session, so the arrow keys can step back and forth through them. */
+let history = [], histIdx = -1;
+let navKey = false;      // true while an arrow key is doing the rendering
+let order = "shuffle";   // "shuffle" | "seq"
+let seqIdx = 0;
+
+function newQuestion(replay){
+  let q;
+  if (replay){ q = replay.q; }
+  else {
+  const pool = poolFor(active);
+  if (!pool.length){
+    current = null;
+    $("qmeta").textContent = "Starred";
+    $("qtext").innerHTML = "No starred questions yet. A question is starred when you answer it " +
+      "wrongly or open its solution before solving it, and you can star any question yourself with " +
+      "<b>☆ Star</b>. Pick another chip to practise.";
+    $("qask").innerHTML = "";
+    $("opts").hidden = true; $("opts").innerHTML = "";
+    $("ans").hidden = true; $("check").hidden = true; $("next").hidden = true;
+    $("fb").innerHTML = ""; $("soldetails").hidden = true; $("seqPos").textContent = "";
+    showStar();
+    return;
+  }
+  let tpl;
+  if (order === "seq"){
+    /* walk the bank in order, wrapping at the end */
+    if (seqIdx >= pool.length) seqIdx = 0;
+    tpl = pool[seqIdx];
+    seqIdx = (seqIdx + 1) % pool.length;
+    $("seqPos").textContent = `${seqIdx === 0 ? pool.length : seqIdx} of ${pool.length}`;
+  } else {
+    const hold = Math.max(1, Math.floor(pool.length / 2));
+    let choices = pool.filter(t => !recentIds.slice(0, hold).includes(t.id));
+    if (!choices.length) choices = pool;        // pool of one, or all held out
+    tpl = pick(choices);
+    recentIds.unshift(tpl.id);
+    if (recentIds.length > 40) recentIds.length = 40;
+    $("seqPos").textContent = "";
+  }
+  q = tpl.gen();
+  q.name = tpl.name;
+  q.id   = tpl.id;
+  q.seqPos = $("seqPos").textContent;   // carried so stepping back shows its own position
+  if (q.mode !== "choice") q.distractors = usable(q.correct, q.cands, q.sep);
+  }
+  current = q;
+  if (replay){
+    tries = replay.tries; peeked = replay.peeked; solved = replay.solved; tallied = replay.tallied;
+  } else {
+    tries = 0; peeked = false; solved = false; tallied = false;
+    history = history.slice(0, histIdx + 1);           // a new draw discards anything ahead
+    history.push({q, tries:0, peeked:false, solved:false, tallied:false, fb:"", ans:""});
+    if (history.length > 50){ history.shift(); }
+    histIdx = history.length - 1;
+  }
+
+  const isChoice = q.mode === "choice";
+  $("qmeta").textContent = q.name;
+  $("qtext").innerHTML   = q.text;
+  $("qfig").innerHTML    = q.fig ? figHTML(q.fig) : "";
+  $("qfig").hidden       = !q.fig;
+  $("qask").innerHTML    = q.ask;
+  /* Hide the input and Check individually, NOT the whole row -- the
+     "New question" button lives in that row and must stay reachable
+     on choice questions. */
+  $("ans").hidden   = isChoice;
+  $("check").hidden = isChoice;
+  $("next").hidden  = false;
+  showStar();
+  $("opts").hidden     = !isChoice;
+  const box = $("opts");
+  box.innerHTML = "";              // always clear, even when the panel is hidden
+  if (isChoice){
+    q.options.forEach((o,k)=>{
+      const btn = document.createElement("button");
+      btn.className = "opt"; btn.innerHTML = o.html;
+      btn.onclick = () => pickOption(k);
+      box.appendChild(btn);
+    });
+  }
+  $("ans").value = "";
+  $("ans").placeholder = q.unit==="money" ? "e.g. 1234.56"
+                     : q.unit==="percent" ? "e.g. 12.34  (percent)"
+                     : "e.g. 18";
+  $("ans").disabled = false;
+  $("check").disabled = false;
+  $("fb").innerHTML = "";
+  $("steps").innerHTML = q.steps.map(s=>`<div>${s}</div>`).join("");
+  const d = $("soldetails"); d.hidden = false; d.open = false;
+  if (replay){
+    /* Put the question back exactly as it was left --- the feedback, what was typed, and
+       whether it had already been answered. The tallied/solved flags come back with it,
+       so revisiting a question never re-counts an attempt or re-awards mastery. */
+    $("fb").innerHTML = replay.fb || "";
+    $("ans").value    = replay.ans || "";
+    $("seqPos").textContent = q.seqPos || "";
+    if (isChoice && q.wrong){
+      [...$("opts").children].forEach((b,j)=>{
+        if (q.wrong.indexOf(j) >= 0){ b.classList.add("wrong"); b.disabled = true; }
+      });
+    }
+    if (solved || q.done){
+      if (isChoice){
+        [...$("opts").children].forEach((b,j)=>{ b.disabled = true;
+          if (q.options[j].correct) b.classList.add("right"); });
+      } else { $("ans").disabled = true; $("check").disabled = true; }
+    }
+    d.open = peeked || solved;
+  }
+  /* Arriving by arrow key must not park the cursor in the answer box: a restored answer
+     sitting there would swallow the next arrow press and strand the student. */
+  if (navKey) $("ans").blur();
+  else if (!isChoice && !$("ans").disabled) $("ans").focus();
+}
+
+function parseInput(raw){
+  const cleaned = raw.replace(/[$,%\s,]/g,"");
+  if (cleaned === "" ) return NaN;
+  return Number(cleaned);
+}
+
+function say(kind, title, body){
+  $("fb").innerHTML = `<div class="fb ${kind}"><strong>${title}</strong>${body}</div>`;
+}
+
+function pickOption(k){
+  const q = current;
+  if (q.done) return;
+  const o    = q.options[k];
+  const btns = [...$("opts").children];
+
+  tries++;
+  if (!tallied){ tallied = true; stats.att++; }
+
+  if (o.correct){
+    q.done = true; solved = true;
+    btns.forEach((b2,j)=>{ b2.disabled = true; if (q.options[j].correct) b2.classList.add("right"); });
+    if (peeked){
+      stats.streak = 0;
+      say("ok","Correct — but you read the solution first.",
+          "It still counts as attempted, just not toward first-try accuracy or your streak. " + o.msg);
+    } else {
+      stats.streak++;
+      if (tries === 1) stats.first++;
+      markMastered(q.id);
+      say("ok", tries===1 ? "Correct — first try." : "Correct.", o.msg);
+    }
+    $("soldetails").open = true;
+  } else {
+    stats.streak = 0;
+    btns[k].classList.add("wrong");
+    btns[k].disabled = true;
+    (q.wrong || (q.wrong = [])).push(k);   // remembered so a revisit keeps it eliminated
+    autoStar();
+    say("no","Not that one.", o.msg);
+  }
+  render();
+}
+
+function check(){
+  const raw = $("ans").value;
+  const parsed = parseInput(raw);
+  if (!Number.isFinite(parsed)){
+    say("hint","Enter a number","Type your answer as a number — you can include $ , or % and it will be ignored.");
+    return;
+  }
+  const q = current;
+  const val = q.unit==="percent" ? parsed/100 : parsed;
+  const TOL = q.tol || REL_MATCH;
+
+  /* Unit slips are formatting mistakes, not wrong answers, so they cost
+     neither an attempt nor first-try credit. Guarded so a genuinely
+     correct entry can never be mistaken for one. */
+  if (!near(val, q.correct, TOL)){
+    if (q.unit==="percent" && near(parsed, q.correct, TOL)){
+      say("hint","Right number, wrong units.",
+          `You entered <code>${raw}</code> as a decimal. This box wants a percent — enter <code>${(q.correct*100).toFixed(4).replace(/\.?0+$/,"")}</code> instead.`);
+      return;
+    }
+    if (near(val*100, q.correct, TOL) || near(val/100, q.correct, TOL)){
+      say("hint","Check your units.","Your figure is off by a factor of 100. Re-read what the box is asking for.");
+      return;
+    }
+  }
+
+  tries++;
+  if (!tallied){ tallied = true; stats.att++; }   // count each question once, right or wrong
+
+  if (near(val, q.correct, TOL)){
+    solved = true;
+    if (peeked){
+      stats.streak = 0;
+      say("ok","Correct — but you read the solution first.",
+          "That is a perfectly good way to learn, and it still counts as attempted. It does " +
+          "not count toward first-try accuracy or your streak, so those numbers stay honest. " +
+          "Try the next one before opening the solution.");
+    } else {
+      stats.streak++;
+      if (tries === 1) stats.first++;
+      markMastered(q.id);
+      say("ok","Correct.", tries===1 ? "First try — well done." : "Got there.");
+    }
+    $("check").disabled = true; $("ans").disabled = true;
+    $("soldetails").open = true;
+    render(); return;
+  }
+
+  stats.streak = 0;
+  autoStar();
+  const hit = q.distractors.find(d => near(val, d.val, TOL));
+  say("no", hit ? "Not quite — and I can see why." : "Not quite.",
+      hit ? hit.msg
+          : "That does not match any of the usual slips, so it may be an arithmetic error. Try again, or open the worked solution below.");
+  render();
+}
+
+function render(){
+  $("sAtt").textContent    = stats.att;
+  $("sFirst").textContent  = stats.first;
+  $("sAcc").textContent    = stats.att ? Math.round(stats.first/stats.att*100)+"%" : "—";
+  $("sStreak").textContent = stats.streak;
+  $("sPeek").textContent   = stats.peek;
+  const total = ALL_TEMPLATES.length;
+  $("pTotal").textContent  = total;
+  $("pDone").textContent   = mastered.size;
+  $("progfill").style.width = (total ? 100*mastered.size/total : 0).toFixed(1) + "%";
+}
+
+$("check").onclick = () => { if (current) check(); };
+$("star").onclick  = () => { if (current) setStar(current.id, !starred.has(current.id)); };
+$("next").onclick  = () => newQuestion();   // arrow fn: never pass the click Event as `replay`
+
+/* ---- arrow keys: right for the next question, left for the previous one -------------
+   Ignored while the answer box is being typed in, where the arrows move the caret, and
+   ignored with a modifier held so the browser's own shortcuts still work.            */
+function snapshotQuestion(){
+  const h = history[histIdx];
+  if (!h) return;
+  h.tries = tries; h.peeked = peeked; h.solved = solved; h.tallied = tallied;
+  h.fb = $("fb").innerHTML; h.ans = $("ans").value;
+}
+function goBack(){
+  if (histIdx <= 0) return;
+  snapshotQuestion(); histIdx--;
+  navKey = true; newQuestion(history[histIdx]); navKey = false;
+}
+function goForward(){
+  snapshotQuestion();
+  navKey = true;
+  if (histIdx < history.length - 1){ histIdx++; newQuestion(history[histIdx]); }
+  else newQuestion();
+  navKey = false;
+}
+document.addEventListener("keydown", e => {
+  if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+  if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
+  const t = e.target;
+  if (t && (t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+  /* Inside the answer box the arrows belong to the caret --- but only while it still has
+     somewhere to go. Once it sits at the end you are pressing toward, the press is free,
+     so a half-typed answer never traps a student in the field. */
+  if (t && t.tagName === "INPUT" && !t.disabled){
+    const at = t.selectionStart, to = t.selectionEnd, n = String(t.value).length;
+    if (at === null || at !== to) return;                       // a selection: leave it alone
+    if (e.key === "ArrowRight" ? at < n : at > 0) return;
+  }
+  e.preventDefault();
+  if (e.key === "ArrowRight") goForward(); else goBack();
+});
+$("ans").addEventListener("keydown", e=>{ if(e.key==="Enter" && !$("check").disabled) check(); });
+$("soldetails").addEventListener("toggle", ()=>{
+  if ($("soldetails").open && !solved && !peeked){
+    peeked = true;
+    stats.peek++;
+    autoStar();
+    if (!tallied){ tallied = true; stats.att++; }  // opening it counts as engaging with the question
+    render();
+  }
+});
+
+function setOrder(o){
+  order = o; seqIdx = 0;
+  $("mShuffle").setAttribute("aria-pressed", String(o === "shuffle"));
+  $("mSeq").setAttribute("aria-pressed",     String(o === "seq"));
+  newQuestion();
+}
+$("mShuffle").onclick = () => setOrder("shuffle");
+$("mSeq").onclick     = () => setOrder("seq");
+
+$("pReset").onclick = () => {
+  if (!mastered.size) return;
+  mastered.clear(); saveProgress(); render();
+};
+
+buildTopics();
+newQuestion();
+render();
+</script>
+</body>
+</html>
