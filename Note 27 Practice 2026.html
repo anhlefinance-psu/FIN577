@@ -240,6 +240,7 @@ function usable(correct, cands, sep){
      pc1   <- Note 27 Section 4.1 (put-call parity)
      g1    <- Note 27 Section 3 (Game K: N(d2) is the risk-neutral probability of ending in the money)
      dl1   <- Note 27 Section 6.3 (delta)
+     pay1  <- Note 27 Section 3 (Game K: K e^(-rT) N(d2), the strike price paid; put: received) -- added 7 Nov 2026
      ceo1  <- 2025 midterm (the CEO is fired: the share falls 5%, volatility doubles; % change in the call)
    N(.) on the three-decimal grid (as Note 07, 27-28 Sep 2026): a student may evaluate N(.) with a calculator or
    with the three-decimal tables at the end of Note 27, and both must score the same. sigma has two decimals and
@@ -495,6 +496,42 @@ const TEMPLATES = [{ id:"c1", topic:"price", name:"A call's price from the formu
       ]};
   }); }},
 
+{ id:"pay1", topic:"reading", name:"The strike price the holder expects to pay", gen(){ return atLeast3(()=>{
+    /* Section 3, Game K (added 7 Nov 2026 at Anh's request, so that Quiz 3 draws every question from the bank):
+       K e^(-rT) N(d2) is today's value of the strike price a call's holder expects to pay, counting only the
+       outcomes in which the call is exercised. Variant: a put's holder RECEIVES the strike price, K e^(-rT) N(-d2).
+       The stem gives N(d1) and N(d2) (four decimals, from the table), so the item tests the reading, not d1.   */
+    const kind=pick(["call","put"]);
+    const {S,K,r,s,T,Tw,d} = pickBS((S,K,r,s,T,d)=> { const q=NT(d.d2); return q>0.15 && q<0.85 && Math.abs(NT(d.d1)-q)>0.03; });
+    const N1=+NT(d.d1).toFixed(4), N2=+NT(d.d2).toFixed(4), Ke=+(K*Math.exp(-r*T)).toFixed(4);
+    const P = kind==="call" ? N2 : +(1-N2).toFixed(4);
+    const correct=+(Ke*P).toFixed(4), tol=centsTol(correct), sep=centsSep(correct);
+    const cands=keepFar(correct,[
+      {val:K*P, msg:`The strike price changes hands at expiration, so it is discounted: K ${ex("&minus;rT")} = ${m4(Ke)} today, not ${money(K)}.`},
+      {val:Ke*(kind==="call"?N1:1-N1), msg:`The strike price goes with ${kind==="call"?"N(d<sub>2</sub>)":"N(&minus;d<sub>2</sub>)"}, the risk-neutral probability that the ${kind} ends in the money. ${kind==="call"?"N(d<sub>1</sub>)":"N(&minus;d<sub>1</sub>)"} goes with the share.`},
+      {val:Ke, msg:`That is the strike price's value if it changed hands for sure. It does so only when the ${kind} is exercised, so multiply by ${kind==="call"?"N(d<sub>2</sub>)":"N(&minus;d<sub>2</sub>) = 1 &minus; N(d<sub>2</sub>)"}.`},
+      {val:Ke*(kind==="call"?1-N2:N2), msg:kind==="call"
+          ? `1 &minus; N(d<sub>2</sub>) is the probability that the call ends <em>out of</em> the money, when nothing is paid. The strike price is paid with risk-neutral probability N(d<sub>2</sub>).`
+          : `N(d<sub>2</sub>) is the probability that a <em>call</em> ends in the money. A put is exercised when S<sub>T</sub> &lt; K, with risk-neutral probability N(&minus;d<sub>2</sub>) = 1 &minus; N(d<sub>2</sub>).`}
+    ],sep);
+    return {
+      unit:"money", tol, sep,
+      text:`A share trades at <b>${money(S)}</b> and pays no dividend over the next ${Tw==='one year'?'year':Tw}. A European ${kind} option on the share
+            has a strike price of <b>${money(K)}</b> and expires in <b>${Tw}</b>. The risk-free rate is <b>${rP(r)}</b>. In the
+            Black-Scholes-Merton formula for this option, N(d<sub>1</sub>) = <b>${N1.toFixed(4)}</b> and N(d<sub>2</sub>) = <b>${N2.toFixed(4)}</b>.`,
+      ask: kind==="call"
+        ? `What is the value today of the strike price the holder expects to pay, counting only the outcomes in which the call is exercised? (Two decimals.)`
+        : `What is the value today of the strike price the holder expects to receive, counting only the outcomes in which the put is exercised? (Two decimals.)`,
+      correct, cands,
+      steps:[
+        kind==="call"
+          ? `c = S N(d<sub>1</sub>) &minus; K ${ex("&minus;rT")} N(d<sub>2</sub>): what you receive minus what you pay. The second term is the strike price, paid only when the call ends in the money (risk-neutral probability N(d<sub>2</sub>)), discounted to today.`
+          : `p = K ${ex("&minus;rT")} N(&minus;d<sub>2</sub>) &minus; S N(&minus;d<sub>1</sub>): the put's holder receives the strike price, only when the put ends in the money (risk-neutral probability N(&minus;d<sub>2</sub>) = 1 &minus; N(d<sub>2</sub>) = ${P.toFixed(4)}), discounted to today.`,
+        `K ${ex("&minus;rT")} = ${money(K)} &times; ${ex(`&minus;${pctS(r)} &times; ${T}`)} = ${m4(Ke)}`,
+        `${m4(Ke)} &times; ${P.toFixed(4)} = <b>${m4(correct)}</b>`
+      ]};
+  }); }},
+
 { id:"ceo1", topic:"greeks", name:"A share falls and its volatility rises", gen(){ return atLeast3(()=>{
     /* 2025 midterm: the CEO is fired, the share falls by x% and its volatility rises. Percentage change in a call.
        Both prices on the three-decimal grid; S1 printed to the cent and used as printed.                         */
@@ -705,6 +742,59 @@ const CHOICE_TEMPLATES = [{ id:"k1", topic:"assume", name:"When the formula appl
       options:opts,
       steps:[`Put-call parity: c &minus; p = S &minus; K e<sup>&minus;rT</sup>. The right-hand side does not depend on &sigma;.`,
              `So when &sigma; rises and S, K, r and T stay the same, c &minus; p stays the same: the put rises by the same ${money(dv)} as the call. Both gain because bigger swings make the good outcomes better and the bad outcomes worse, while the bad outcomes are truncated at zero.`]};
+  }},
+{ id:"kiv1", topic:"apps", name:"Implied volatility: above or below", gen(){
+    /* Section 6.2 (added 7 Nov 2026): the implied volatility is the sigma that makes the formula match the market
+       price; an option's price rises with sigma, so a market price above the formula's price at sigma0 means an
+       implied volatility above sigma0. Variants: a call or a put; market above or below the formula's price.     */
+    const kind=pick(["call","put"]), up=pick([true,false]);
+    let S,K,r,T,s0,s1,f0,mk;
+    do { S=pick(range(40,120,1)); K=Math.round(S*pick(range(0.95,1.05,0.01))); r=pick(range(0.02,0.05,0.005)); T=pick([0.25,0.5,1]);
+         s0=pick(range(0.20,0.40,0.02)); s1=+(s0+(up?1:-1)*pick([0.04,0.06,0.08])).toFixed(2);
+         f0=+(kind==="call"?bsCall(S,K,r,s0,T):bsPut(S,K,r,s0,T)).toFixed(2); mk=+(kind==="call"?bsCall(S,K,r,s1,T):bsPut(S,K,r,s1,T)).toFixed(2);
+    } while (f0 < 1 || Math.abs(mk-f0) < 0.3);
+    const v0=pctS(s0,0), Tw=T===1?"one year":T===0.5?"six months":"three months";
+    const opts=shuffle([
+      {html:`It is ${up?"above":"below"} ${v0}: a ${up?"higher":"lower"} volatility ${up?"raises":"lowers"} the formula's price, ${up?"up":"down"} to ${money(mk)}`, correct:true,
+       msg:`Right. The implied volatility is the &sigma; at which the formula gives the market price, and the ${kind}'s price rises with &sigma;. To move the formula's price from ${money(f0)} to ${money(mk)}, &sigma; must go ${up?"above":"below"} ${v0}.`},
+      {html:`It is ${up?"below":"above"} ${v0}: the ${kind} trades ${up?"above":"below"} its formula price, so the market expects a ${up?"calmer":"more volatile"} share`, correct:false,
+       msg:`It runs the other way. A higher &sigma; raises the ${kind}'s price, so a market price ${up?"above":"below"} ${money(f0)} needs a &sigma; ${up?"above":"below"} ${v0}.`},
+      {html:`It is ${v0}: the implied volatility is the volatility put into the formula`, correct:false,
+       msg:`At ${v0} the formula gives ${money(f0)}, not the market's ${money(mk)}. The implied volatility is the &sigma; that gives ${money(mk)}.`},
+      {html:`It cannot be found without the price of a ${kind==="call"?"put":"call"} on the same share`, correct:false,
+       msg:`The ${kind}'s own market price is enough: find the &sigma; at which the formula gives ${money(mk)}.`}
+    ]);
+    return {mode:"choice",
+      text:`A share trades at ${money(S)} and pays no dividend; the risk-free rate is ${pctS(r)} p.a., continuously compounded. A European ${kind} on it has a strike price of ${money(K)} and expires in ${Tw}. With a volatility of ${v0} a year, the Black-Scholes-Merton formula prices the ${kind} at ${money(f0)}. The ${kind} trades in the market at ${money(mk)}.`,
+      ask:`What can you say about the ${kind}'s implied volatility?`,
+      options:opts,
+      steps:[`The implied volatility is the &sigma; that makes the formula's price equal the market price.`,
+             `An option's price rises with &sigma; (its vega is positive), so the formula's price moves from ${money(f0)} to ${money(mk)} only if &sigma; goes ${up?"above":"below"} ${v0}.`]};
+  }},
+
+{ id:"kiv2", topic:"apps", name:"Implied volatility: a call and a put", gen(){
+    /* Sections 4.1 and 6.2 (added 7 Nov 2026): when the market prices of a call and a put with the same strike and
+       expiration satisfy put-call parity, they have the same implied volatility (the formula's prices satisfy
+       parity at any sigma). Variants: the call's or the put's implied volatility is given.                       */
+    const given=pick(["call","put"]), other=given==="call"?"put":"call";
+    const s=pick(range(0.18,0.45,0.01)), v=pctS(s,0), w=pctS(1-s,0);
+    const opts=shuffle([
+      {html:`${v}: at that volatility the formula matches the ${given}'s price, and parity then matches the ${other}'s too`, correct:true,
+       msg:`Right. At &sigma; = ${v} the formula gives the ${given}'s market price. The formula's call and put satisfy parity, p = c &minus; S + K e<sup>&minus;rT</sup>, and so do the market prices, so at ${v} the formula gives the ${other}'s market price as well.`},
+      {html:`${w}: one minus the ${given}'s implied volatility`, correct:false,
+       msg:`A volatility is not a probability. Parity ties the ${other}'s price to the ${given}'s, so the same &sigma; prices both.`},
+      {html:`${given==="call"?"Below":"Above"} ${v}: a put gains less from volatility than a call`, correct:false,
+       msg:`A call and a put with the same strike price and expiration have the same vega, by parity, and the same implied volatility.`},
+      {html:`It cannot be found without the ${other}'s own market price`, correct:false,
+       msg:`Parity already fixes the ${other}'s market price from the ${given}'s: p = c &minus; S + K e<sup>&minus;rT</sup>. At ${v} the formula gives exactly that price.`}
+    ]);
+    return {mode:"choice",
+      text:`A share pays no dividend. A European call and a European put on it have the same strike price and the same expiration, and their market prices satisfy put-call parity. The ${given}'s implied volatility is ${v}.`,
+      ask:`What is the ${other}'s implied volatility?`,
+      options:opts,
+      steps:[`At &sigma; = ${v} the formula prices the ${given} at its market price.`,
+             `The formula's put and call satisfy put-call parity, p = c &minus; S + K e<sup>&minus;rT</sup>, and so do the market prices.`,
+             `So at &sigma; = ${v} the formula's ${other} price equals the ${other}'s market price: its implied volatility is also ${v}.`]};
   }}
 ];
 
@@ -715,7 +805,7 @@ const TOPICS = [
   {key:"reading", label:"Reading the formula"},
   {key:"parity", label:"Put-call parity"},
   {key:"div", label:"Dividends"},
-  {key:"apps", label:"Fare locks"},
+  {key:"apps", label:"Fare locks and implied volatility"},
   {key:"greeks", label:"Delta and vega"}
 ];
 

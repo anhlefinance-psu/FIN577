@@ -506,6 +506,30 @@ const CHOICE_TEMPLATES = [{ id:"k1", topic:"path", name:"Building a path from da
       options:opts,
       steps:[`Actual daily returns have fatter tails than a normal distribution: very large moves, up or down, happen more often than a normal distribution allows.`,
              `The bag holds ABC's actual returns, shifted by the same amount, which changes their average but not their shape, so it keeps their fat tails. A normal distribution with the same mean and standard deviation has thin tails.`]};
+  }},
+{ id:"k7", topic:"price", name:"Two runs, two prices", gen(){
+    /* Sections 1 and 2 (added 7 Nov 2026 at Anh's request: every non-bonus exam question comes from a bank; this
+       was a hand-written item on the FIN 577 final, Version 3). A simulated price is an average over random paths,
+       so two runs with the same inputs differ; the gap shrinks as the number of paths grows (Note 27, Section 1:
+       ABC's call at $1.88, $1.99, $2.00 with 1,000, 10,000 and 100,000 paths). Variants: the number of paths.  */
+    const n=pick([500,1000,2000]), a=pick(range(1.60,3.40,0.01)), g=pick(range(0.12,0.30,0.01)), b=+(a+g).toFixed(2);
+    const avg=((a+b)/2).toFixed(3), ns=n.toLocaleString("en-US");
+    const opts=shuffle([
+      {html:`Each run draws its own random paths; ${ns} paths are too few for the average payoff to settle, and with many more paths both prices would move toward the same value`, correct:true,
+       msg:`Right. A simulated price is an average over randomly drawn paths, so it varies from run to run. The more paths, the closer the average gets to the true value.`},
+      {html:`One of them made a mistake: two simulations with the same inputs and the same method must give exactly the same price`, correct:false,
+       msg:`Each run draws different random returns, so two runs give different averages. The gap shrinks as the number of paths grows.`},
+      {html:`The true price must lie between the two, so averaging them gives it exactly, at $${avg}: the two errors cancel out`, correct:false,
+       msg:`Nothing guarantees that the errors of two runs cancel, or that the true price lies between them. More paths, not averaging two small runs, bring the price close to its true value.`},
+      {html:`More paths would not help: the share's volatility makes any two simulated prices differ by about this much, however many paths are drawn`, correct:false,
+       msg:`The more paths, the closer the average gets to the true value: one run of the note's ABC call gives $1.88 with 1,000 paths, $1.99 with 10,000 and $2.00 with 100,000.`}
+    ]);
+    return {mode:"choice",
+      text:`Two analysts price the same six-month European call on ABC by simulation, with the same inputs and the same method: 126 risk-neutral daily returns per path, <b>${ns} paths</b> each. One gets <b>${money(a)}</b>, the other <b>${money(b)}</b>.`,
+      ask:`What explains the difference?`,
+      options:opts,
+      steps:[`A simulated price is the average discounted payoff over randomly drawn paths, so each run gives a slightly different number.`,
+             `The more paths, the closer the average gets to the true value, and the closer two runs get to each other: one run of ABC's call gives $1.88 with 1,000 paths, $1.99 with 10,000 and $2.00 with 100,000.`]};
   }}
 ];
 

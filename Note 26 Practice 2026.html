@@ -878,24 +878,33 @@ const CHOICE_TEMPLATES = [{ id:"k1", topic:"concept", name:"What the up price st
   }},
 { id:"k8", topic:"div", name:"When to exercise an American call with a dividend", gen(){
     /* Section 7: exercise, if at all, at a high node just before the ex-dividend date. Rewritten 3 Nov 2026 after
-       the blind sitting (the key was the longest, hedged option): four options of one shape.                  */
-    const D=pick(range(1.00,4.00,0.25)), m=pick([4,5]);
+       the blind sitting (the key was the longest, hedged option): four options of one shape.
+       7 Nov 2026 (Anh): with no strike or prices given, "the lower node" could also be right (a deep in-the-money
+       call), and "after the share goes ex-dividend" at 3 months disqualified itself (rule 9). The stem now gives the
+       note's ABC tree (S 100, K 101, sigma 7.07%, r 2%) and the 3-month share prices: the lower node is below the
+       strike, so exercising there pays nothing. D from $2.00: below $1.75 waiting beats exercising even at the
+       upper node (checked 7 Nov 2026: at $2.00 exercise 2.54 vs wait 2.35).                                     */
+    const D=pick(range(2.00,4.00,0.25)), m=pick([4,5]);
+    const r=0.02, sg=0.0707, dt=0.25, K=101, u=Math.exp(sg*Math.sqrt(dt));
+    const Ss=100-D*Math.exp(-r*m/12), pv3=D*Math.exp(-r*(m-3)/12);
+    const up=+(Ss*u+pv3).toFixed(2), dn=+(Ss/u+pv3).toFixed(2);
     const opts=shuffle([
-      {html:`At the upper node at 3 months, before the share goes ex-dividend`, correct:true,
-       msg:`Right. Exercising there gets the holder the share before it goes ex-dividend, and so the ${money(D)} dividend. It pays when that beats the value of waiting.`},
-      {html:`At the lower node at 3 months, before the share goes ex-dividend`, correct:false,
-       msg:`At a low node the call is worth little or nothing if exercised. Early exercise pays only at a high node, where the payoff from exercising beats waiting.`},
-      {html:`At the upper node at 3 months, after the share goes ex-dividend`, correct:false,
-       msg:`The share goes ex-dividend between 3 and 6 months, after the 3-month nodes. To collect the dividend, the holder must exercise before that date.`},
-      {html:`Nowhere before 6 months, whatever the dividend`, correct:false,
+      {html:`At the upper node at 3 months only`, correct:true,
+       msg:`Right. At ${money(up)} the call is in the money, and exercising there, before the share goes ex-dividend, gets the holder the share and so the ${money(D)} dividend. Here that beats the value of waiting.`},
+      {html:`At the lower node at 3 months only`, correct:false,
+       msg:`At the lower node the share is at ${money(dn)}, below the ${money(K)} strike price: exercising there pays nothing. The candidate is the upper node, where the call is in the money.`},
+      {html:`At both nodes at 3 months`, correct:false,
+       msg:`At the lower node the share is at ${money(dn)}, below the ${money(K)} strike price: exercising there pays nothing. Only the upper node is a candidate.`},
+      {html:`Nowhere before 6 months: exercising a call early never beats waiting`, correct:false,
        msg:`That holds for a share that pays no dividend. With a dividend, exercising just before the ex-dividend date can be worth more than waiting.`}
     ]);
     return {mode:"choice",
-      text:`A share will pay a dividend of ${money(D)} in ${m} months. An American call on it expires in 6 months, and you price it on a two-step tree with steps of three months.`,
+      text:`ABC's share trades at $100.00 and will pay a dividend of ${money(D)} in ${m} months. An American call on it has a strike price of $101.00 and expires in 6 months. You price the call on a two-step tree with steps of three months, so the share goes ex-dividend between the 3-month and the 6-month nodes. At 3 months, the share price is ${money(up)} at the upper node and ${money(dn)} at the lower node.`,
       ask:"Where in the tree could it pay to exercise the call early?",
       options:opts,
       steps:[`At each node: value = max(payoff from exercising now, value of waiting).`,
-             `Between 3 and 6 months the share goes ex-dividend and its price drops by about the dividend. At the upper node at 3 months, exercising first, to collect the dividend, can beat waiting.`]};
+             `At the lower node the call is out of the money (${money(dn)} &lt; ${money(K)}), so exercising pays nothing.`,
+             `Between 3 and 6 months the share goes ex-dividend and its price drops by about the dividend. At the upper node, exercising first, to collect the dividend, can beat waiting.`]};
   }}
 ];
 
